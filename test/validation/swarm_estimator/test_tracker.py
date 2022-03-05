@@ -10,8 +10,8 @@ import scipy.stats as stats
 import gncpy.filters as gfilts
 import gncpy.dynamics as gdyn
 import gncpy.distributions as gdistrib
-import gasur.swarm_estimator.tracker as tracker
-import gasur.utilities.distributions as gasdist
+import caser.swarm_estimator.tracker as tracker
+import caser.utilities.distributions as gasdist
 
 
 global_seed = 69
@@ -2469,7 +2469,7 @@ if __name__ == "__main__":
     # test_PHD()
     # test_CPHD()
 
-    # test_GLMB()
+    test_GLMB()
     # test_STM_GLMB()
     # test_SMC_GLMB()
     # test_USMC_GLMB()
@@ -2485,7 +2485,7 @@ if __name__ == "__main__":
     # test_JGLMB()
     # test_JGLMB_high_birth()
     # test_STM_JGLMB()
-    test_SMC_JGLMB()
+    # test_SMC_JGLMB()
     # test_USMC_JGLMB()
     # test_MCMC_USMC_JGLMB()
     # test_QKF_JGLMB()

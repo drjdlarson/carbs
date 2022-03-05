@@ -5,7 +5,7 @@ Toolchain
    :maxdepth: 2
    :caption: Contents:
    
-This provides information on initial setup of the toolchain for either using gasur in developing other programs or developing for gasur, information on how to use **tox** for running unit and validation tests, and for using **tox** to build documentation.
+This provides information on initial setup of the toolchain for either using caser in developing other programs or developing for caser, information on how to use **tox** for running unit and validation tests, and for using **tox** to build documentation.
 
 
 .. include:: ../../README.rst

@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import numpy.testing as test
 
-import gasur.utilities.graphs as graphs
+import caser.utilities.graphs as graphs
 
 
 @pytest.mark.incremental

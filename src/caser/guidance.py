@@ -8,7 +8,7 @@ import scipy.linalg as la
 from scipy.stats import multivariate_normal as mvn
 from scipy.stats.distributions import chi2
 
-from gasur.utilities.distributions import GaussianMixture
+from caser.utilities.distributions import GaussianMixture
 from gncpy.math import get_hessian, get_jacobian
 from gncpy.control import BaseELQR
 
@@ -18,7 +18,7 @@ class DensityBased:
 
     Args:
         wayareas (GaussianMixture): desired target distributions, see
-            :py:class:`gasur.estimator.GaussianMixture`
+            :py:class:`caser.estimator.GaussianMixture`
         safety_factor (float): overbounding saftey factor when calculating the
             radius of influence for the activation function (default: 1).
         y_ref (float): Reference point on the sigmoid, must be less than 1
@@ -29,7 +29,7 @@ class DensityBased:
 
     Attributes:
         targets (GaussianMixture): desired target distributions, see
-            :py:class:`gasur.estimator.GaussianMixture`
+            :py:class:`caser.estimator.GaussianMixture`
         safety_factor (float): overbounding saftey factor when calculating the
             radius of influence for the activation function.
         y_ref (float): Reference point on the sigmoid, must be less than 1
@@ -168,7 +168,7 @@ class DensityBased:
                 a desired state
 
         Returns:
-            (GaussianMixture): desired wayareas, see :py:class:`gasur.estimator.GaussianMixture`
+            (GaussianMixture): desired wayareas, see :py:class:`caser.estimator.GaussianMixture`
 
         Todo:
             Ensure the calculated covariance is full rank and positive
@@ -393,7 +393,7 @@ class ELQRGaussian(BaseELQR, DensityBased):
 
         Converts measured values into class data structures and compares with
         values calculated from the last call
-        to :py:meth:`gasur.guidance.centralized.ELQRGaussian.iterate`. If
+        to :py:meth:`caser.guidance.centralized.ELQRGaussian.iterate`. If
         none match, then the measurents are held and remaining properties set
         to zero. Overrides base class version.
 
@@ -512,7 +512,7 @@ class ELQRGaussian(BaseELQR, DensityBased):
         """Quadratizes the non-quadratic state terms in the cost function.
 
         Overrides the base class version,
-        see :py:meth:`gasur.guidance.base.BaseELQR.quadratize_non_quad_state`
+        see :py:meth:`caser.guidance.base.BaseELQR.quadratize_non_quad_state`
 
         Args:
             all_states (N x Ng numpy array): matrix containing states of all
@@ -520,7 +520,7 @@ class ELQRGaussian(BaseELQR, DensityBased):
             obj_num (int): index of the guassian object currently being
                 evaluated
             **kwargs : passed through
-                to :py:meth:`gasur.utilities.math.get_hessian`
+                to :py:meth:`caser.utilities.math.get_hessian`
 
         Returns:
             tuple containing
@@ -558,7 +558,7 @@ class ELQRGaussian(BaseELQR, DensityBased):
         """Performs one iteration of the ELQR over the entire time horizon.
 
         Overrides base class,
-        see :py:meth:`gasur.guidance.base.BaseELQR.iterate`
+        see :py:meth:`caser.guidance.base.BaseELQR.iterate`
 
         Args:
             measured_gaussians (GaussianMixture): currently measured gaussians
@@ -729,7 +729,7 @@ class ELQRGaussian(BaseELQR, DensityBased):
         """Calculates the true cost at the final timestep.
         
         Wrapper around base class version,
-        see :py:meth:`gasur.guidance.base.BaseELQR.final_cost_function`
+        see :py:meth:`caser.guidance.base.BaseELQR.final_cost_function`
 
         Args:
             all_states (Ng x N numpy array): array of the ending statess for

@@ -9,8 +9,8 @@ import numpy as np
 import numpy.testing as test
 from copy import deepcopy
 
-from gasur.utilities.distributions import GaussianMixture
-import gasur.guidance as guide
+from caser.utilities.distributions import GaussianMixture
+import caser.guidance as guide
 
 
 class TestDensityBased:

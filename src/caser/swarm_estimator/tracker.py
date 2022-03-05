@@ -13,9 +13,9 @@ import abc
 from copy import deepcopy
 import warnings
 
-import gasur.utilities.distributions as gasdist
-from gasur.utilities.graphs import k_shortest, murty_m_best
-from gasur.utilities.sampling import gibbs
+import caser.utilities.distributions as gasdist
+from caser.utilities.graphs import k_shortest, murty_m_best
+from caser.utilities.sampling import gibbs
 from gncpy.math import log_sum_exp, get_elem_sym_fnc
 import gncpy.plotting as pltUtil
 import gncpy.filters as gfilts
@@ -175,7 +175,7 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
 
     @property
     def prob_death(self):
-        """Compliment of :attr:`gasur.swarm_estimator.RandomFinitSetBase.prob_survive`."""
+        """Compliment of :attr:`caser.swarm_estimator.RandomFinitSetBase.prob_survive`."""
         return 1 - self.prob_survive
 
     @property
@@ -687,14 +687,14 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         ----------
         timestep: float
             current timestep
-        probDensity : :class:`gasur.utilities.distributions.GaussianMixture`
+        probDensity : :class:`caser.utilities.distributions.GaussianMixture`
             Probability density to perform prediction on.
         filt_args : dict
             Passed directly to the inner filter.
 
         Returns
         -------
-        gm : :class:`gasur.utilities.distributions.GaussianMixture`
+        gm : :class:`caser.utilities.distributions.GaussianMixture`
             predicted Gaussian mixture.
 
         """
@@ -774,14 +774,14 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         ----------
         meas : list
             2d numpy arrays of each measurement.
-        probDensity : :py:class:`gasur.utilities.distributions.GaussianMixture`
+        probDensity : :py:class:`caser.utilities.distributions.GaussianMixture`
             probability density to run correction on.
         filt_args : dict
             arguements to pass to the inner filter correct function.
 
         Returns
         -------
-        gm : :py:class:`gasur.utilities.distributions.GaussianMixture`
+        gm : :py:class:`caser.utilities.distributions.GaussianMixture`
             corrected probability density.
 
         """
@@ -897,7 +897,7 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         timestep. If this is called with `enable_extract` set to true then
         the extract states method does not need to be called separately. It is
         recommended to call this function instead of
-        :meth:`gasur.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`
+        :meth:`caser.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`
         directly.
 
         Parameters
@@ -1351,7 +1351,7 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
         timestep: float
             current timestep
         **kwargs : dict, optional
-            See :meth:gasur.swarm_estimator.tracker.ProbabilityHypothesisDensity.predict`
+            See :meth:caser.swarm_estimator.tracker.ProbabilityHypothesisDensity.predict`
             for the available arguments.
 
         Returns
@@ -2601,13 +2601,13 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         -------
         state_sets : list
             Each element is the state list from the normal
-            :meth:`gasur.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`.
+            :meth:`caser.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`.
         label_sets : list
             Each element is the label list from the normal
-            :meth:`gasur.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`
+            :meth:`caser.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`
         cov_sets : list
             Each element is the covariance list from the normal
-            :meth:`gasur.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`
+            :meth:`caser.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`
             if the covariances are saved.
         probs : list
             Each element is the association probability for the extracted states.
@@ -2715,7 +2715,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         incremented. If this is called with `enable_extract` set to true then
         the extract states method does not need to be called separately. It is
         recommended to call this function instead of
-        :meth:`gasur.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`
+        :meth:`caser.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`
         directly.
 
         Parameters

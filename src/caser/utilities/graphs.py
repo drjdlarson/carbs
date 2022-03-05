@@ -5,7 +5,7 @@ This module contains the functions for graph search algorithms.
 import numpy as np
 from warnings import warn
 
-import gasur.utilities.graphs_subroutines as subs
+import caser.utilities.graphs_subroutines as subs
 
 
 def k_shortest(log_cost_in, k):

@@ -7,8 +7,8 @@ Created on Wed Apr 22 18:55:41 2020
 import pytest
 import numpy as np
 
-from gasur.utilities.distributions import GaussianMixture
-from gasur.guidance import GaussianObject
+from caser.utilities.distributions import GaussianMixture
+from caser.guidance import GaussianObject
 
 
 @pytest.fixture(scope="session")

@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import numpy.testing as test
 
-import gasur.utilities.graphs_subroutines as g_sub
+import caser.utilities.graphs_subroutines as g_sub
 
 
 def test_assign_opt1():
