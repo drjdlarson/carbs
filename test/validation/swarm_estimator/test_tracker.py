@@ -12,6 +12,8 @@ import gncpy.dynamics as gdyn
 import gncpy.distributions as gdistrib
 import caser.swarm_estimator.tracker as tracker
 import caser.utilities.distributions as gasdist
+import serums.models as smodels
+from serums.enums import GSMTypes
 
 
 global_seed = 69
@@ -389,17 +391,17 @@ def _setup_ekf_gsm(dt, rng, m_dfs, m_vars):
     # define measurement noise filters
     num_parts = 500
 
-    range_gsm = gdistrib.GaussianScaleMixture(gsm_type=gdistrib.GSMTypes.STUDENTS_T,
-                                              degrees_of_freedom=m_dfs[0],
-                                              df_range=(1, 5),
-                                              scale=np.sqrt(m_vars[0]).reshape((1, 1)),
-                                              scale_range=(0, 5 * np.sqrt(m_vars[0])))
+    range_gsm = smodels.GaussianScaleMixture(gsm_type=GSMTypes.STUDENTS_T,
+                                             degrees_of_freedom=m_dfs[0],
+                                             df_range=(1, 5),
+                                             scale=np.sqrt(m_vars[0]).reshape((1, 1)),
+                                             scale_range=(0, 5 * np.sqrt(m_vars[0])))
 
-    bearing_gsm = gdistrib.GaussianScaleMixture(gsm_type=gdistrib.GSMTypes.STUDENTS_T,
-                                                degrees_of_freedom=m_dfs[1],
-                                                df_range=(1, 5),
-                                                scale=np.sqrt(m_vars[1]).reshape((1, 1)),
-                                                scale_range=(0, 5 * np.sqrt(m_vars[1])))
+    bearing_gsm = smodels.GaussianScaleMixture(gsm_type=GSMTypes.STUDENTS_T,
+                                               degrees_of_freedom=m_dfs[1],
+                                               df_range=(1, 5),
+                                               scale=np.sqrt(m_vars[1]).reshape((1, 1)),
+                                               scale_range=(0, 5 * np.sqrt(m_vars[1])))
 
     filt.set_meas_noise_model(gsm_lst=[range_gsm, bearing_gsm], num_parts=num_parts,
                               rng=rng)
@@ -413,7 +415,7 @@ def _setup_ekf_gsm(dt, rng, m_dfs, m_vars):
 def _setup_phd_double_int_birth():
     mu = [np.array([10., 0., 0., 0.]).reshape((4, 1))]
     cov = [np.diag(np.array([1, 1, 1, 1]))**2]
-    gm0 = gasdist.GaussianMixture(means=mu, covariances=cov, weights=[1])
+    gm0 = smodels.GaussianMixture(means=mu, covariances=cov, weights=[1])
 
     return [gm0, ]
 
@@ -421,7 +423,7 @@ def _setup_phd_double_int_birth():
 def _setup_gm_glmb_double_int_birth():
     mu = [np.array([10., 0., 0., 1.]).reshape((4, 1))]
     cov = [np.diag(np.array([1, 1, 1, 1]))**2]
-    gm0 = gasdist.GaussianMixture(means=mu, covariances=cov, weights=[1])
+    gm0 = smodels.GaussianMixture(means=mu, covariances=cov, weights=[1])
 
     return [(gm0, 0.003), ]
 
@@ -429,7 +431,8 @@ def _setup_gm_glmb_double_int_birth():
 def _setup_stm_glmb_double_int_birth():
     mu = [np.array([10., 0., 0., 1.]).reshape((4, 1))]
     scale = [np.diag(np.array([1, 1, 1, 1]))**2]
-    stm0 = gasdist.StudentsTMixture(means=mu, scalings=scale, weights=[1])
+    stm0 = smodels.StudentsTMixture(means=mu, scalings=scale, weights=[1],
+                                    dof=3)
 
     return [(stm0, 0.003), ]
 
@@ -487,7 +490,7 @@ def _setup_gsm_birth():
     # note: GSM filter assumes noise is conditionally Gaussian so use GM with 1 term for birth
     means = [np.array([2000, 2000, 20, 20, 0, 0]).reshape((6, 1))]
     cov = [np.diag((5 * 10**4, 5 * 10**4, 8, 8, 0.02, 0.02))]
-    gm0 = gasdist.GaussianMixture(means=means, covariances=cov, weights=[1])
+    gm0 = smodels.GaussianMixture(means=means, covariances=cov, weights=[1])
 
     return [(gm0, 0.05), ]
 
@@ -2469,7 +2472,7 @@ if __name__ == "__main__":
     # test_PHD()
     # test_CPHD()
 
-    test_GLMB()
+    # test_GLMB()
     # test_STM_GLMB()
     # test_SMC_GLMB()
     # test_USMC_GLMB()
@@ -2488,7 +2491,7 @@ if __name__ == "__main__":
     # test_SMC_JGLMB()
     # test_USMC_JGLMB()
     # test_MCMC_USMC_JGLMB()
-    # test_QKF_JGLMB()
+    test_QKF_JGLMB()
     # test_SQKF_JGLMB()
     # test_UKF_JGLMB()
     # test_QKF_GSM_JGLMB()

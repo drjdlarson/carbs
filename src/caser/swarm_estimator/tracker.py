@@ -20,6 +20,7 @@ from gncpy.math import log_sum_exp, get_elem_sym_fnc
 import gncpy.plotting as pltUtil
 import gncpy.filters as gfilts
 import gncpy.errors as gerr
+import serums.models as smodels
 
 
 class RandomFiniteSetBase(metaclass=abc.ABCMeta):
@@ -582,7 +583,7 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         self.merge_threshold = merge_threshold
         self.max_gauss = max_gauss
 
-        self._gaussMix = gasdist.GaussianMixture()
+        self._gaussMix = smodels.GaussianMixture()
 
         super().__init__(**kwargs)
 
@@ -673,9 +674,7 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
                                                     filt_args)
 
         for gm in self.birth_terms:
-            self._gaussMix.weights.extend(gm.weights)
-            self._gaussMix.means.extend(gm.means)
-            self._gaussMix.covariances.extend(gm.covariances)
+            self._gaussMix.add_components(gm.means, gm.covariances, gm.weights)
 
     def _predict_prob_density(self, timestep, probDensity, filt_args):
         """Predicts the probability density.
@@ -698,17 +697,18 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
             predicted Gaussian mixture.
 
         """
-        gm_tup = zip(probDensity.means,
-                     probDensity.covariances)
-        gm = gasdist.GaussianMixture()
-        gm.weights = [self.prob_survive * x for x in probDensity.weights.copy()]
-        for ii, (m, P) in enumerate(gm_tup):
+        weights = [self.prob_survive * x for x in probDensity.weights.copy()]
+        covariances = []
+        means = []
+        for ii, (m, P) in enumerate(zip(probDensity.means,
+                                        probDensity.covariances)):
             self.filter.cov = P
             n_mean = self.filter.predict(timestep, m, **filt_args)
-            gm.covariances.append(self.filter.cov.copy())
-            gm.means.append(n_mean)
+            covariances.append(self.filter.cov.copy())
+            means.append(n_mean)
 
-        return gm
+        return smodels.GaussianMixture(means=means, covariances=covariances,
+                                       weights=weights)
 
     def correct(self, timestep, meas_in, meas_mat_args={}, est_meas_args={},
                 filt_args={}):
@@ -756,13 +756,9 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         gmix = deepcopy(self._gaussMix)
         gmix.weights = [self.prob_miss_detection * x for x in gmix.weights]
         gm = self._correct_prob_density(timestep, meas, self._gaussMix, filt_args)
+        gm.add_components(gmix.means, gmix.covariances, gmix.weights)
 
-        gm.weights.extend(gmix.weights)
-        self._gaussMix.weights = gm.weights.copy()
-        gm.means.extend(gmix.means)
-        self._gaussMix.means = gm.means.copy()
-        gm.covariances.extend(gmix.covariances)
-        self._gaussMix.covariances = gm.covariances.copy()
+        self._gaussMix = gm
 
     def _correct_prob_density(self, timestep, meas, probDensity, filt_args):
         """Corrects the probability densities.
@@ -785,7 +781,9 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
             corrected probability density.
 
         """
-        gm = gasdist.GaussianMixture()
+        means = []
+        covariances = []
+        weights = []
         det_weights = [self.prob_detection * x for x in probDensity.weights]
         for z in meas:
             w_lst = []
@@ -795,13 +793,14 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
                 (mean, qz) = self.filter.correct(timestep, z, state, **filt_args)
                 cov = self.filter.cov
                 w = qz * det_weights[jj]
-                gm.means.append(mean)
-                gm.covariances.append(cov)
+                means.append(mean)
+                covariances.append(cov)
                 w_lst.append(w)
-            gm.weights.extend([x / (self.clutter_rate * self.clutter_den
-                               + sum(w_lst)) for x in w_lst])
+            weights.extend([x / (self.clutter_rate * self.clutter_den + sum(w_lst))
+                            for x in w_lst])
 
-        return gm
+        return smodels.GaussianMixture(means=means, covariances=covariances,
+                                       weights=weights)
 
     def _prune(self):
         """Removes hypotheses below a threshold.
@@ -809,13 +808,9 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         This should be called once per time step after the correction and
         before the state extraction.
         """
-        idx = np.where(np.asarray(self._gaussMix.weights)
-                       < self.prune_threshold)
-        idx = np.ndarray.flatten(idx[0])
-        for index in sorted(idx, reverse=True):
-            del self._gaussMix.means[index]
-            del self._gaussMix.weights[index]
-            del self._gaussMix.covariances[index]
+        inds = np.where(np.asarray(self._gaussMix.weights)
+                        < self.prune_threshold)[0]
+        self._gaussMix.remove_components(inds.flatten().tolist())
 
     def _merge(self):
         """Merges nearby hypotheses."""
@@ -825,7 +820,7 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         m_lst = []
         p_lst = []
         while len(loop_inds) > 0:
-            jj = np.argmax(self._gaussMix.weights)
+            jj = int(np.argmax(self._gaussMix.weights))
             comp_inds = []
             inv_cov = la.inv(self._gaussMix.covariances[jj])
             for ii in loop_inds:
@@ -849,9 +844,8 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
             for ii in comp_inds:
                 self._gaussMix.weights[ii] = -1
 
-        self._gaussMix.weights = w_lst
-        self._gaussMix.means = m_lst
-        self._gaussMix.covariances = p_lst
+        self._gaussMix = smodels.GaussianMixture(means=m_lst, covariances=p_lst,
+                                                 weights=w_lst)
 
     def _cap(self):
         """Removes least likely hypotheses until a maximum number is reached.
@@ -862,10 +856,7 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         if len(self._gaussMix.weights) > self.max_gauss:
             idx = np.argsort(self._gaussMix.weights)
             w = sum(self._gaussMix.weights)
-            for index in sorted(idx[0:-self.max_gauss], reverse=True):
-                del self._gaussMix.means[index]
-                del self._gaussMix.weights[index]
-                del self._gaussMix.covariances[index]
+            self._gaussMix.remove_components(idx[0:-self.max_gauss])
             self._gaussMix.weights = [x * (w / sum(self._gaussMix.weights))
                                       for x in self._gaussMix.weights]
 
@@ -881,6 +872,7 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         s_lst = []
         c_lst = []
         for jj in inds:
+            jj = int(jj)
             num_reps = round(self._gaussMix.weights[jj])
             s_lst.extend([self._gaussMix.means[jj]] * num_reps)
             if self.save_covs:
@@ -1542,9 +1534,8 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
             wt_2 = self.prob_detection * qz_temp[:, [ee]] / self.clutter_den * w_pred
             w_temp = wt_1 * wt_2
             for ww in range(0, w_temp.shape[0]):
-                gmix.weights.append(w_temp[ww].item())
-                gmix.means.append(mean_temp[ee, :, ww].reshape((xdim, 1)))
-                gmix.covariances.append(cov_temp[ww, :, :])
+                gmix.add_components(mean_temp[ee, :, ww].reshape((xdim, 1)),
+                                    cov_temp[ww, :, :], w_temp[ww].item())
 
         cdn_update = self._card_dist.copy()
         for ii in range(0, len(cdn_update)):
@@ -1569,7 +1560,7 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
         ii = 0
         tot_agents = 0
         while ii < s_weights.size and tot_agents < self.cardinality:
-            idx = s_weights[ii]
+            idx = int(s_weights[ii])
 
             n_agents = round(self._gaussMix.weights[idx])
             if n_agents <= 0:
