@@ -1,3 +1,6 @@
 [submodule "gncpy"]
 	path = gncpy
 	url = https://github.com/drjdlarson/gncpy.git
+[submodule "serums"]
+	path = serums
+	url = https://github.com/drjdlarson/serums.git
