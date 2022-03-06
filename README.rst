@@ -8,6 +8,7 @@ A python package for Command, control & information (C2I) of Autonomous Swarms E
 
 .. _CASER: https://github.com/drjdlarson/caser
 .. _GNCPY: https://github.com/drjdlarson/gncpy
+.. _SERUMS: https://github.com/drjdlarson/serums
 .. _STACKOVERFLOW: https://stackoverflow.com/questions/69704561/cannot-update-spyder-5-1-5-on-new-anaconda-install
 .. _SUBMODULE: https://git-scm.com/book/en/v2/Git-Tools-Submodules
 
@@ -17,18 +18,19 @@ Setup
 Currently this package is not available via pip, this provides a guide on installation from the git repository. Note that Python 3 is required, pytest is used for managing the built-in tests, and tox is used for automating the testing and documentation generation. It is recommended to use Anaconda and the Spyder IDE, but this is not necessary. The general process follows the following order with more details in the corresponding subsections.
 
 #. Install Anaconda and Spyder and update to the latest version *[Optional]*. See `Installing and Updating Spyder`_.
-#. Decide if gncpy is needed as a seperate repository outside of caser. This makes it easier to develop for gncpy in addition to caser.
+#. Decide if gncpy and serums are needed as a seperate repository outside of caser. This makes it easier to develop for gncpy and serums in addition to caser.
 
-    * **If gncpy is installed outside, tox will still use the version within caser for running automated tests.**
+    * **If gncpy/serums is installed outside, tox will still use the version within caser for running automated tests.**
 
-#. Setup git for submodules if tox will be used to automate running all test cases or gncpy is not being installed outside caser *[Optional]*. See `Using git with Submodules`_.
+#. Setup git for submodules if tox will be used to automate running all test cases or if gncpy and serums are not being installed outside caser *[Optional]*. See `Using git with Submodules`_.
 #. Clone caser.
 #. Clone gncpy outside caser *[Optional]*.
-#. Install caser and gncpy to the base conda environment. See `Installing caser and gncpy`_.
+#. Clone serums outside caser *[Optional]*.
+#. Install caser, gncpy, and serums to the base conda environment. See `Installing caser, gncpy, and serums`_.
     
-    * Other virtual environments can be used for development/projects but it seems caser/gncpy are needed in the base to get Spyder's variable explorer to work with their custom types.
+    * Other virtual environments can be used for development/projects but it seems caser/gncpy/serums are needed in the base to get Spyder's variable explorer to work with their custom types.
 
-If using Anaconda and Spyder and all optional steps where followed you should be able to run tests with tox, generate documentation with tox, and run tests as standalone scripts from within Spyder (See `Testing`_ and `Building Documentation`_). Also the Spyder IDE variable explorer should recognize caser and gncpy data types for debugging. It is also possible to create conda environments and tell Spyder to use that as the interpreter for running code. Note that the proper version of :code:`spyder-kernels` must be installed in the environment but Spyder will tell you the command to run when it fails to start the interpreter. This can be useful if you need additional libraries for certain projects. Information on conda environments can be found `here <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_ and setting up Spyder with a custom interpreter can be done through Spyder's settings.
+If using Anaconda and Spyder and all optional steps where followed you should be able to run tests with tox, generate documentation with tox, and run tests as standalone scripts from within Spyder (See `Testing`_ and `Building Documentation`_). Also the Spyder IDE variable explorer should recognize caser, serums, and gncpy data types for debugging. It is also possible to create conda environments and tell Spyder to use that as the interpreter for running code. Note that the proper version of :code:`spyder-kernels` must be installed in the environment but Spyder will tell you the command to run when it fails to start the interpreter. This can be useful if you need additional libraries for certain projects. Information on conda environments can be found `here <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_ and setting up Spyder with a custom interpreter can be done through Spyder's settings.
 
 
 Installing and Updating Spyder
@@ -46,17 +48,21 @@ Installing and Updating Spyder
             conda install spyder=5.1.5
 
     
-Installing caser and gncpy
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Installing caser, gncpy, and serums
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 #. Download/clone the `gncpy`_ repository and save it somewhere on your system (remember the location) *[Optional]*.
     
     * Only do this if you need/want gncpy outside of caser.
+
+#. Download/clone the `serums`_ repository and save it somewhere on your system (remember the location) *[Optional]*.
+    
+    * Only do this if you need/want serums outside of caser.
     
 #. Download/clone the `caser`_ repository somewhere on your system (remember the location).
 #. Open the terminal that has the base Anaconda environment activated (normal terminal for linux, Anaconda prompt on windows).
 #. Navigate to the directory where you saved the repositories.
     
-    * The directory structure should look like the following. Where you only have two gncpy folders if you are installing gncpy outside, and cloned both repositories to the same top level directory.
+    * The directory structure should look like the following. Where you only have two gncpy/serums folders if you are installing them outside, and cloned both repositories to the same top level directory.
     
         ::
         
@@ -65,10 +71,31 @@ Installing caser and gncpy
             │   ├── setup.py
             │   ├── gncpy/
             │   │   └── setup.py
-            │   └── src
-            └── gncpy/
+            │   ├── serums/
+            │   │   └── setup.py
+            │   └── src/
+            ├── gncpy/
+            │   ├── serums/
+            │   │   └── setup.py
+            │   └── setup.py
+            └── serums/
                 └── setup.py
+
+#. Install serums.
     
+    * If using anaconda then install without dependencies to allow conda to manage dependencies. Note, :code:`PATH_TO_SERUMS` is either :code:`./serums/` if installing serums outside caser, or :code:`./caser/serums/` otherwise. 
+    
+        .. code-block:: bash
+
+            conda install numpy scipy matplotlib
+            pip install --no-dependencies -e PATH_TO_SERUMS
+    
+    * If not using anaconda then serums can be installed with the dependencies. Note, :code:`PATH_TO_SERUMS` follows the format in the above bullet.
+    
+        .. code-block:: bash
+        
+            pip install -e PATH_TO_SERUMS
+
 #. Install gncpy.
     
     * If using anaconda then install without dependencies to allow conda to manage dependencies. Note, :code:`PATH_TO_GNCPY` is either :code:`./gncpy/` if installing gncpy outside caser, or :code:`./caser/gncpy/` otherwise. 
@@ -222,7 +249,7 @@ Please cite the framework as follows
     @Misc{caser,
     author       = {Jordan D. Larson and Ryan W. Thomas and Vaughn Weirens and Vincent W. Hill},
     howpublished = {Web page},
-    title        = {{CASER}: A {P}ython library for {G}uidance, navigation, and control of {A}utonomous {S}warms {U}sing {R}andom finite sets},
+    title        = {{CASER}: A {P}ython library for {C}ommand, control & information of {A}utonomous {S}warms {E}mploying {R}andom finite sets},
     year         = {2019},
     url          = {https://github.com/drjdlarson/caser},
     }
