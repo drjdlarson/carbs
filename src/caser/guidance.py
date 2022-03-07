@@ -8,7 +8,7 @@ import scipy.linalg as la
 from scipy.stats import multivariate_normal as mvn
 from scipy.stats.distributions import chi2
 
-from caser.utilities.distributions import GaussianMixture
+from serums.models import GaussianMixture
 from gncpy.math import get_hessian, get_jacobian
 from gncpy.control import BaseELQR
 
@@ -727,7 +727,7 @@ class ELQRGaussian(BaseELQR, DensityBased):
 
     def final_cost_function(self, all_states, **kwargs):
         """Calculates the true cost at the final timestep.
-        
+
         Wrapper around base class version,
         see :py:meth:`caser.guidance.base.BaseELQR.final_cost_function`
 

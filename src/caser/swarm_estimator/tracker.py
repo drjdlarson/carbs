@@ -13,14 +13,17 @@ import abc
 from copy import deepcopy
 import warnings
 
-import caser.utilities.distributions as gasdist
 from caser.utilities.graphs import k_shortest, murty_m_best
 from caser.utilities.sampling import gibbs
+
 from gncpy.math import log_sum_exp, get_elem_sym_fnc
 import gncpy.plotting as pltUtil
 import gncpy.filters as gfilts
 import gncpy.errors as gerr
+
 import serums.models as smodels
+from serums.enums import SingleObjectDistance
+from serums.distances import calculate_ospa, calculate_ospa2
 
 
 class RandomFiniteSetBase(metaclass=abc.ABCMeta):
@@ -328,17 +331,17 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
 
     def _ospa_input_check(self, core_method, truth, true_covs):
         if core_method is None:
-            core_method = gasdist.OSPAMethod.EUCLIDEAN
+            core_method = SingleObjectDistance.EUCLIDEAN
 
-        elif core_method is gasdist.OSPAMethod.MAHALANOBIS and not self.save_covs:
+        elif core_method is SingleObjectDistance.MAHALANOBIS and not self.save_covs:
             msg = 'Must save covariances to calculate {:s} OSPA. Using {:s} instead'
-            warnings.warn(msg.format(core_method, gasdist.OSPAMethod.EUCLIDEAN))
-            core_method = gasdist.OSPAMethod.EUCLIDEAN
+            warnings.warn(msg.format(core_method, SingleObjectDistance.EUCLIDEAN))
+            core_method = SingleObjectDistance.EUCLIDEAN
 
-        elif core_method is gasdist.OSPAMethod.HELLINGER and true_covs is None:
+        elif core_method is SingleObjectDistance.HELLINGER and true_covs is None:
             msg = 'Must save covariances to calculate {:s} OSPA. Using {:s} instead'
-            warnings.warn(msg.format(core_method, gasdist.OSPAMethod.EUCLIDEAN))
-            core_method = gasdist.OSPAMethod.EUCLIDEAN
+            warnings.warn(msg.format(core_method, SingleObjectDistance.EUCLIDEAN))
+            core_method = SingleObjectDistance.EUCLIDEAN
 
         return core_method
 
@@ -367,7 +370,7 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
                        true_covs=None):
         """Calculates the OSPA distance between the truth at all timesteps.
 
-        Wrapper for :func:`.utilities.distributions.calculate_ospa`.
+        Wrapper for :func:`serums.distances.calculate_ospa`.
 
         Parameters
         ----------
@@ -381,14 +384,14 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
         p : int
             The power of the distance term. Higher values penalize outliers
             more.
-        core_method : :class:`.utilities.distributions.OSPAMethod`, Optional
+        core_method : :class:`serums.enums.SingleObjectDistance`, Optional
             The main distance measure to use for the localization component.
-            The default value of None implies :attr:`.OSPAMethod.EUCLIDEAN`.
+            The default value of None implies :attr:`.SingleObjectDistance.EUCLIDEAN`.
         true_covs : list, Optional
             Each element represents a timestep and is a list of N x N numpy arrays
             corresonponding to the uncertainty about the true states. Note the
             order must be consistent with the truth data given. This is only
-            needed for core methods :attr:`OSPAMethod.HELLINGER`. The defautl
+            needed for core methods :attr:`SingleObjectDistance.HELLINGER`. The defautl
             value is None.
         """
         # error checking on optional input arguments
@@ -415,12 +418,12 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
         # find OSPA
         (self.ospa, self.ospa_localization, self.ospa_cardinality,
          self._ospa_params['core'], self._ospa_params['cutoff'],
-         self._ospa_params['power']) = gasdist.calculate_ospa(est_mat,
-                                                              true_mat, c, p,
-                                                              use_empty=True,
-                                                              core_method=core_method,
-                                                              true_cov_mat=true_cov_mat,
-                                                              est_cov_mat=est_cov_mat)[0:6]
+         self._ospa_params['power']) = calculate_ospa(est_mat,
+                                                      true_mat, c, p,
+                                                      use_empty=True,
+                                                      core_method=core_method,
+                                                      true_cov_mat=true_cov_mat,
+                                                      est_cov_mat=est_cov_mat)[0:6]
 
     def _plt_ospa_hist(self, y_val, time_units, time, ttl, y_lbl, opts):
         fig = opts['f_hndl']
@@ -686,14 +689,14 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         ----------
         timestep: float
             current timestep
-        probDensity : :class:`caser.utilities.distributions.GaussianMixture`
+        probDensity : :class:`serums.models.GaussianMixture`
             Probability density to perform prediction on.
         filt_args : dict
             Passed directly to the inner filter.
 
         Returns
         -------
-        gm : :class:`caser.utilities.distributions.GaussianMixture`
+        gm : :class:`serums.models.GaussianMixture`
             predicted Gaussian mixture.
 
         """
@@ -770,14 +773,14 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         ----------
         meas : list
             2d numpy arrays of each measurement.
-        probDensity : :py:class:`caser.utilities.distributions.GaussianMixture`
+        probDensity : :py:class:`serums.models.GaussianMixture`
             probability density to run correction on.
         filt_args : dict
             arguements to pass to the inner filter correct function.
 
         Returns
         -------
-        gm : :py:class:`caser.utilities.distributions.GaussianMixture`
+        gm : :py:class:`serums.models.GaussianMixture`
             corrected probability density.
 
         """
@@ -2778,7 +2781,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         return est_mat, est_cov_mat
 
     def calculate_ospa2(self, truth, c, p, win_len, true_covs=None,
-                        core_method=gasdist.OSPAMethod.MANHATTAN):
+                        core_method=SingleObjectDistance.MANHATTAN):
         # error checking on optional input arguments
         core_method = self._ospa_input_check(core_method, truth, true_covs)
 
@@ -2805,11 +2808,11 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         (self.ospa2, self.ospa2_localization, self.ospa2_cardinality,
          self._ospa2_params['core'], self._ospa2_params['cutoff'],
          self._ospa2_params['power'],
-         self._ospa2_params['win_len']) = gasdist.calculate_ospa2(est_mat,
-                                                                  true_mat, c,
-                                                                  p, win_len,
-                                                                  core_method=core_method,
-                                                                  true_cov_mat=true_cov_mat,
+         self._ospa2_params['win_len']) = calculate_ospa2(est_mat,
+                                                          true_mat, c,
+                                                          p, win_len,
+                                                          core_method=core_method,
+                                                          true_cov_mat=true_cov_mat,
                                                                   est_cov_mat=est_cov_mat)
 
     def plot_states_labels(self, plt_inds, ttl="Labeled State Trajectories",

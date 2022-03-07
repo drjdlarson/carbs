@@ -11,9 +11,8 @@ import gncpy.filters as gfilts
 import gncpy.dynamics as gdyn
 import gncpy.distributions as gdistrib
 import caser.swarm_estimator.tracker as tracker
-import caser.utilities.distributions as gasdist
 import serums.models as smodels
-from serums.enums import GSMTypes
+from serums.enums import GSMTypes, SingleObjectDistance
 
 
 global_seed = 69
@@ -669,16 +668,16 @@ def test_PHD():  # noqa
     if debug_plots:
         phd.plot_ospa_history(time=time, time_units='s')
 
-    phd.calculate_ospa(global_true, 5, 1, core_method=gasdist.OSPAMethod.MANHATTAN)
+    phd.calculate_ospa(global_true, 5, 1, core_method=SingleObjectDistance.MANHATTAN)
     if debug_plots:
         phd.plot_ospa_history(time=time, time_units='s')
 
-    phd.calculate_ospa(global_true, 1, 1, core_method=gasdist.OSPAMethod.HELLINGER,
+    phd.calculate_ospa(global_true, 1, 1, core_method=SingleObjectDistance.HELLINGER,
                        true_covs=true_covs)
     if debug_plots:
         phd.plot_ospa_history(time=time, time_units='s')
 
-    phd.calculate_ospa(global_true, 5, 1, core_method=gasdist.OSPAMethod.MAHALANOBIS)
+    phd.calculate_ospa(global_true, 5, 1, core_method=SingleObjectDistance.MAHALANOBIS)
     if debug_plots:
         phd.plot_ospa_history(time=time, time_units='s')
 
@@ -798,11 +797,11 @@ def test_GLMB():  # noqa
     if debug_plots:
         glmb.plot_ospa2_history(time=time, time_units='s')
 
-    glmb.calculate_ospa2(global_true, 5, 1, 10, core_method=gasdist.OSPAMethod.EUCLIDEAN)
+    glmb.calculate_ospa2(global_true, 5, 1, 10, core_method=SingleObjectDistance.EUCLIDEAN)
     if debug_plots:
         glmb.plot_ospa2_history(time=time, time_units='s')
 
-    glmb.calculate_ospa2(global_true, 5, 1, 10, core_method=gasdist.OSPAMethod.MAHALANOBIS)
+    glmb.calculate_ospa2(global_true, 5, 1, 10, core_method=SingleObjectDistance.MAHALANOBIS)
     if debug_plots:
         glmb.plot_ospa2_history(time=time, time_units='s')
 
@@ -2469,7 +2468,7 @@ if __name__ == "__main__":
 
     start = timer()
 
-    # test_PHD()
+    test_PHD()
     # test_CPHD()
 
     # test_GLMB()
@@ -2491,7 +2490,7 @@ if __name__ == "__main__":
     # test_SMC_JGLMB()
     # test_USMC_JGLMB()
     # test_MCMC_USMC_JGLMB()
-    test_QKF_JGLMB()
+    # test_QKF_JGLMB()
     # test_SQKF_JGLMB()
     # test_UKF_JGLMB()
     # test_QKF_GSM_JGLMB()
