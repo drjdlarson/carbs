@@ -3096,7 +3096,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             fig.add_subplot(1, 1, 1)
 
         if time is None:
-            time = np.arange(self.card_history.size, dtype=int)
+            time = np.arange(card_history.size, dtype=int)
 
         fig.axes[0].grid(True)
         fig.axes[0].step(time, card_history, where='post', label='estimated')
