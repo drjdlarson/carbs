@@ -3437,7 +3437,11 @@ class GSMGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
 
 
 class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
-    """Implements a Joint Generalized Labeled Multi-Bernoullie Filter.
+    """Implements a Joint Generalized Labeled Multi-Bernoulli Filter.
+
+    The Joint GLMB is designed to call predict and correct simultaneously,
+    as a single joint prediction-correction step.
+    Calling them asynchronously may cause poor performance.
 
     Notes
     -----
@@ -3448,6 +3452,7 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
 
     def __init__(self, **kwargs):
         self._old_track_tab = []  # used to store previous track table and initialize survival probability matrix
+        self._update_has_been_called = True # used to denote if the update function should be called or not.
         super().__init__(**kwargs)
 
     def save_filter_state(self):
@@ -3493,8 +3498,13 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
         -------
         None.
         """
-        # Birth Track Table
-        birth_tab = self._gen_birth_tab(timestep)[0]
+        if self._update_has_been_called:
+            # Birth Track Table
+            birth_tab = self._gen_birth_tab(timestep)[0]
+        else:
+            birth_tab = []
+            warnings.warn("Joint GLMB should call predict and correct simultaneously")
+        self._update_has_been_called = False
 
         # Survival Track Table
         surv_tab = self._gen_surv_tab(timestep, filt_args)
@@ -3572,17 +3582,17 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
 
         # Pre-calculation of average survival/death probabilities
         avg_surv = np.zeros(len(self.birth_terms) + len(self._old_track_tab))
-        for ii in range(0, len(avg_surv)):
+        for ii in range(0, avg_surv.shape[0]):
             if ii <= len(self.birth_terms) - 1:
                 avg_surv[ii] = self.birth_terms[ii][1]
             else:
                 avg_surv[ii] = self.prob_survive
-        avg_surv = np.array([avg_surv]).T
+        # avg_surv = np.array([avg_surv]).T
         avg_death = 1 - avg_surv
 
         # Pre-calculation of average detection/missed probabilities
         avg_detect = self.prob_detection * np.ones(len(self._track_tab))
-        avg_detect = np.array([avg_detect]).T
+        # avg_detect = np.array([avg_detect]).T
         avg_miss = 1 - avg_detect
 
         self._meas_tab.append(deepcopy(meas))
@@ -3597,7 +3607,7 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
         joint_cost = np.concatenate([np.diag(avg_death.flatten()),
                                      np.diag(avg_surv.flatten() * avg_miss.flatten())], axis=1)
 
-        other_jc_terms = np.tile(avg_surv * avg_detect, (1, num_meas)) * all_cost_m / (clutter)
+        other_jc_terms = np.tile((avg_surv * avg_detect).reshape((-1, 1)), (1, num_meas)) * all_cost_m / (clutter)
 
         joint_cost = np.append(joint_cost, other_jc_terms, axis=1)
 
@@ -3677,12 +3687,14 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
         for ii in range(0, len(up_hyp)):
             up_hyp[ii].assoc_prob = np.exp(up_hyp[ii].assoc_prob - lse)
 
-        self._track_tab = up_tab
+        self._track_tab = deepcopy(up_tab)
         self._hypotheses = up_hyp
         self._card_dist = self._calc_card_dist(self._hypotheses)
         self._clean_predictions()
         self._clean_updates()
-        self._old_track_tab = self._track_tab
+        self._update_has_been_called = True
+        self._old_track_tab = deepcopy(self._track_tab)
+
 
 
 class STMJointGeneralizedLabeledMultiBernoulli(_STMGLMBBase,
