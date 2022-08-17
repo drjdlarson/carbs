@@ -3519,6 +3519,23 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
         keyind = np.not_equal(difference, 0)
         mindices = (keys[0][np.where(keyind)]).astype(int)
         return mindices
+    
+    def _calc_avg_prob_surv_death(self):
+        avg_surv = np.zeros(len(self.birth_terms) + len(self._old_track_tab))
+        for ii in range(0, avg_surv.shape[0]):
+            if ii <= len(self.birth_terms) - 1:
+                avg_surv[ii] = self.birth_terms[ii][1]
+            else:
+                avg_surv[ii] = self.prob_survive
+        # avg_surv = np.array([avg_surv]).T
+        avg_death = 1 - avg_surv
+        return avg_surv, avg_death
+    
+    def _calc_avg_prob_det_mdet(self):
+        avg_detect = self.prob_detection * np.ones(len(self._track_tab))
+        # avg_detect = np.array([avg_detect]).T
+        avg_miss = 1 - avg_detect
+        return avg_detect, avg_miss
 
     def _gen_cor_tab(self, num_meas, meas, timestep, filt_args):
         num_pred = len(self._track_tab)
@@ -3542,72 +3559,15 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
                     up_tab[s_to_ii].meas_assoc_hist.append(emm)
                 all_cost_m[ii, emm] = cost
         return up_tab, all_cost_m
-
-    def correct(self, timestep, meas, filt_args={}):
-        """Correction step of the JGLMB filter.
-
-        This corrects the hypotheses based on the measurements and gates the
-        measurements according to the class settings. It also updates the
-        cardinality distribution. Because this calls the inner filter's correct
-        function, the keyword arguments must contain any information needed by
-        that function.
-
-        Parameters
-        ----------
-        timestep: float
-            Current timestep.
-        meas_in : list
-            List of Nm x 1 numpy arrays each representing a measuremnt.
-        filt_args : dict, optional
-            keyword arguments to pass to the inner filters correct function.
-            The default is {}.
-
-        Todo
-        ----
-            Fix the measurement gating
-
-        Returns
-        -------
-        None
-        """
-        # gating by tracks
-        if self.gating_on:
-            RuntimeError('Gating not implemented yet. PLEASE TURN OFF GATING')
-            # for ent in self._track_tab:
-            #     ent.gatemeas = self._gate_meas(meas, ent.probDensity.means,
-            #                                     ent.probDensity.covariances)
-        else:
-            for ent in self._track_tab:
-                ent.gatemeas = np.arange(0, len(meas))
-
-        # Pre-calculation of average survival/death probabilities
-        avg_surv = np.zeros(len(self.birth_terms) + len(self._old_track_tab))
-        for ii in range(0, avg_surv.shape[0]):
-            if ii <= len(self.birth_terms) - 1:
-                avg_surv[ii] = self.birth_terms[ii][1]
-            else:
-                avg_surv[ii] = self.prob_survive
-        # avg_surv = np.array([avg_surv]).T
-        avg_death = 1 - avg_surv
-
-        # Pre-calculation of average detection/missed probabilities
-        avg_detect = self.prob_detection * np.ones(len(self._track_tab))
-        # avg_detect = np.array([avg_detect]).T
-        avg_miss = 1 - avg_detect
-
-        self._meas_tab.append(deepcopy(meas))
-        num_meas = len(meas)
-
-        # missed detection tracks
-        [up_tab, all_cost_m] = self._gen_cor_tab(num_meas, meas, timestep, filt_args)
-
+    
+    def _gen_cor_hyps(self, num_meas, avg_prob_detect, avg_prob_miss_detect, avg_prob_surv, avg_prob_death, all_cost_m):
         clutter = self.clutter_rate * self.clutter_den
 
         # Joint Cost Matrix
-        joint_cost = np.concatenate([np.diag(avg_death.flatten()),
-                                     np.diag(avg_surv.flatten() * avg_miss.flatten())], axis=1)
+        joint_cost = np.concatenate([np.diag(avg_prob_death.flatten()),
+                                     np.diag(avg_prob_surv.flatten() * avg_prob_miss_detect.flatten())], axis=1)
 
-        other_jc_terms = np.tile((avg_surv * avg_detect).reshape((-1, 1)), (1, num_meas)) * all_cost_m / (clutter)
+        other_jc_terms = np.tile((avg_prob_surv * avg_prob_detect).reshape((-1, 1)), (1, num_meas)) * all_cost_m / (clutter)
 
         joint_cost = np.append(joint_cost, other_jc_terms, axis=1)
 
@@ -3686,6 +3646,60 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
         lse = log_sum_exp([x.assoc_prob for x in up_hyp])
         for ii in range(0, len(up_hyp)):
             up_hyp[ii].assoc_prob = np.exp(up_hyp[ii].assoc_prob - lse)
+        
+        return up_hyp
+
+    def correct(self, timestep, meas, filt_args={}):
+        """Correction step of the JGLMB filter.
+
+        This corrects the hypotheses based on the measurements and gates the
+        measurements according to the class settings. It also updates the
+        cardinality distribution. Because this calls the inner filter's correct
+        function, the keyword arguments must contain any information needed by
+        that function.
+
+        Parameters
+        ----------
+        timestep: float
+            Current timestep.
+        meas_in : list
+            List of Nm x 1 numpy arrays each representing a measuremnt.
+        filt_args : dict, optional
+            keyword arguments to pass to the inner filters correct function.
+            The default is {}.
+
+        Todo
+        ----
+            Fix the measurement gating
+
+        Returns
+        -------
+        None
+        """
+        # gating by tracks
+        if self.gating_on:
+            RuntimeError('Gating not implemented yet. PLEASE TURN OFF GATING')
+            # for ent in self._track_tab:
+            #     ent.gatemeas = self._gate_meas(meas, ent.probDensity.means,
+            #                                     ent.probDensity.covariances)
+        else:
+            for ent in self._track_tab:
+                ent.gatemeas = np.arange(0, len(meas))
+
+        # Pre-calculation of average survival/death probabilities
+        avg_prob_surv, avg_prob_death = self._calc_avg_prob_surv_death()
+
+        # Pre-calculation of average detection/missed probabilities
+        avg_prob_detect, avg_prob_miss_detect = self._calc_avg_prob_det_mdet()
+        
+        if self.save_measurements:
+            self._meas_tab.append(deepcopy(meas))
+        num_meas = len(meas)
+
+        # missed detection tracks
+        [up_tab, all_cost_m] = self._gen_cor_tab(num_meas, meas, timestep, filt_args)
+
+        up_hyp = self._gen_cor_hyps(num_meas, avg_prob_detect, avg_prob_miss_detect, avg_prob_surv, avg_prob_death, all_cost_m)
 
         self._track_tab = deepcopy(up_tab)
         self._hypotheses = up_hyp
