@@ -8,6 +8,7 @@ import scipy.linalg as la
 from scipy.stats import multivariate_normal as mvn
 from scipy.stats.distributions import chi2
 
+import serums.models as smodels
 from serums.models import GaussianMixture
 from gncpy.math import get_hessian, get_jacobian
 from gncpy.control import BaseELQR
@@ -34,18 +35,18 @@ class DensityBased:
             radius of influence for the activation function.
         y_ref (float): Reference point on the sigmoid, must be less than 1
     """
+
     def __init__(self, wayareas=None, safety_factor=1, y_ref=0.9, **kwargs):
         if wayareas is None:
             wayareas = GaussianMixture()
         self.targets = wayareas
         self.safety_factor = safety_factor
         if y_ref >= 1:
-            raise ValueError('Reference point must be less than 1')
+            raise ValueError("Reference point must be less than 1")
         self.y_ref = y_ref
         super().__init__(**kwargs)
 
-    def density_based_cost(self, obj_states, obj_weights, obj_covariances,
-                           **kwargs):
+    def density_based_cost(self, obj_states, obj_weights, obj_covariances, **kwargs):
         r"""Implements the density based cost function.
 
         Implements the following cost function based on the difference between
@@ -92,7 +93,7 @@ class DensityBased:
             if dist > max_dist:
                 max_dist = dist
         radius_of_influence = self.safety_factor * max_dist
-        shift = radius_of_influence + np.log(1/self.y_ref - 1)
+        shift = radius_of_influence + np.log(1 / self.y_ref - 1)
 
         # get actiavation term
         max_dist = 0
@@ -104,10 +105,10 @@ class DensityBased:
         activator = 1 / (1 + np.exp(-(max_dist - shift)))
 
         # get maximum variance
-        max_var_obj = max(map(lambda x: float(np.max(np.diag(x))),
-                              obj_covariances))
-        max_var_target = max(map(lambda x: float(np.max(np.diag(x))),
-                                 self.targets.covariances))
+        max_var_obj = max(map(lambda x: float(np.max(np.diag(x))), obj_covariances))
+        max_var_target = max(
+            map(lambda x: float(np.max(np.diag(x))), self.targets.covariances)
+        )
 
         # Loop for all double summation terms
         sum_obj_obj = 0
@@ -117,48 +118,67 @@ class DensityBased:
         for outer_obj in range(0, num_objects):
             # object to object
             for inner_obj in range(0, num_objects):
-                comb_cov = obj_covariances[outer_obj] \
-                            + obj_covariances[inner_obj]
-                sum_obj_obj += obj_weights[outer_obj] \
-                    * obj_weights[inner_obj] \
-                    * mvn.pdf(obj_states[:, outer_obj],
-                              mean=obj_states[:, inner_obj],
-                              cov=comb_cov)
+                comb_cov = obj_covariances[outer_obj] + obj_covariances[inner_obj]
+                sum_obj_obj += (
+                    obj_weights[outer_obj]
+                    * obj_weights[inner_obj]
+                    * mvn.pdf(
+                        obj_states[:, outer_obj],
+                        mean=obj_states[:, inner_obj],
+                        cov=comb_cov,
+                    )
+                )
 
             # object to target and quadratic
             for ii in range(0, num_targets):
                 # object to target
-                comb_cov = obj_covariances[outer_obj] \
-                    + self.targets.covariances[ii]
-                sum_obj_target += obj_weights[outer_obj] \
-                    * self.targets.weights[ii] \
-                    * mvn.pdf(obj_states[:, outer_obj],
-                              mean=self.targets.means[ii].squeeze(),
-                              cov=comb_cov)
+                comb_cov = obj_covariances[outer_obj] + self.targets.covariances[ii]
+                sum_obj_target += (
+                    obj_weights[outer_obj]
+                    * self.targets.weights[ii]
+                    * mvn.pdf(
+                        obj_states[:, outer_obj],
+                        mean=self.targets.means[ii].squeeze(),
+                        cov=comb_cov,
+                    )
+                )
 
                 # quadratic
                 diff = obj_states[:, [outer_obj]] - self.targets.means[ii]
-                log_term = np.log((2*np.pi)**(-0.5*num_states)
-                                  / np.sqrt(la.det(comb_cov))) \
+                log_term = (
+                    np.log(
+                        (2 * np.pi) ** (-0.5 * num_states) / np.sqrt(la.det(comb_cov))
+                    )
                     - 0.5 * diff.T @ la.inv(comb_cov) @ diff
-                quad += (obj_weights[outer_obj] * self.targets.weights[ii]
-                         * log_term).squeeze()
+                )
+                quad += (
+                    obj_weights[outer_obj] * self.targets.weights[ii] * log_term
+                ).squeeze()
 
         # target to target
         for outer in range(0, num_targets):
             for inner in range(0, num_targets):
-                comb_cov = self.targets.covariances[outer] \
-                    + self.targets.covariances[inner]
-                sum_target_target += self.targets.weights[outer] \
-                    * self.targets.weights[inner] \
-                    * mvn.pdf(self.targets.means[outer].squeeze(),
-                              mean=self.targets.means[inner].squeeze(),
-                              cov=comb_cov)
+                comb_cov = (
+                    self.targets.covariances[outer] + self.targets.covariances[inner]
+                )
+                sum_target_target += (
+                    self.targets.weights[outer]
+                    * self.targets.weights[inner]
+                    * mvn.pdf(
+                        self.targets.means[outer].squeeze(),
+                        mean=self.targets.means[inner].squeeze(),
+                        cov=comb_cov,
+                    )
+                )
 
-        return 10 * num_objects * max_var_obj * (sum_obj_obj - 2
-                                                 * max_var_target * num_targets
-                                                 * sum_obj_target) \
-            + sum_target_target + activator * quad
+        return (
+            10
+            * num_objects
+            * max_var_obj
+            * (sum_obj_obj - 2 * max_var_target * num_targets * sum_obj_target)
+            + sum_target_target
+            + activator * quad
+        )
 
     def convert_waypoints(self, waypoints):
         """Converts waypoints into wayareas.
@@ -176,23 +196,21 @@ class DensityBased:
         """
         center_len = waypoints[0].size
         num_waypoints = len(waypoints)
-        combined_centers = np.zeros((center_len, num_waypoints+1))
+        combined_centers = np.zeros((center_len, num_waypoints + 1))
 
         # get overall center, build collection of centers
         for ii in range(0, num_waypoints):
             combined_centers[:, [ii]] = waypoints[ii].reshape((center_len, 1))
             combined_centers[:, [num_waypoints]] += combined_centers[:, [ii]]
-        combined_centers[:, [num_waypoints]] = combined_centers[:, [-1]] \
-            / num_waypoints
+        combined_centers[:, [num_waypoints]] = combined_centers[:, [-1]] / num_waypoints
 
         # find directions to each point
-        directions = np.zeros((center_len, num_waypoints + 1, num_waypoints
-                               + 1))
+        directions = np.zeros((center_len, num_waypoints + 1, num_waypoints + 1))
         for start_point in range(0, num_waypoints + 1):
             for end_point in range(0, num_waypoints + 1):
-                directions[:, start_point, end_point] = \
-                    (combined_centers[:, end_point]
-                     - combined_centers[:, start_point])
+                directions[:, start_point, end_point] = (
+                    combined_centers[:, end_point] - combined_centers[:, start_point]
+                )
 
         def find_principal_components(data):
             num_samps = data.shape[0]
@@ -204,8 +222,7 @@ class DensityBased:
                 for jj in range(0, num_feats):
                     acc = 0
                     for samp in range(0, num_samps):
-                        acc += (data[samp, ii] - mean[ii]) \
-                                * (data[samp, jj] - mean[jj])
+                        acc += (data[samp, ii] - mean[ii]) * (data[samp, jj] - mean[jj])
                     covars[ii, jj] = acc / num_samps
             (w, comps) = la.eig(covars)
             inds = np.argsort(w)[::-1]
@@ -250,7 +267,7 @@ class DensityBased:
             reset (bool): Removes the current targets if true, else appends
                 new_waypoints to the current set of targets
         """
-        reset = kwargs.get('reset', False)
+        reset = kwargs.get("reset", False)
         if not reset:
             for m in self.targets.means:
                 new_waypoints.append(m)
@@ -337,28 +354,27 @@ class GaussianObject:
     """
 
     def __init__(self, **kwargs):
-        self.dyn_functions = kwargs.get('dyn_functions', [])
-        self.inv_dyn_functions = kwargs.get('inv_dyn_functions', [])
+        self.dyn_functions = kwargs.get("dyn_functions", [])
+        self.inv_dyn_functions = kwargs.get("inv_dyn_functions", [])
 
         # each timestep is a row
-        self.means = kwargs.get('means', np.array([[]]))
-        self.ctrl_inputs = kwargs.get('control_input', np.array([[]]))
+        self.means = kwargs.get("means", np.array([[]]))
+        self.ctrl_inputs = kwargs.get("control_input", np.array([[]]))
 
         # lists of arrays
-        self.feedforward_lst = kwargs.get('feedforward', [])
-        self.feedback_lst = kwargs.get('feedback', [])
-        self.cost_to_come_mat = kwargs.get('cost_to_come_mat', [])
-        self.cost_to_come_vec = kwargs.get('cost_to_come_vec', [])
-        self.cost_to_go_mat = kwargs.get('cost_to_go_mat', [])
-        self.cost_to_go_vec = kwargs.get('cost_go_vec', [])
+        self.feedforward_lst = kwargs.get("feedforward", [])
+        self.feedback_lst = kwargs.get("feedback", [])
+        self.cost_to_come_mat = kwargs.get("cost_to_come_mat", [])
+        self.cost_to_come_vec = kwargs.get("cost_to_come_vec", [])
+        self.cost_to_go_mat = kwargs.get("cost_to_go_mat", [])
+        self.cost_to_go_vec = kwargs.get("cost_go_vec", [])
 
         # only 1 for entire trajectory
-        self.covariance = kwargs.get('covariance', np.array([[]]))
-        self.weight = kwargs.get('weight', np.nan)
+        self.covariance = kwargs.get("covariance", np.array([[]]))
+        self.weight = kwargs.get("weight", np.nan)
         if self.weight <= 0:
-            raise ValueError('Weight must be greater than 0')
-        self.ctrl_nom = kwargs.get('ctrl_nom', np.array([[]]))
-
+            raise ValueError("Weight must be greater than 0")
+        self.ctrl_nom = kwargs.get("ctrl_nom", np.array([[]]))
 
 
 class ELQRGaussian(BaseELQR, DensityBased):
@@ -384,11 +400,12 @@ class ELQRGaussian(BaseELQR, DensityBased):
         self.gaussians = cur_gaussians  # list of GaussianObjects
         self.similar_thresh = similar_thresh
         if self.similar_thresh >= 1:
-            raise ValueError('similar_thresh must be less than 1')
+            raise ValueError("similar_thresh must be less than 1")
         super().__init__(**kwargs)
 
-    def initialize(self, measured_gaussians, est_dyn_lst, est_inv_dyn_lst,
-                   n_inputs_lst, **kwargs):
+    def initialize(
+        self, measured_gaussians, est_dyn_lst, est_inv_dyn_lst, n_inputs_lst, **kwargs
+    ):
         """ (Re-)initializes for current optimization attempt.
 
         Converts measured values into class data structures and compares with
@@ -411,7 +428,7 @@ class ELQRGaussian(BaseELQR, DensityBased):
                 nominal control input for the corresponding dynamics functions
         """
         # Inputs: GaussianMixture object of observations
-        u_nom_lst = kwargs.pop('ctrl_nom_lst', None)
+        u_nom_lst = kwargs.pop("ctrl_nom_lst", None)
 
         num_obs = len(measured_gaussians.means)
         if num_obs == 0:
@@ -433,8 +450,7 @@ class ELQRGaussian(BaseELQR, DensityBased):
                 if fit_criteria < best_fit[1]:
                     best_fit = (jj, fit_criteria)
 
-            found_match = best_fit[1] < chi2.ppf(self.similar_thresh,
-                                                 df=n_states)
+            found_match = best_fit[1] < chi2.ppf(self.similar_thresh, df=n_states)
 
             # initialize GaussianObject with measured value ii
             obj = GaussianObject()
@@ -455,9 +471,9 @@ class ELQRGaussian(BaseELQR, DensityBased):
 
                 obj.means[1:-1, :] = self.gaussians[ind].means[2::, :]
                 for jj, ff in enumerate(obj.dyn_functions):
-                    obj.means[-1, jj] = ff(obj.means[[-2], :].T,
-                                           obj.ctrl_inputs[[-2], :].T,
-                                           **kwargs)
+                    obj.means[-1, jj] = ff(
+                        obj.means[[-2], :].T, obj.ctrl_inputs[[-2], :].T, **kwargs
+                    )
                 obj.feedforward_lst = self.gaussians[ind].feedforward_lst[1::]
                 shape = self.gaussians[ind].feedforward_lst[0].shape
                 obj.feedforward_lst.append(np.zeros(shape))
@@ -507,8 +523,7 @@ class ELQRGaussian(BaseELQR, DensityBased):
         # assign new gaussians to class variable
         self.gaussians = new_gaussians
 
-    def quadratize_non_quad_state(self, all_states=None, obj_num=None,
-                                  **kwargs):
+    def quadratize_non_quad_state(self, all_states=None, obj_num=None, **kwargs):
         """Quadratizes the non-quadratic state terms in the cost function.
 
         Overrides the base class version,
@@ -528,6 +543,7 @@ class ELQRGaussian(BaseELQR, DensityBased):
                 - Q (N x N numpy array): state penalty matrix
                 - q (N x 1 numpy array): state penalty vector
         """
+
         def helper(x, cur_states):
             loc_states = cur_states.copy()
             loc_states[:, [obj_num]] = x.copy()
@@ -538,8 +554,9 @@ class ELQRGaussian(BaseELQR, DensityBased):
                 cov_lst.append(ii.covariance)
             return self.density_based_cost(loc_states, weight_lst, cov_lst)
 
-        Q = get_hessian(all_states[:, [obj_num]].copy(),
-                        lambda x_: helper(x_, all_states), **kwargs)
+        Q = get_hessian(
+            all_states[:, [obj_num]].copy(), lambda x_: helper(x_, all_states), **kwargs
+        )
 
         # Regularize Matrix
         eig_vals, eig_vecs = la.eig(Q)
@@ -548,8 +565,9 @@ class ELQRGaussian(BaseELQR, DensityBased):
                 eig_vals[ii] = 0
         Q = eig_vecs @ np.diag(eig_vals) @ la.inv(eig_vecs)
 
-        q = get_jacobian(all_states[:, [obj_num]].copy(),
-                         lambda x_: helper(x_, all_states), **kwargs)
+        q = get_jacobian(
+            all_states[:, [obj_num]].copy(), lambda x_: helper(x_, all_states), **kwargs
+        )
         q = q - Q @ all_states[:, [obj_num]]
 
         return Q, q
@@ -571,12 +589,13 @@ class ELQRGaussian(BaseELQR, DensityBased):
             n_inputs_lst (list): each element is the number of control inputs
                 for the corresponding dynamics functions
         """
-        est_dyn_lst = kwargs.pop('est_dyn_lst')
-        est_inv_dyn_lst = kwargs.pop('est_inv_dyn_lst')
-        n_inputs_lst = kwargs.pop('n_inputs_lst')
+        est_dyn_lst = kwargs.pop("est_dyn_lst")
+        est_inv_dyn_lst = kwargs.pop("est_inv_dyn_lst")
+        n_inputs_lst = kwargs.pop("n_inputs_lst")
 
-        self.initialize(measured_gaussians, est_dyn_lst, est_inv_dyn_lst,
-                        n_inputs_lst, **kwargs)
+        self.initialize(
+            measured_gaussians, est_dyn_lst, est_inv_dyn_lst, n_inputs_lst, **kwargs
+        )
         num_gaussians = len(self.gaussians)
         if num_gaussians == 0:
             return
@@ -590,16 +609,16 @@ class ELQRGaussian(BaseELQR, DensityBased):
         for iteration in range(0, self.max_iters):
             # forward pass
             for kk in range(0, self.horizon_len - 1):
-                cur_states = np.zeros((num_gaussians,
-                                       self.gaussians[0].means.shape[1]))
+                cur_states = np.zeros((num_gaussians, self.gaussians[0].means.shape[1]))
                 for ii, gg in enumerate(self.gaussians):
                     cur_states[ii, :] = gg.means[kk, :]
 
                 # update control for each gaussian
                 for gg in self.gaussians:
-                    gg.ctrl_input[kk, :] = (gg.feedback_lst[kk]
-                                            @ gg.means[[kk], :].T
-                                            + gg.feedforward_lst[kk]).squeeze()
+                    gg.ctrl_input[kk, :] = (
+                        gg.feedback_lst[kk] @ gg.means[[kk], :].T
+                        + gg.feedforward_lst[kk]
+                    ).squeeze()
 
                 for ii, gg in enumerate(self.gaussians):
                     x_hat = gg.means[[kk], :].T
@@ -608,91 +627,107 @@ class ELQRGaussian(BaseELQR, DensityBased):
                     feedforward = gg.feedforward_lst[kk]
                     cost_come_mat = gg.cost_to_come_mat[kk]
                     cost_come_vec = gg.cost_to_come_vec[kk]
-                    cost_go_mat = gg.cost_to_go_mat[kk+1]
-                    cost_go_vec = gg.cost_to_go_vec[kk+1]
+                    cost_go_mat = gg.cost_to_go_mat[kk + 1]
+                    cost_go_vec = gg.cost_to_go_vec[kk + 1]
                     x_start = x_starts[[ii], :].T
                     u_nom = gg.ctrl_nom
                     f = gg.dyn_functions
                     in_f = gg.inv_dyn_functions
 
-                    (x_hat, gg.feedback_lst[kk], gg.feedforward_lst[kk],
-                     gg.cost_to_come_mat[kk+1],
-                     gg.cost_to_come_vec[kk+1]) = self.forward_pass(x_hat,
-                                                                    u_hat,
-                                                                    feedback,
-                                                                    feedforward,
-                                                                    cost_come_mat,
-                                                                    cost_come_vec,
-                                                                    cost_go_mat,
-                                                                    cost_go_vec,
-                                                                    kk,
-                                                                    x_start=x_start,
-                                                                    u_nom=u_nom,
-                                                                    dyn_fncs=f,
-                                                                    inv_dyn_fncs=in_f,
-                                                                    all_states=cur_states.T,
-                                                                    obj_num=ii,
-                                                                    **kwargs)
-                    gg.means[[kk+1], :] = x_hat.T
+                    (
+                        x_hat,
+                        gg.feedback_lst[kk],
+                        gg.feedforward_lst[kk],
+                        gg.cost_to_come_mat[kk + 1],
+                        gg.cost_to_come_vec[kk + 1],
+                    ) = self.forward_pass(
+                        x_hat,
+                        u_hat,
+                        feedback,
+                        feedforward,
+                        cost_come_mat,
+                        cost_come_vec,
+                        cost_go_mat,
+                        cost_go_vec,
+                        kk,
+                        x_start=x_start,
+                        u_nom=u_nom,
+                        dyn_fncs=f,
+                        inv_dyn_fncs=in_f,
+                        all_states=cur_states.T,
+                        obj_num=ii,
+                        **kwargs
+                    )
+                    gg.means[[kk + 1], :] = x_hat.T
 
             # quadratize final cost
             for gg in self.gaussians:
                 x_hat = gg.means[[-1], :].T
                 u_hat = gg.ctrl_input[[-1], :].T
                 x_end = self.find_nearest_target(gg.means[-1, :])
-                gg.cost_to_go_mat[-1], gg.cost_to_go_vec[-1] = \
-                    self.quadratize_final_cost(x_hat, u_hat, x_end=x_end,
-                                               **kwargs)
-                gg.means[-1, :] = (-la.inv(gg.cost_to_go_mat[-1]
-                                          + gg.cost_to_come_mat[-1])
-                                   @ (gg.cost_to_go_vec[-1]
-                                      + gg.cost_to_come_vec[-1])).squeeze()
+                (
+                    gg.cost_to_go_mat[-1],
+                    gg.cost_to_go_vec[-1],
+                ) = self.quadratize_final_cost(x_hat, u_hat, x_end=x_end, **kwargs)
+                gg.means[-1, :] = (
+                    -la.inv(gg.cost_to_go_mat[-1] + gg.cost_to_come_mat[-1])
+                    @ (gg.cost_to_go_vec[-1] + gg.cost_to_come_vec[-1])
+                ).squeeze()
 
             # backward pass
             for kk in range(self.horizon_len - 2, -1, -1):
-                prev_states = np.zeros((num_gaussians,
-                                       self.gaussians[0].means.shape[1]))
+                prev_states = np.zeros(
+                    (num_gaussians, self.gaussians[0].means.shape[1])
+                )
                 for ii, gg in enumerate(self.gaussians):
-                    gg.ctrl_input[kk, :] = (gg.feedback_lst[kk]
-                                            @ gg.means[[kk+1], :].T
-                                            + gg.feedforward_lst[kk]).squeeze()
+                    gg.ctrl_input[kk, :] = (
+                        gg.feedback_lst[kk] @ gg.means[[kk + 1], :].T
+                        + gg.feedforward_lst[kk]
+                    ).squeeze()
                     for jj, ff in enumerate(gg.inv_dyn_functions):
-                        prev_states[ii, jj] = ff(gg.means[kk+1, :],
-                                                 gg.ctrl_input[kk, :],
-                                                 **kwargs)
+                        prev_states[ii, jj] = ff(
+                            gg.means[kk + 1, :], gg.ctrl_input[kk, :], **kwargs
+                        )
 
                 # update values
                 for ii, gg in enumerate(self.gaussians):
-                    x_hat = gg.means[[kk+1], :].T
+                    x_hat = gg.means[[kk + 1], :].T
                     u_hat = gg.ctrl_input[[kk], :].T
                     feedback = gg.feedback_lst[kk]
                     feedforward = gg.feedforward_lst[kk]
                     cost_come_mat = gg.cost_to_come_mat[kk]
                     cost_come_vec = gg.cost_to_come_vec[kk]
-                    cost_go_mat = gg.cost_to_go_mat[kk+1]
-                    cost_go_vec = gg.cost_to_go_vec[kk+1]
+                    cost_go_mat = gg.cost_to_go_mat[kk + 1]
+                    cost_go_vec = gg.cost_to_go_vec[kk + 1]
                     x_start = x_starts[[ii], :].T
                     u_nom = gg.ctrl_nom
                     f = gg.dyn_functions
                     in_f = gg.inv_dyn_functions
 
-                    (x_hat, gg.feedback_lst[kk], gg.feedforward_lst[kk],
-                     gg.cost_to_go_mat[kk],
-                     gg.cost_to_go_vec[kk]) = self.backward_pass(x_hat, u_hat,
-                                                                 feedback,
-                                                                 feedforward,
-                                                                 cost_come_mat,
-                                                                 cost_come_vec,
-                                                                 cost_go_mat,
-                                                                 cost_go_vec,
-                                                                 kk,
-                                                                 x_start=x_start,
-                                                                 u_nom=u_nom,
-                                                                 dyn_fncs=f,
-                                                                 inv_dyn_fncs=in_f,
-                                                                 all_states=prev_states.T,
-                                                                 obj_num=ii,
-                                                                 **kwargs)
+                    (
+                        x_hat,
+                        gg.feedback_lst[kk],
+                        gg.feedforward_lst[kk],
+                        gg.cost_to_go_mat[kk],
+                        gg.cost_to_go_vec[kk],
+                    ) = self.backward_pass(
+                        x_hat,
+                        u_hat,
+                        feedback,
+                        feedforward,
+                        cost_come_mat,
+                        cost_come_vec,
+                        cost_go_mat,
+                        cost_go_vec,
+                        kk,
+                        x_start=x_start,
+                        u_nom=u_nom,
+                        dyn_fncs=f,
+                        inv_dyn_fncs=in_f,
+                        all_states=prev_states.T,
+                        obj_num=ii,
+                        **kwargs
+                    )
                     gg.means[[kk], :] = x_hat.T
 
             # find real cost of trajectory
@@ -704,18 +739,19 @@ class ELQRGaussian(BaseELQR, DensityBased):
                 weight_lst.append(gg.weight)
                 cov_lst.append(gg.covariance)
             cur_cost = 0
-            for kk in range(0, self.horizon_len-1):
-                cur_cost += self.density_based_cost(states.T, weight_lst,
-                                                    cov_lst, **kwargs)
+            for kk in range(0, self.horizon_len - 1):
+                cur_cost += self.density_based_cost(
+                    states.T, weight_lst, cov_lst, **kwargs
+                )
 
                 ctrl_inputs = np.zeros((num_gaussians, n_inputs))
                 for ii, gg in enumerate(self.gaussians):
                     state = states[[ii], :].T
-                    ctrl_inputs[ii, :] = (gg.feedback_lst[kk] @ state
-                                          + gg.feedforward_lst[kk]).squeeze()
+                    ctrl_inputs[ii, :] = (
+                        gg.feedback_lst[kk] @ state + gg.feedforward_lst[kk]
+                    ).squeeze()
                     for jj, ff in enumerate(gg.dyn_functions):
-                        states[ii, jj] = ff(state, ctrl_inputs[[ii], :].T,
-                                            **kwargs)
+                        states[ii, jj] = ff(state, ctrl_inputs[[ii], :].T, **kwargs)
             cur_cost += self.final_cost_function(states)
 
             # check for convergence
@@ -761,3 +797,137 @@ class ELQRGaussian(BaseELQR, DensityBased):
                 min_dist = dist
                 x_end = goal.copy()
         return x_end
+
+
+class ELQR:
+    def __init__(self, max_iters=1e3, tol=1e-4):
+        super().__init__()
+
+        self.max_iters = int(max_iters)
+        self.tol = tol
+
+        self._single_elqr = ELQR()
+
+    def non_quadratic_cost(
+        self,
+        t,
+        state_dist,
+        ctrl_input,
+        goal_dist,
+        is_initial,
+        is_final,
+        safety_factor,
+        y_ref,
+    ):
+        r"""Implements the density based cost function.
+
+        Implements the following cost function based on the difference between
+        Gaussian mixtures, with additional terms to improve convergence when
+        far from the targets.
+
+        .. math::
+            J &= \sum_{k=1}^{T} 10 N_g\sigma_{g,max}^2 \left( \sum_{j=1}^{N_g}
+                    \sum_{i=1}^{N_g} w_{g,k}^{(j)} w_{g,k}^{(i)}
+                    \mathcal{N}( \mathbf{m}^{(j)}_{g,k}; \mathbf{m}^{(i)}_{g,k},
+                    P^{(j)}_{g, k} + P^{(i)}_{g, k} ) \right. \\
+                &- \left. 20 \sigma_{d, max}^2 N_d \sum_{j=1}^{N_d} \sum_{i=1}^{N_g}
+                    w_{d,k}^{(j)} w_{g,k}^{(i)} \mathcal{N}(
+                    \mathbf{m}^{(j)}_{d, k}; \mathbf{m}^{(i)}_{g, k},
+                    P^{(j)}_{d, k} + P^{(i)}_{g, k} ) \right) \\
+                &+ \sum_{j=1}^{N_d} \sum_{i=1}^{N_d} w_{d,k}^{(j)}
+                    w_{d,k}^{(i)} \mathcal{N}( \mathbf{m}^{(j)}_{d,k};
+                    \mathbf{m}^{(i)}_{d,k}, P^{(j)}_{d, k} + P^{(i)}_{d, k} ) \\
+                &+ \alpha \sum_{j=1}^{N_d} \sum_{i=1}^{N_g} w_{d,k}^{(j)}
+                    w_{g,k}^{(i)} \ln{\mathcal{N}( \mathbf{m}^{(j)}_{d,k};
+                    \mathbf{m}^{(i)}_{g,k}, P^{(j)}_{d, k} + P^{(i)}_{g, k} )}
+
+        Args:
+            obj_states (N x Ng numpy array): Matrix of all the object's states,
+                each column is one objects state
+            obj_weights (list of floats): weight of each state, same order as
+                obj_states
+            obj_covariances (list): list of N x N numpy arrays representing
+                each states covariance matrix
+
+        Returns:
+            (float): density based cost
+        """
+        all_goals = np.array([m.ravel().tolist() for m in goal_dist.means])
+        all_states = np.array([m.ravel().tolist() for m in state_dist.means])
+        target_center = np.mean(all_goals, axis=0).reshape((-1, 1))
+        num_targets = all_goals.shape[0]
+        num_objects = all_states.shape[0]
+        state_dim = all_states.shape[1]
+
+        # find radius of influence and shift
+        diff = all_goals - target_center.T
+        max_dist = np.sqrt(np.max(np.sum(diff * diff, axis=1)))
+        radius_of_influence = safety_factor * max_dist
+        shift = radius_of_influence + np.log(1 / y_ref - 1)
+
+        # get actiavation term
+        diff = all_states - target_center.T
+        max_dist = np.sqrt(np.max(np.sum(diff * diff, axis=1)))
+        activator = 1 / (1 + np.exp(-(max_dist - shift)))
+
+        # get maximum variance
+        max_var_obj = max(
+            map(lambda x: float(np.max(np.diag(x))), state_dist.covariances)
+        )
+        max_var_target = max(
+            map(lambda x: float(np.max(np.diag(x))), goal_dist.covariances)
+        )
+
+        # Loop for all double summation terms
+        sum_obj_obj = 0
+        sum_obj_target = 0
+        quad = 0
+        for out_w, out_dist in state_dist:
+            # create temporary gaussian object for calculations
+            temp_gauss = smodels.Gaussian(mean=out_dist.mean)
+
+            # object to object cost
+            for in_w, in_dist in state_dist:
+                temp_gauss.covariance = out_dist.covariance + in_dist.covariance
+                sum_obj_obj += in_w * out_w * temp_gauss.pdf(in_dist.mean)
+
+            # object to target and quadratic
+            for tar_w, tar_dist in goal_dist:
+                # object to target
+                temp_gauss.covariance = out_dist.covariance + tar_dist.covariance
+                sum_obj_target += tar_w * out_w * temp_gauss.pdf(tar_dist.mean)
+
+                # quadratic
+                diff = out_dist.mean - tar_dist.mean
+                log_term = (
+                    np.log(
+                        (2 * np.pi) ** (-0.5 * state_dim)
+                        / np.sqrt(la.det(temp_gauss.covariance))
+                    )
+                    - 0.5 * diff.T @ la.inv(temp_gauss.covariance) @ diff
+                )
+                quad += out_w * tar_w * log_term.item()
+
+        sum_target_target = 0
+        for out_w, out_dist in goal_dist:
+            temp_gauss = smodels.Gaussian(mean=out_dist.mean)
+            for in_w, in_dist in goal_dist:
+                temp_gauss.covariance = out_dist.covariance + in_dist.covariance
+                sum_target_target += out_w * in_w * temp_gauss.pdf(in_dist.mean)
+
+        return (
+            10
+            * num_objects
+            * max_var_obj
+            * (sum_obj_obj - 2 * max_var_target * num_targets * sum_obj_target)
+            + sum_target_target
+            + activator * quad
+        )
+
+    def plan(self, tt, start_dist, end_dist, **kwargs):
+        for ii in range(self.max_iters):
+            # TODO: update control for each gaussian
+            # TODO: forward pass for each gaussian
+            # TODO: quadratize final cost for each gaussian
+            # TODO: backward pass for each gaussian
+            pass
