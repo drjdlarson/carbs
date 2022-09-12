@@ -3,214 +3,315 @@
 This module contains the classes and data structures
 for RFS guidance related algorithms.
 """
+import io
 import numpy as np
 import scipy.linalg as la
-from scipy.stats import multivariate_normal as mvn
-from scipy.stats.distributions import chi2
+import matplotlib.pyplot as plt
+from PIL import Image
+from copy import deepcopy
+from warnings import warn
 
+import gncpy.control as gcontrol
+import gncpy.plotting as gplot
 import serums.models as smodels
-from serums.models import GaussianMixture
-from gncpy.math import get_hessian, get_jacobian
-from gncpy.control import BaseELQR
+from serums.distances import calculate_ospa
 
 
-class DensityBased:
-    """Defines the base data structure for guidance using Gaussian Mixtures.
+def gaussian_density_cost(state_dist, goal_dist, safety_factor, y_ref):
+    r"""Implements a GM density based cost function.
 
-    Args:
-        wayareas (GaussianMixture): desired target distributions, see
-            :py:class:`caser.estimator.GaussianMixture`
-        safety_factor (float): overbounding saftey factor when calculating the
-            radius of influence for the activation function (default: 1).
-        y_ref (float): Reference point on the sigmoid, must be less than 1
-            (default: 0.9)
+    Notes
+    -----
+    Implements the following cost function based on the difference between
+    Gaussian mixtures, with additional terms to improve convergence when
+    far from the targets.
 
-    Raises:
-        ValueError: if y_ref is greater than 1
+    .. math::
+        J &= \sum_{k=1}^{T} 10 N_g\sigma_{g,max}^2 \left( \sum_{j=1}^{N_g}
+                \sum_{i=1}^{N_g} w_{g,k}^{(j)} w_{g,k}^{(i)}
+                \mathcal{N}( \mathbf{m}^{(j)}_{g,k}; \mathbf{m}^{(i)}_{g,k},
+                P^{(j)}_{g, k} + P^{(i)}_{g, k} ) \right. \\
+            &- \left. 20 \sigma_{d, max}^2 N_d \sum_{j=1}^{N_d} \sum_{i=1}^{N_g}
+                w_{d,k}^{(j)} w_{g,k}^{(i)} \mathcal{N}(
+                \mathbf{m}^{(j)}_{d, k}; \mathbf{m}^{(i)}_{g, k},
+                P^{(j)}_{d, k} + P^{(i)}_{g, k} ) \right) \\
+            &+ \sum_{j=1}^{N_d} \sum_{i=1}^{N_d} w_{d,k}^{(j)}
+                w_{d,k}^{(i)} \mathcal{N}( \mathbf{m}^{(j)}_{d,k};
+                \mathbf{m}^{(i)}_{d,k}, P^{(j)}_{d, k} + P^{(i)}_{d, k} ) \\
+            &+ \alpha \sum_{j=1}^{N_d} \sum_{i=1}^{N_g} w_{d,k}^{(j)}
+                w_{g,k}^{(i)} \ln{\mathcal{N}( \mathbf{m}^{(j)}_{d,k};
+                \mathbf{m}^{(i)}_{g,k}, P^{(j)}_{d, k} + P^{(i)}_{g, k} )}
 
-    Attributes:
-        targets (GaussianMixture): desired target distributions, see
-            :py:class:`caser.estimator.GaussianMixture`
-        safety_factor (float): overbounding saftey factor when calculating the
-            radius of influence for the activation function.
-        y_ref (float): Reference point on the sigmoid, must be less than 1
+    Parameters
+    ----------
+    state_dist : :class:`serums.models.GaussianMixture`
+        Initial state distribution.
+    goal_dist : :class:`serums.models.GaussianMixture`
+        Desired state distribution.
+    safety_factor : float
+        Overbounding tuning factor for extra convergence term.
+    y_ref : float
+        Reference point to use on the sigmoid function, must be in the range
+        (0, 1).
+
+    Returns
+    -------
+    float
+        cost.
+    """
+    all_goals = np.array([m.ravel().tolist() for m in goal_dist.means])
+    all_states = np.array([m.ravel().tolist() for m in state_dist.means])
+    target_center = np.mean(all_goals, axis=0).reshape((-1, 1))
+    num_targets = all_goals.shape[0]
+    num_objects = all_states.shape[0]
+    state_dim = all_states.shape[1]
+
+    # find radius of influence and shift
+    diff = all_goals - target_center.T
+    max_dist = np.sqrt(np.max(np.sum(diff * diff, axis=1)))
+    radius_of_influence = safety_factor * max_dist
+    shift = radius_of_influence + np.log(1 / y_ref - 1)
+
+    # get actiavation term
+    diff = all_states - target_center.T
+    max_dist = np.sqrt(np.max(np.sum(diff * diff, axis=1)))
+    activator = 1 / (1 + np.exp(-(max_dist - shift)))
+
+    # get maximum variance
+    max_var_obj = max(map(lambda x: float(np.max(np.diag(x))), state_dist.covariances))
+    max_var_target = max(
+        map(lambda x: float(np.max(np.diag(x))), goal_dist.covariances)
+    )
+
+    # Loop for all double summation terms
+    sum_obj_obj = 0
+    sum_obj_target = 0
+    quad = 0
+    for out_w, out_dist in state_dist:
+        # create temporary gaussian object for calculations
+        temp_gauss = smodels.Gaussian(mean=out_dist.mean)
+
+        # object to object cost
+        for in_w, in_dist in state_dist:
+            temp_gauss.covariance = out_dist.covariance + in_dist.covariance
+            sum_obj_obj += in_w * out_w * temp_gauss.pdf(in_dist.mean)
+
+        # object to target and quadratic
+        for tar_w, tar_dist in goal_dist:
+            # object to target
+            temp_gauss.covariance = out_dist.covariance + tar_dist.covariance
+            sum_obj_target += tar_w * out_w * temp_gauss.pdf(tar_dist.mean)
+
+            # quadratic
+            diff = out_dist.mean - tar_dist.mean
+            log_term = (
+                np.log(
+                    (2 * np.pi) ** (-0.5 * state_dim)
+                    / np.sqrt(la.det(temp_gauss.covariance))
+                )
+                - 0.5 * diff.T @ la.inv(temp_gauss.covariance) @ diff
+            )
+            quad += out_w * tar_w * log_term.item()
+
+    sum_target_target = 0
+    for out_w, out_dist in goal_dist:
+        temp_gauss = smodels.Gaussian(mean=out_dist.mean)
+        for in_w, in_dist in goal_dist:
+            temp_gauss.covariance = out_dist.covariance + in_dist.covariance
+            sum_target_target += out_w * in_w * temp_gauss.pdf(in_dist.mean)
+
+    return (
+        10
+        * num_objects
+        * max_var_obj
+        * (sum_obj_obj - 2 * max_var_target * num_targets * sum_obj_target)
+        + sum_target_target
+        + activator * quad
+    )
+
+
+class ELQR:
+    """Implements the ELQR algorithm for swarms.
+
+    Notes
+    -----
+    This follows :cite:`Thomas2021_RecedingHorizonExtendedLinearQuadraticRegulatorforRFSBasedSwarms`.
+
+    Attributes
+    ----------
+    max_iters : int
+        Maximum number of iterations to optimize.
+    tol : float
+        Relative tolerance for convergence.
     """
 
-    def __init__(self, wayareas=None, safety_factor=1, y_ref=0.9, **kwargs):
-        if wayareas is None:
-            wayareas = GaussianMixture()
-        self.targets = wayareas
-        self.safety_factor = safety_factor
-        if y_ref >= 1:
-            raise ValueError("Reference point must be less than 1")
-        self.y_ref = y_ref
-        super().__init__(**kwargs)
+    def __init__(self, max_iters=1e3, tol=1e-4):
+        """Initialize an object.
 
-    def density_based_cost(self, obj_states, obj_weights, obj_covariances, **kwargs):
-        r"""Implements the density based cost function.
-
-        Implements the following cost function based on the difference between
-        Gaussian mixtures, with additional terms to improve convergence when
-        far from the targets.
-
-        .. math::
-            J &= \sum_{k=1}^{T} 10 N_g\sigma_{g,max}^2 \left( \sum_{j=1}^{N_g}
-                    \sum_{i=1}^{N_g} w_{g,k}^{(j)} w_{g,k}^{(i)}
-                    \mathcal{N}( \mathbf{m}^{(j)}_{g,k}; \mathbf{m}^{(i)}_{g,k},
-                    P^{(j)}_{g, k} + P^{(i)}_{g, k} ) \right. \\
-                &- \left. 20 \sigma_{d, max}^2 N_d \sum_{j=1}^{N_d} \sum_{i=1}^{N_g}
-                    w_{d,k}^{(j)} w_{g,k}^{(i)} \mathcal{N}(
-                    \mathbf{m}^{(j)}_{d, k}; \mathbf{m}^{(i)}_{g, k},
-                    P^{(j)}_{d, k} + P^{(i)}_{g, k} ) \right) \\
-                &+ \sum_{j=1}^{N_d} \sum_{i=1}^{N_d} w_{d,k}^{(j)}
-                    w_{d,k}^{(i)} \mathcal{N}( \mathbf{m}^{(j)}_{d,k};
-                    \mathbf{m}^{(i)}_{d,k}, P^{(j)}_{d, k} + P^{(i)}_{d, k} ) \\
-                &+ \alpha \sum_{j=1}^{N_d} \sum_{i=1}^{N_g} w_{d,k}^{(j)}
-                    w_{g,k}^{(i)} \ln{\mathcal{N}( \mathbf{m}^{(j)}_{d,k};
-                    \mathbf{m}^{(i)}_{g,k}, P^{(j)}_{d, k} + P^{(i)}_{g, k} )}
-
-        Args:
-            obj_states (N x Ng numpy array): Matrix of all the object's states,
-                each column is one objects state
-            obj_weights (list of floats): weight of each state, same order as
-                obj_states
-            obj_covariances (list): list of N x N numpy arrays representing
-                each states covariance matrix
-
-        Returns:
-            (float): density based cost
+        Parameters
+        ----------
+        max_iters : int, optional
+            Maximum number of iterations to optimize. The default is 1e3.
+        tol : float, optional
+            Relative tolerance for convergence. The default is 1e-4.
         """
-        target_center = self.target_center()
-        num_targets = len(self.targets.means)
-        num_objects = obj_states.shape[1]
-        num_states = obj_states.shape[0]
+        super().__init__()
 
-        # find radius of influence and shift
-        max_dist = 0
-        for tar_mean in self.targets.means:
-            diff = tar_mean - target_center
-            dist = np.sqrt(diff.T @ diff).squeeze()
-            if dist > max_dist:
-                max_dist = dist
-        radius_of_influence = self.safety_factor * max_dist
-        shift = radius_of_influence + np.log(1 / self.y_ref - 1)
+        self.max_iters = int(max_iters)
+        self.tol = tol
 
-        # get actiavation term
-        max_dist = 0
-        for ii in range(0, num_objects):
-            diff = target_center - obj_states[:, [ii]]
-            dist = np.sqrt(diff.T @ diff).squeeze()
-            if dist > max_dist:
-                max_dist = dist
-        activator = 1 / (1 + np.exp(-(max_dist - shift)))
+        self._singleELQR = gcontrol.ELQR()
+        self._elqr_lst = []
+        self._start_covs = []
+        self._start_weights = []
+        self._time_vec = np.array([])
+        self._cur_ind = None
 
-        # get maximum variance
-        max_var_obj = max(map(lambda x: float(np.max(np.diag(x))), obj_covariances))
-        max_var_target = max(
-            map(lambda x: float(np.max(np.diag(x))), self.targets.covariances)
+    def get_state_dist(self, tt):
+        """Calculates the current state distribution.
+
+        Parameters
+        ----------
+        tt : float
+            Current timestep.
+
+        Returns
+        -------
+        :class:`serums.models.GaussianMixture`
+            State distribution.
+        """
+        kk = int(np.argmin(np.abs(tt - self._time_vec)))
+        means = [
+            params["traj"][kk, :].copy().reshape((-1, 1)) for params in self._elqr_lst
+        ]
+        return smodels.GaussianMixture(
+            means=means,
+            covariances=[c.copy() for c in self._start_covs],
+            weights=self._start_weights.copy(),
         )
 
-        # Loop for all double summation terms
-        sum_obj_obj = 0
-        sum_obj_target = 0
-        sum_target_target = 0
-        quad = 0
-        for outer_obj in range(0, num_objects):
-            # object to object
-            for inner_obj in range(0, num_objects):
-                comb_cov = obj_covariances[outer_obj] + obj_covariances[inner_obj]
-                sum_obj_obj += (
-                    obj_weights[outer_obj]
-                    * obj_weights[inner_obj]
-                    * mvn.pdf(
-                        obj_states[:, outer_obj],
-                        mean=obj_states[:, inner_obj],
-                        cov=comb_cov,
-                    )
-                )
+    def non_quad_fun_factory(self):
+        """Factory for creating the non-quadratic cost function.
 
-            # object to target and quadratic
-            for ii in range(0, num_targets):
-                # object to target
-                comb_cov = obj_covariances[outer_obj] + self.targets.covariances[ii]
-                sum_obj_target += (
-                    obj_weights[outer_obj]
-                    * self.targets.weights[ii]
-                    * mvn.pdf(
-                        obj_states[:, outer_obj],
-                        mean=self.targets.means[ii].squeeze(),
-                        cov=comb_cov,
-                    )
-                )
+        This should generate a function of the same form needed by the single
+        agent controller, that is time, state, control input, end state,
+        is initial flag, is final flag, *args. For this class, it implements
+        a GM density based cost function. Specifically, the returned function
+        takes time, state, control input, end state, is initial flag,
+        is final flag, goal distribution, safety factor, and y ref. It returns
+        a float for the non-quadratic part of the cost.
 
-                # quadratic
-                diff = obj_states[:, [outer_obj]] - self.targets.means[ii]
-                log_term = (
-                    np.log(
-                        (2 * np.pi) ** (-0.5 * num_states) / np.sqrt(la.det(comb_cov))
-                    )
-                    - 0.5 * diff.T @ la.inv(comb_cov) @ diff
-                )
-                quad += (
-                    obj_weights[outer_obj] * self.targets.weights[ii] * log_term
-                ).squeeze()
-
-        # target to target
-        for outer in range(0, num_targets):
-            for inner in range(0, num_targets):
-                comb_cov = (
-                    self.targets.covariances[outer] + self.targets.covariances[inner]
-                )
-                sum_target_target += (
-                    self.targets.weights[outer]
-                    * self.targets.weights[inner]
-                    * mvn.pdf(
-                        self.targets.means[outer].squeeze(),
-                        mean=self.targets.means[inner].squeeze(),
-                        cov=comb_cov,
-                    )
-                )
-
-        return (
-            10
-            * num_objects
-            * max_var_obj
-            * (sum_obj_obj - 2 * max_var_target * num_targets * sum_obj_target)
-            + sum_target_target
-            + activator * quad
-        )
-
-    def convert_waypoints(self, waypoints):
-        """Converts waypoints into wayareas.
-
-        Args:
-            waypoints (list): each element is a N x 1 numpy array representing
-                a desired state
-
-        Returns:
-            (GaussianMixture): desired wayareas, see :py:class:`caser.estimator.GaussianMixture`
-
-        Todo:
-            Ensure the calculated covariance is full rank and positive
-            semi-definite
+        Returns
+        -------
+        callable
+            function to calculate cost.
         """
-        center_len = waypoints[0].size
-        num_waypoints = len(waypoints)
-        combined_centers = np.zeros((center_len, num_waypoints + 1))
 
-        # get overall center, build collection of centers
-        for ii in range(0, num_waypoints):
-            combined_centers[:, [ii]] = waypoints[ii].reshape((center_len, 1))
-            combined_centers[:, [num_waypoints]] += combined_centers[:, [ii]]
-        combined_centers[:, [num_waypoints]] = combined_centers[:, [-1]] / num_waypoints
+        def non_quadratic_fun(
+            tt,
+            state,
+            ctrl_input,
+            end_state,
+            is_initial,
+            is_final,
+            goal_dist,
+            safety_factor,
+            y_ref,
+        ):
+            state_dist = self.get_state_dist(tt)
+            state_dist.remove_components(
+                [self._cur_ind,]  # noqa
+            )
+            state_dist.add_components(
+                state.reshape((-1, 1)),
+                self._start_covs[self._cur_ind],
+                self._start_weights[self._cur_ind],
+            )
+            return gaussian_density_cost(state_dist, goal_dist, safety_factor, y_ref)
 
-        # find directions to each point
-        directions = np.zeros((center_len, num_waypoints + 1, num_waypoints + 1))
-        for start_point in range(0, num_waypoints + 1):
-            for end_point in range(0, num_waypoints + 1):
-                directions[:, start_point, end_point] = (
-                    combined_centers[:, end_point] - combined_centers[:, start_point]
-                )
+        return non_quadratic_fun
+
+    def set_control_model(self, singleELQR, quad_modifier=None):
+        """Sets the single agent control model used.
+
+        Parameters
+        ----------
+        singleELQR : :class:`gncpy.control.ELQR`
+            Single agent controller for generating trajectories.
+        quad_modifier : callable, optional
+            Modifing function for the quadratization. See
+            :meth:`gncpy.control.ELQR.set_cost_model`. The default is None.
+        """
+        self._singleELQR = deepcopy(singleELQR)
+
+        if quad_modifier is not None:
+            self._singleELQR.set_cost_model(quad_modifier=quad_modifier)
+
+    def find_end_state(self, cur_state, end_dist):
+        """Finds the ending state for the given current state.
+
+        Parameters
+        ----------
+        cur_state : N x 1 numpy array
+            Current state.
+        end_dist : :class:`serums.models.GaussianMixture`
+            Ending state distribution.
+
+        Returns
+        -------
+        N x 1 numpy array
+            Best ending state given the current state.
+        """
+        all_ends = np.vstack([m.ravel() for m in end_dist.means])
+        diff = all_ends - cur_state.T
+        min_ind = int(np.argmin(np.sum(diff * diff, axis=1)))
+
+        return end_dist.means[min_ind]
+
+    def init_elqr_lst(self, tt, start_dist, end_dist):
+        """Initialize the list of single agent ELQR controllers.
+
+        Parameters
+        ----------
+        tt : float
+            current time.
+        start_dist : :class:`serums.models.GaussianMixture`
+            Starting gaussian mixture.
+        end_dist : :class:`serums.models.GaussianMixture`
+            Ending distribution.
+
+        Returns
+        -------
+        num_timesteps : int
+            total number of timesteps.
+        """
+        self._elqr_lst = []
+        for w, dist in start_dist:
+            p = {}
+            p["elqr"] = deepcopy(self._singleELQR)
+            end_state = self.find_end_state(dist.location, end_dist)
+            p["old_cost"], num_timesteps, p["traj"], self._time_vec = p["elqr"].reset(
+                tt, dist.location, end_state
+            )
+            self._elqr_lst.append(p)
+        return num_timesteps
+
+    def targets_to_wayareas(self, end_states):
+        """Converts target locations to wayareas with automatic scaling.
+
+        Performs a Principal Component Analysis (PCA) on the ending state
+        locations to create a Gaussian Mixture.
+
+        Parameters
+        ----------
+        end_states : Nt x N numpy array
+            All possible ending states, one per row.
+
+        Returns
+        -------
+        :class:`serums.models.GaussianMixture`
+            Ending state distribution.
+        """
 
         def find_principal_components(data):
             num_samps = data.shape[0]
@@ -235,699 +336,707 @@ class DensityBased:
                     proj = np.abs(new_dirs[:, [ii]].T @ old_dirs[:, [jj]])
                     if proj > vals[ii]:
                         vals[ii] = proj
-            return np.diag(vals)
+            return vals
 
-        weight = 1 / num_waypoints
-        wayareas = GaussianMixture()
-        for wp_ind in range(0, num_waypoints):
-            center = waypoints[wp_ind].reshape((center_len, 1))
+        thresh = 1e-2
 
-            sample_data = combined_centers.copy()
-            sample_data = np.delete(sample_data, wp_ind, 1)
-            sample_dirs = directions[:, wp_ind, :].squeeze()
-            sample_dirs = np.delete(sample_dirs, wp_ind, 1)
-            comps = find_principal_components(sample_data.T)
+        wayareas = smodels.GaussianMixture()
+        all_ends = np.vstack([s.ravel() for s in end_states])
+        aug_end_states = np.vstack((all_ends, np.mean(all_ends, axis=0)))
+
+        directions = np.zeros(
+            (aug_end_states.shape[1], aug_end_states.shape[0], aug_end_states.shape[0])
+        )
+        for ii, s_pt in enumerate(aug_end_states):
+            for jj, e_pt in enumerate(aug_end_states):
+                directions[:, ii, jj] = e_pt - s_pt
+
+        weight = 1 / len(end_states)
+        for wp_ind, center in enumerate(all_ends):
+            sample_data = np.delete(aug_end_states, wp_ind, axis=0)
+            sample_dirs = np.delete(directions[:, wp_ind, :].squeeze(), wp_ind, axis=1)
+            comps = find_principal_components(sample_data)
             vals = find_largest_proj_dist(comps, sample_dirs)
+            vals[vals <= thresh] = thresh
 
-            covariance = comps @ vals @ la.inv(comps)
+            cov = comps @ np.diag(vals) @ la.inv(comps)
+            wayareas.add_components(center.reshape((-1, 1)), cov, weight)
 
-            wayareas.means.append(center)
-            wayareas.covariances.append(covariance)
-            wayareas.weights.append(weight)
         return wayareas
 
-    def update_targets(self, new_waypoints, **kwargs):
-        """Updates the target list.
-
-        Args:
-            new_waypoints (list): each element is a N x 1 numpy array
-                representing at target state
-
-        Keyword Args:
-            reset (bool): Removes the current targets if true, else appends
-                new_waypoints to the current set of targets
-        """
-        reset = kwargs.get("reset", False)
-        if not reset:
-            for m in self.targets.means:
-                new_waypoints.append(m)
-        # clear way areas and add new ones
-        self.targets = GaussianMixture()
-        self.targets = self.convert_waypoints(new_waypoints)
-
-    def target_center(self):
-        """Calculates the mean of the overall target distribution.
-
-        Returns:
-            (N x 1 numpy array): the mean of the target states
-        """
-        summed = np.zeros(self.targets.means[0].shape)
-        num_tars = len(self.targets.means)
-        for ii in range(0, num_tars):
-            summed += self.targets.means[ii]
-        return summed / num_tars
-
-
-class GaussianObject:
-    """Data structure for an object defined by a Gaussian distribution.
-
-    This defines the attributes for a general object used in
-    Gaussian based guidance algorithms.
-
-    Keyword Args:
-        dyn_functions (list of functions): list of dynamics functions, 1 per
-            state, same order as state variables, must take in x, u
-        inv_dyn_functions (list of functions): list of inverse dynamics
-            functions, 1 per state, same order as state variables, must take
-            in x, u
-        means (Nh x N numpy array): the state at each timestep of the time
-            horizon
-        ctrl_inputs (Nh x Nu numpy array): control input at each timestep of
-            the time horizon
-        feedforward (list): list of numpy arrays of the Nu x 1 feedforward
-            gain, one for each timestep of the time horizon
-        feedback (list): list of numpy arrays of the Nu x N feedforward
-            gain, one for each timestep of the time horizon
-        cost_to_come_mat (list): list of numpy arras of the N x N cost-to-come
-            matrix, one for wach timestep of the time horizon
-        cost_to_come_vec (list): list of numpy arras of the N x 1 cost-to-come
-            vector, one for wach timestep of the time horizon
-        cost_to_go_mat (list): list of numpy arras of the N x N cost-to-go
-            matrix, one for wach timestep of the time horizon
-        cost_to_go_mat (list): list of numpy arras of the N x 1 cost-to-go
-            vector, one for wach timestep of the time horizon
-        covariance (N x N numpy array): covariance matrix
-        weight (float): weight of the Gaussian in the mixture, must be greater
-            than 0
-        ctrl_nom (Nu x 1 numpy array): nominal control input
-
-    Raises:
-        ValueError: if weight is less than or equal to 0
-
-    Attributes:
-        dyn_functions (list of functions): list of dynamics functions, 1 per
-            state, same order as state variables, must take in x, u
-        inv_dyn_functions (list of functions): list of inverse dynamics
-            functions, 1 per state, same order as state variables, must take
-            in x, u
-        means (Nh x N numpy array): the state at each timestep of the time
-            horizon
-        ctrl_inputs (Nh x Nu numpy array): control input at each timestep of
-            the time horizon
-        feedforward (list): list of numpy arrays of the Nu x 1 feedforward
-            gain, one for each timestep of the time horizon
-        feedback (list): list of numpy arrays of the Nu x N feedforward
-            gain, one for each timestep of the time horizon
-        cost_to_come_mat (list): list of numpy arras of the N x N cost-to-come
-            matrix, one for wach timestep of the time horizon
-        cost_to_come_vec (list): list of numpy arras of the N x 1 cost-to-come
-            vector, one for wach timestep of the time horizon
-        cost_to_go_mat (list): list of numpy arras of the N x N cost-to-go
-            matrix, one for wach timestep of the time horizon
-        cost_to_go_vec (list): list of numpy arras of the N x 1 cost-to-go
-            vector, one for wach timestep of the time horizon
-        covariance (N x N numpy array): covariance matrix, only 1 for entire
-            time horizon
-        weight (float): weight of the Gaussian in the mixture, must be greater
-            than 0
-        ctrl_nom (Nu x 1 numpy array): nominal control input
-    """
-
-    def __init__(self, **kwargs):
-        self.dyn_functions = kwargs.get("dyn_functions", [])
-        self.inv_dyn_functions = kwargs.get("inv_dyn_functions", [])
-
-        # each timestep is a row
-        self.means = kwargs.get("means", np.array([[]]))
-        self.ctrl_inputs = kwargs.get("control_input", np.array([[]]))
-
-        # lists of arrays
-        self.feedforward_lst = kwargs.get("feedforward", [])
-        self.feedback_lst = kwargs.get("feedback", [])
-        self.cost_to_come_mat = kwargs.get("cost_to_come_mat", [])
-        self.cost_to_come_vec = kwargs.get("cost_to_come_vec", [])
-        self.cost_to_go_mat = kwargs.get("cost_to_go_mat", [])
-        self.cost_to_go_vec = kwargs.get("cost_go_vec", [])
-
-        # only 1 for entire trajectory
-        self.covariance = kwargs.get("covariance", np.array([[]]))
-        self.weight = kwargs.get("weight", np.nan)
-        if self.weight <= 0:
-            raise ValueError("Weight must be greater than 0")
-        self.ctrl_nom = kwargs.get("ctrl_nom", np.array([[]]))
-
-
-class ELQRGaussian(BaseELQR, DensityBased):
-    r""" Implements centralized Extended LQR for gaussian mixtures.
-
-    Args:
-        cur_gaussians (list): list of gaussian objects
-        similar_thresh (float): minimum probability threshold for
-            :math:`\chi^2` similarity test
-
-    Raises:
-        VaueError: if similar_thresh is greater than or equal to 1
-
-    Attributes:
-        cur_gaussians (list): list of gaussian objects
-        similar_thresh (float): minimum probability threshold for
-            :math:`\chi^2` similarity test
-    """
-
-    def __init__(self, cur_gaussians=None, similar_thresh=0.95, **kwargs):
-        if cur_gaussians is None:
-            cur_gaussians = []
-        self.gaussians = cur_gaussians  # list of GaussianObjects
-        self.similar_thresh = similar_thresh
-        if self.similar_thresh >= 1:
-            raise ValueError("similar_thresh must be less than 1")
-        super().__init__(**kwargs)
-
-    def initialize(
-        self, measured_gaussians, est_dyn_lst, est_inv_dyn_lst, n_inputs_lst, **kwargs
+    def gen_final_traj(
+        self,
+        num_timesteps,
+        start,
+        elqr,
+        state_args,
+        ctrl_args,
+        cost_args,
+        inv_state_args,
+        inv_ctrl_args,
     ):
-        """ (Re-)initializes for current optimization attempt.
+        """Generates the final trajectory state and control trajectories.
 
-        Converts measured values into class data structures and compares with
-        values calculated from the last call
-        to :py:meth:`caser.guidance.centralized.ELQRGaussian.iterate`. If
-        none match, then the measurents are held and remaining properties set
-        to zero. Overrides base class version.
+        Parameters
+        ----------
+        num_timesteps : int
+            total number of timesteps.
+        start : N x 1 numpy array
+            Initial state.
+        elqr : :class:`gncpy.control.ELQR`
+            Single agent controller for the given starting state.
+        state_args : tuple
+            Additional arguments for the state matrix.
+        ctrl_args : tuple
+            Additional arguments for the input matrix.
+        cost_args : tuple
+            Additional arguments for the cost function.
+        inv_state_args : tuple
+            Additional arguments for the inverse state transition matrix.
+        inv_ctrl_args : tuple
+            Additional arguments for the inverse input matrix.
 
-        Args:
-            meausred_gaussians (GaussianMixture): currently observed Gaussians
-            est_dyn_lst (list): each element is a list of dynamics functions,
-                must take x, u as parameters
-            est_inv_dyn_lst (list): each element is a list of inverse dynamics
-                functions, must take x, u as parameters
-            n_inputs_lst (list): each element is the number of control inputs
-                for the corresponding dynamics functions
-
-        Keyword Args:
-            u_nom_lst (list): list of Nu x 1 numpy arrays representing the
-                nominal control input for the corresponding dynamics functions
+        Returns
+        -------
+        state_traj : Nh+1 x N numpy array
+            state trajectory.
+        ctrl_signal : Nh x Nu numpy array
+            control signal.
+        cost : float
+            cost of the trajectory.
         """
-        # Inputs: GaussianMixture object of observations
-        u_nom_lst = kwargs.pop("ctrl_nom_lst", None)
+        ctrl_signal = np.nan * np.ones((num_timesteps, elqr.u_nom.size))
+        state_traj = np.nan * np.ones((num_timesteps + 1, start.size))
+        cost = 0
+        state_traj[0, :] = start.flatten()
+        for kk, tt in enumerate(self._time_vec[:-1]):
+            ctrl_signal[kk, :] = (
+                elqr.feedback_gain[kk] @ state_traj[kk, :].reshape((-1, 1))
+                + elqr.feedthrough_gain[kk]
+            ).ravel()
+            cost += elqr.cost_function(
+                tt,
+                state_traj[kk, :].reshape((-1, 1)),
+                ctrl_signal[kk, :].reshape((-1, 1)),
+                cost_args,
+                is_initial=(kk == 0),
+                is_final=False,
+            )
+            state_traj[kk + 1, :] = elqr.prop_state(
+                tt,
+                state_traj[kk, :].reshape((-1, 1)),
+                ctrl_signal[kk, :].reshape((-1, 1)),
+                state_args,
+                ctrl_args,
+                True,
+                inv_state_args,
+                inv_ctrl_args,
+            ).ravel()
 
-        num_obs = len(measured_gaussians.means)
-        if num_obs == 0:
-            self.gaussians = []
-            return
+        cost += elqr.cost_function(
+            self._time_vec[-1],
+            state_traj[num_timesteps, :].reshape((-1, 1)),
+            ctrl_signal[num_timesteps - 1, :].reshape((-1, 1)),
+            cost_args,
+            is_initial=False,
+            is_final=True,
+        )
 
-        n_states = measured_gaussians.means[0].size
-        new_gaussians = []
-        for ii in range(0, num_obs):
-            obs_mean = measured_gaussians.means[ii].reshape((n_states, 1))
-            best_fit = (-1, np.inf)  # index, fit criteria
+        return state_traj, ctrl_signal, cost
 
-            for jj, gg in enumerate(self.gaussians):
-                test_mean = gg.means[[1], :].reshape((n_states, 1))
-                test_cov = gg.covariance
+    def draw_init_states(
+        self, fig, states, plt_inds, marker, zorder, cmap=None, color=None
+    ):
+        kwargs = dict(marker=marker, zorder=zorder,)
+        if color is not None:
+            kwargs["color"] = color
 
-                diff = obs_mean - test_mean
-                fit_criteria = diff.T @ la.inv(test_cov) @ diff
-                if fit_criteria < best_fit[1]:
-                    best_fit = (jj, fit_criteria)
+        for c_ind, (w, dist) in enumerate(states):
+            s = dist.location
+            if cmap is not None:
+                kwargs["color"] = cmap(c_ind)
+            fig.axes[0].scatter(s[plt_inds[0], 0], s[plt_inds[1], 0], **kwargs)
 
-            found_match = best_fit[1] < chi2.ppf(self.similar_thresh, df=n_states)
+    def save_animation(self, fig, fig_h, fig_w, frame_list):
+        with io.BytesIO() as buff:
+            fig.savefig(buff, format="raw")
+            buff.seek(0)
+            img = np.frombuffer(buff.getvalue(), dtype=np.uint8).reshape(
+                (fig_h, fig_w, -1)
+            )
+        frame_list.append(Image.fromarray(img))
 
-            # initialize GaussianObject with measured value ii
-            obj = GaussianObject()
-            obj.means = np.zeros((self.horizon_len, n_states))
-            obj.means[0, :] = measured_gaussians.means[ii].squeeze()
-            obj.covariance = measured_gaussians.covariances[ii]
-            obj.weight = measured_gaussians.weights[ii]
-            if found_match:
-                # Init remaining trajectory of ii with self.gaussian jj
-                ind = best_fit[0]
-                obj.dyn_functions = self.gaussians[ind].dyn_functions
-                obj.inv_dyn_functions = self.gaussians[ind].inv_dyn_functions
-                obj.ctrl_nom = self.gaussians[ind].ctrl_nom
+    def init_plot(
+        self,
+        show_animation,
+        save_animation,
+        cmap,
+        start_dist,
+        end_dist,
+        fig,
+        plt_opts,
+        ttl,
+        plt_inds,
+    ):
+        frame_list = []
+        fig_h = None
+        fig_w = None
+        if show_animation:
+            if cmap is None:
+                cmap = gplot.get_cmap(len(start_dist))
 
-                n_inputs = self.gaussians[0].ctrl_inputs.shape[1]
-                obj.ctrl_inputs = np.zeros((self.horizon_len, n_inputs))
-                obj.ctrl_inputs[:-1, :] = self.gaussians[ind].ctrl_inputs[1::, :]
+            if fig is None:
+                fig = plt.figure()
+                fig.add_subplot(1, 1, 1)
+                fig.axes[0].set_aspect("equal", adjustable="box")
 
-                obj.means[1:-1, :] = self.gaussians[ind].means[2::, :]
-                for jj, ff in enumerate(obj.dyn_functions):
-                    obj.means[-1, jj] = ff(
-                        obj.means[[-2], :].T, obj.ctrl_inputs[[-2], :].T, **kwargs
+                if plt_opts is None:
+                    plt_opts = gplot.init_plotting_opts(f_hndl=fig)
+
+                if ttl is None:
+                    ttl = "Multi-Agent ELQR"
+
+                gplot.set_title_label(fig, 0, plt_opts, ttl=ttl)
+
+                # draw start
+                self.draw_init_states(fig, start_dist, plt_inds, "o", 1000, cmap=cmap)
+
+            self.draw_init_states(fig, end_dist, plt_inds, "x", 1000, color="r")
+
+            fig.tight_layout()
+            plt.pause(0.1)
+
+            # for stopping simulation with the esc key.
+            fig.canvas.mpl_connect(
+                "key_release_event",
+                lambda event: [exit(0) if event.key == "escape" else None],
+            )
+            fig_w, fig_h = fig.canvas.get_width_height()
+
+            # save first frame of animation
+            if save_animation:
+                self.save_animation(fig, fig_h, fig_w, frame_list)
+
+        return fig, fig_h, fig_w, frame_list, cmap
+
+    def reset(self, start_dist):
+        self._start_covs = [c.copy() for c in start_dist.covariances]
+        self._start_weights = [w for w in start_dist.weights]
+
+    def output_helper(
+        self,
+        c_ind,
+        num_timesteps,
+        start,
+        params,
+        state_args,
+        ctrl_args,
+        cost_args,
+        inv_state_args,
+        inv_ctrl_args,
+        costs,
+        state_trajs,
+        ctrl_signals,
+        show_animation,
+        fig,
+        plt_inds,
+        cmap,
+    ):
+        self._cur_ind = c_ind
+        params["elqr"].set_cost_model(
+            non_quadratic_fun=self.non_quad_fun_factory(), skip_validity_check=True
+        )
+        st, c, cs = self.gen_final_traj(
+            num_timesteps,
+            start,
+            params["elqr"],
+            state_args,
+            ctrl_args,
+            cost_args,
+            inv_state_args,
+            inv_ctrl_args,
+        )
+        costs.append(c)
+        state_trajs.append(st)
+        ctrl_signals.append(cs)
+
+        if show_animation:
+            fig.axes[0].plot(
+                st[:, plt_inds[0]],
+                st[:, plt_inds[1]],
+                linestyle="-",
+                color=cmap(c_ind),
+            )
+            plt.pause(0.001)
+
+    def create_outputs(
+        self,
+        start_dist,
+        num_timesteps,
+        state_args,
+        ctrl_args,
+        cost_args,
+        inv_state_args,
+        inv_ctrl_args,
+        show_animation,
+        fig,
+        plt_inds,
+        cmap,
+    ):
+        costs = []
+        state_trajs = []
+        ctrl_signals = []
+        for c_ind, ((w, dist), params) in enumerate(zip(start_dist, self._elqr_lst)):
+            self.output_helper(
+                c_ind,
+                num_timesteps,
+                dist.location,
+                params,
+                state_args,
+                ctrl_args,
+                cost_args,
+                inv_state_args,
+                inv_ctrl_args,
+                costs,
+                state_trajs,
+                ctrl_signals,
+                show_animation,
+                fig,
+                plt_inds,
+                cmap,
+            )
+
+        return state_trajs, costs, ctrl_signals
+
+    def plan(
+        self,
+        tt,
+        start_dist,
+        end_dist,
+        state_args=None,
+        ctrl_args=None,
+        cost_args=None,
+        inv_state_args=None,
+        inv_ctrl_args=None,
+        provide_details=False,
+        disp=True,
+        show_animation=False,
+        save_animation=False,
+        plt_opts=None,
+        ttl=None,
+        fig=None,
+        cmap=None,
+        plt_inds=None,
+    ):
+        """Main planning function.
+
+        Parameters
+        ----------
+        tt : float
+            Starting timestep for the plan.
+        start_dist : :class:`serums.models.GaussianMixture`
+            Starting state distribution.
+        end_dist : :class:`serums.models.GaussianMixture`
+            Ending state distribution.
+        state_args : tuple, optional
+            Additional arguments for getting the state transition matrix. The
+            default is None.
+        ctrl_args : tuple, optional
+            Additional arguements for getting the input matrix. The default is
+            None.
+        cost_args : tuple, optional
+            Additional arguments for the cost function. The default is None.
+        inv_state_args : tuple, optional
+            Additional arguments to get the inverse state matrix. The default
+            is None.
+        inv_ctrl_args : tuple, optional
+            Additional arguments to get the inverse input matrix. The default
+            is None.
+        provide_details : bool, optional
+            Falg for if optional outputs should be output. The default is False.
+        disp : bool, optional
+            Falg for if additional text should be printed. The default is True.
+        show_animation : bool, optional
+            Flag for if an animation is generated. The default is False.
+        save_animation : bool, optional
+            Flag for saving the animation. Only applies if the animation is
+            shown. The default is False.
+        plt_opts : dict, optional
+            Additional plotting options. See
+            :func:`gncpy.plotting.init_plotting_opts`. The default is None.
+        ttl : string, optional
+            Title of the generated plot. The default is None.
+        fig : matplotlib figure, optional
+            Handle to the figure. If supplied only the end states are added.
+            The default is None.
+        cmap : matplotlib colormap, optional
+            Color map for the different agents. See :func:`gncpy.plotting.get_cmap`.
+            The default is None.
+        plt_inds : list, optional
+            Indices in the state vector to plot. The default is None.
+
+        Returns
+        -------
+        state_trajs : list
+            Each element is an Nh+1xN numpy array.
+        costs : list, optional
+            Each element is a float for the cost of that trajectory
+        ctrl_signals : list, optional
+            Each element is an NhxNu numpy array
+        fig : matplotlib figure, optional
+            Handle to the generated figure
+        frame_list : list, optional
+            Each element is a PIL image if the animation is being saved.
+        """
+        if state_args is None:
+            state_args = ()
+        if ctrl_args is None:
+            ctrl_args = ()
+        if cost_args is None:
+            cost_args = ()
+        if inv_state_args is None:
+            inv_state_args = ()
+        if inv_ctrl_args is None:
+            inv_ctrl_args = ()
+
+        num_timesteps = self.init_elqr_lst(tt, start_dist, end_dist)
+        old_cost = float("inf")
+        self.reset(start_dist)
+
+        fig, fig_h, fig_w, frame_list, cmap = self.init_plot(
+            show_animation,
+            save_animation,
+            cmap,
+            start_dist,
+            end_dist,
+            fig,
+            plt_opts,
+            ttl,
+            plt_inds,
+        )
+
+        if disp:
+            print("Starting ELQR optimization loop...")
+
+        for itr in range(self.max_iters):
+            # forward pass for each gaussian, step by step
+            for kk in range(num_timesteps):
+                for ind, params in enumerate(self._elqr_lst):
+                    self._cur_ind = ind
+                    params["elqr"].set_cost_model(
+                        non_quadratic_fun=self.non_quad_fun_factory(),
+                        skip_validity_check=True,
                     )
-                obj.feedforward_lst = self.gaussians[ind].feedforward_lst[1::]
-                shape = self.gaussians[ind].feedforward_lst[0].shape
-                obj.feedforward_lst.append(np.zeros(shape))
-
-                obj.feedback_lst = self.gaussians[ind].feedback_lst[1::]
-                shape = self.gaussians[ind].feedforward_lst[0].shape
-                obj.feedback_lst.append(np.zeros(shape))
-
-                obj.cost_to_come_mat = self.gaussians[ind].cost_to_come_mat[1::]
-                obj.cost_to_come_mat.append(obj.cost_to_come_mat[-1].copy())
-                obj.cost_to_come_vec = self.gaussians[ind].cost_to_go_vec[1::]
-                obj.cost_to_come_vec.append(obj.cost_to_come_vec[-1].copy())
-                obj.cost_to_go_mat = self.gaussians[ind].cost_to_go_mat[1::]
-                obj.cost_to_go_mat.append(obj.cost_to_go_mat[-1].copy())
-                obj.cost_to_go_vec = self.gaussians[ind].cost_to_go_vec[1::]
-                obj.cost_to_go_vec.append(obj.cost_to_go_vec[-1].copy())
-
-                # remove self.gaussian jj
-                self.gaussians.pop(ind)
-            else:
-                # Predict remaining time horizon
-                obj.means[1::, :] = obj.means[0, :]
-                obj.ctrl_input = np.zeros((self.horizon_len, n_inputs_lst[ii]))
-                obj.dyn_functions = est_dyn_lst[ii].copy()
-                obj.inv_dyn_functions = est_inv_dyn_lst[ii].copy()
-                if u_nom_lst is None:
-                    u_nom = np.zeros((n_inputs_lst[ii], 1))
-                else:
-                    u_nom = u_nom_lst[ii]
-                obj.ctrl_nom = u_nom
-                ff = np.zeros((u_nom.shape[0], 1))
-                fb = np.zeros((u_nom.shape[0], n_states))
-                ccm = np.zeros((n_states, n_states))
-                ccv = np.zeros((n_states, 1))
-                cgm = np.zeros((n_states, n_states))
-                cgv = np.zeros((n_states, 1))
-                for jj in range(0, self.horizon_len):
-                    obj.feedforward_lst.append(ff.copy())
-                    obj.feedback_lst.append(fb.copy())
-                    obj.cost_to_come_mat.append(ccm.copy())
-                    obj.cost_to_come_vec.append(ccv.copy())
-                    obj.cost_to_go_mat.append(cgm.copy())
-                    obj.cost_to_go_vec.append(cgv.copy())
-
-            # add newly initialized object to list
-            new_gaussians.append(obj)
-        # assign new gaussians to class variable
-        self.gaussians = new_gaussians
-
-    def quadratize_non_quad_state(self, all_states=None, obj_num=None, **kwargs):
-        """Quadratizes the non-quadratic state terms in the cost function.
-
-        Overrides the base class version,
-        see :py:meth:`caser.guidance.base.BaseELQR.quadratize_non_quad_state`
-
-        Args:
-            all_states (N x Ng numpy array): matrix containing states of all
-                gaussians for current timestep
-            obj_num (int): index of the guassian object currently being
-                evaluated
-            **kwargs : passed through
-                to :py:meth:`caser.utilities.math.get_hessian`
-
-        Returns:
-            tuple containing
-
-                - Q (N x N numpy array): state penalty matrix
-                - q (N x 1 numpy array): state penalty vector
-        """
-
-        def helper(x, cur_states):
-            loc_states = cur_states.copy()
-            loc_states[:, [obj_num]] = x.copy()
-            weight_lst = []
-            cov_lst = []
-            for ii in self.gaussians:
-                weight_lst.append(ii.weight)
-                cov_lst.append(ii.covariance)
-            return self.density_based_cost(loc_states, weight_lst, cov_lst)
-
-        Q = get_hessian(
-            all_states[:, [obj_num]].copy(), lambda x_: helper(x_, all_states), **kwargs
-        )
-
-        # Regularize Matrix
-        eig_vals, eig_vecs = la.eig(Q)
-        for ii in range(0, eig_vals.size):
-            if eig_vals[ii] < 0:
-                eig_vals[ii] = 0
-        Q = eig_vecs @ np.diag(eig_vals) @ la.inv(eig_vecs)
-
-        q = get_jacobian(
-            all_states[:, [obj_num]].copy(), lambda x_: helper(x_, all_states), **kwargs
-        )
-        q = q - Q @ all_states[:, [obj_num]]
-
-        return Q, q
-
-    def iterate(self, measured_gaussians, **kwargs):
-        """Performs one iteration of the ELQR over the entire time horizon.
-
-        Overrides base class,
-        see :py:meth:`caser.guidance.base.BaseELQR.iterate`
-
-        Args:
-            measured_gaussians (GaussianMixture): currently measured gaussians
-
-        Keyword Args:
-            est_dyn_lst (list): each element is a list of dynamics functions,
-                must take x, u as parameters
-            est_inv_dyn_lst (list): each element is a list of inverse dynamics
-                functions, must take x, u as parameters
-            n_inputs_lst (list): each element is the number of control inputs
-                for the corresponding dynamics functions
-        """
-        est_dyn_lst = kwargs.pop("est_dyn_lst")
-        est_inv_dyn_lst = kwargs.pop("est_inv_dyn_lst")
-        n_inputs_lst = kwargs.pop("n_inputs_lst")
-
-        self.initialize(
-            measured_gaussians, est_dyn_lst, est_inv_dyn_lst, n_inputs_lst, **kwargs
-        )
-        num_gaussians = len(self.gaussians)
-        if num_gaussians == 0:
-            return
-
-        x_starts = np.zeros((num_gaussians, self.gaussians[0].means.shape[1]))
-        for ii, gg in enumerate(self.gaussians):
-            x_starts[ii, :] = gg.means[1, :]
-
-        converged = False
-        old_cost = np.inf
-        for iteration in range(0, self.max_iters):
-            # forward pass
-            for kk in range(0, self.horizon_len - 1):
-                cur_states = np.zeros((num_gaussians, self.gaussians[0].means.shape[1]))
-                for ii, gg in enumerate(self.gaussians):
-                    cur_states[ii, :] = gg.means[kk, :]
-
-                # update control for each gaussian
-                for gg in self.gaussians:
-                    gg.ctrl_input[kk, :] = (
-                        gg.feedback_lst[kk] @ gg.means[[kk], :].T
-                        + gg.feedforward_lst[kk]
-                    ).squeeze()
-
-                for ii, gg in enumerate(self.gaussians):
-                    x_hat = gg.means[[kk], :].T
-                    u_hat = gg.ctrl_input[[kk], :].T
-                    feedback = gg.feedback_lst[kk]
-                    feedforward = gg.feedforward_lst[kk]
-                    cost_come_mat = gg.cost_to_come_mat[kk]
-                    cost_come_vec = gg.cost_to_come_vec[kk]
-                    cost_go_mat = gg.cost_to_go_mat[kk + 1]
-                    cost_go_vec = gg.cost_to_go_vec[kk + 1]
-                    x_start = x_starts[[ii], :].T
-                    u_nom = gg.ctrl_nom
-                    f = gg.dyn_functions
-                    in_f = gg.inv_dyn_functions
-
-                    (
-                        x_hat,
-                        gg.feedback_lst[kk],
-                        gg.feedforward_lst[kk],
-                        gg.cost_to_come_mat[kk + 1],
-                        gg.cost_to_come_vec[kk + 1],
-                    ) = self.forward_pass(
-                        x_hat,
-                        u_hat,
-                        feedback,
-                        feedforward,
-                        cost_come_mat,
-                        cost_come_vec,
-                        cost_go_mat,
-                        cost_go_vec,
+                    params["traj"][kk + 1, :] = params["elqr"].forward_pass_step(
+                        itr,
                         kk,
-                        x_start=x_start,
-                        u_nom=u_nom,
-                        dyn_fncs=f,
-                        inv_dyn_fncs=in_f,
-                        all_states=cur_states.T,
-                        obj_num=ii,
-                        **kwargs
+                        self._time_vec,
+                        params["traj"],
+                        state_args,
+                        ctrl_args,
+                        cost_args,
+                        inv_state_args,
+                        inv_ctrl_args,
                     )
-                    gg.means[[kk + 1], :] = x_hat.T
 
-            # quadratize final cost
-            for gg in self.gaussians:
-                x_hat = gg.means[[-1], :].T
-                u_hat = gg.ctrl_input[[-1], :].T
-                x_end = self.find_nearest_target(gg.means[-1, :])
-                (
-                    gg.cost_to_go_mat[-1],
-                    gg.cost_to_go_vec[-1],
-                ) = self.quadratize_final_cost(x_hat, u_hat, x_end=x_end, **kwargs)
-                gg.means[-1, :] = (
-                    -la.inv(gg.cost_to_go_mat[-1] + gg.cost_to_come_mat[-1])
-                    @ (gg.cost_to_go_vec[-1] + gg.cost_to_come_vec[-1])
-                ).squeeze()
-
-            # backward pass
-            for kk in range(self.horizon_len - 2, -1, -1):
-                prev_states = np.zeros(
-                    (num_gaussians, self.gaussians[0].means.shape[1])
+            # quadratize final cost for each gaussian
+            for c_ind, params in enumerate(self._elqr_lst):
+                self._cur_ind = c_ind
+                params["elqr"].set_cost_model(
+                    non_quadratic_fun=self.non_quad_fun_factory(),
+                    skip_validity_check=True,
                 )
-                for ii, gg in enumerate(self.gaussians):
-                    gg.ctrl_input[kk, :] = (
-                        gg.feedback_lst[kk] @ gg.means[[kk + 1], :].T
-                        + gg.feedforward_lst[kk]
-                    ).squeeze()
-                    for jj, ff in enumerate(gg.inv_dyn_functions):
-                        prev_states[ii, jj] = ff(
-                            gg.means[kk + 1, :], gg.ctrl_input[kk, :], **kwargs
-                        )
+                params["elqr"].end_state = self.find_end_state(
+                    params["traj"][-1, :].reshape((-1, 1)), end_dist
+                )
+                params["traj"] = params["elqr"].quadratize_final_cost(
+                    itr, num_timesteps, params["traj"], self._time_vec, cost_args
+                )
 
-                # update values
-                for ii, gg in enumerate(self.gaussians):
-                    x_hat = gg.means[[kk + 1], :].T
-                    u_hat = gg.ctrl_input[[kk], :].T
-                    feedback = gg.feedback_lst[kk]
-                    feedforward = gg.feedforward_lst[kk]
-                    cost_come_mat = gg.cost_to_come_mat[kk]
-                    cost_come_vec = gg.cost_to_come_vec[kk]
-                    cost_go_mat = gg.cost_to_go_mat[kk + 1]
-                    cost_go_vec = gg.cost_to_go_vec[kk + 1]
-                    x_start = x_starts[[ii], :].T
-                    u_nom = gg.ctrl_nom
-                    f = gg.dyn_functions
-                    in_f = gg.inv_dyn_functions
-
-                    (
-                        x_hat,
-                        gg.feedback_lst[kk],
-                        gg.feedforward_lst[kk],
-                        gg.cost_to_go_mat[kk],
-                        gg.cost_to_go_vec[kk],
-                    ) = self.backward_pass(
-                        x_hat,
-                        u_hat,
-                        feedback,
-                        feedforward,
-                        cost_come_mat,
-                        cost_come_vec,
-                        cost_go_mat,
-                        cost_go_vec,
+            # backward pass for each gaussian
+            for kk in range(num_timesteps - 1, -1, -1):
+                for c_ind, params in enumerate(self._elqr_lst):
+                    self._cur_ind = c_ind
+                    params["elqr"].set_cost_model(
+                        non_quadratic_fun=self.non_quad_fun_factory(),
+                        skip_validity_check=True,
+                    )
+                    params["traj"][kk, :] = params["elqr"].backward_pass_step(
+                        itr,
                         kk,
-                        x_start=x_start,
-                        u_nom=u_nom,
-                        dyn_fncs=f,
-                        inv_dyn_fncs=in_f,
-                        all_states=prev_states.T,
-                        obj_num=ii,
-                        **kwargs
+                        self._time_vec,
+                        params["traj"],
+                        state_args,
+                        ctrl_args,
+                        cost_args,
+                        inv_state_args,
+                        inv_ctrl_args,
                     )
-                    gg.means[[kk], :] = x_hat.T
 
-            # find real cost of trajectory
-            states = x_starts
-            weight_lst = []
-            cov_lst = []
-            n_inputs = self.gaussians[0].feedback_lst[kk].shape[0]
-            for gg in self.gaussians:
-                weight_lst.append(gg.weight)
-                cov_lst.append(gg.covariance)
-            cur_cost = 0
-            for kk in range(0, self.horizon_len - 1):
-                cur_cost += self.density_based_cost(
-                    states.T, weight_lst, cov_lst, **kwargs
+            # get true cost
+            cost = 0
+            for ind, params in enumerate(self._elqr_lst):
+                self._cur_ind = ind
+                params["elqr"].set_cost_model(
+                    non_quadratic_fun=self.non_quad_fun_factory(),
+                    skip_validity_check=True,
+                )
+                x = params["traj"][0, :].copy().reshape((-1, 1))
+                for kk, tt in enumerate(self._time_vec[:-1]):
+                    u = (
+                        params["elqr"].feedback_gain[kk] @ x
+                        + params["elqr"].feedthrough_gain[kk]
+                    )
+                    cost += params["elqr"].cost_function(
+                        tt, x, u, cost_args, is_initial=(kk == 0), is_final=False,
+                    )
+                    x = params["elqr"].prop_state(
+                        tt,
+                        x,
+                        u,
+                        state_args,
+                        ctrl_args,
+                        True,
+                        inv_state_args,
+                        inv_ctrl_args,
+                    )
+                params["elqr"].end_state = self.find_end_state(
+                    params["traj"][-1, :].reshape((-1, 1)), end_dist
+                )
+                cost += params["elqr"].cost_function(
+                    self._time_vec[-1],
+                    x,
+                    u,
+                    cost_args,
+                    is_initial=False,
+                    is_final=True,
                 )
 
-                ctrl_inputs = np.zeros((num_gaussians, n_inputs))
-                for ii, gg in enumerate(self.gaussians):
-                    state = states[[ii], :].T
-                    ctrl_inputs[ii, :] = (
-                        gg.feedback_lst[kk] @ state + gg.feedforward_lst[kk]
-                    ).squeeze()
-                    for jj, ff in enumerate(gg.dyn_functions):
-                        states[ii, jj] = ff(state, ctrl_inputs[[ii], :].T, **kwargs)
-            cur_cost += self.final_cost_function(states)
+            if disp:
+                print("\tIteration: {:3d} Cost: {:10.4f}".format(itr, cost))
+
+            if show_animation:
+                for c_ind, params in enumerate(self._elqr_lst):
+                    img = params["elqr"].draw_traj(
+                        fig,
+                        plt_inds,
+                        fig_h,
+                        fig_w,
+                        c_ind == (len(self._elqr_lst) - 1),
+                        num_timesteps,
+                        self._time_vec,
+                        state_args,
+                        ctrl_args,
+                        inv_state_args,
+                        inv_ctrl_args,
+                        color=cmap(c_ind),
+                        alpha=0.2,
+                        zorder=-10,
+                    )
+
+                if save_animation:
+                    frame_list.append(img)
 
             # check for convergence
-            converged = np.abs(old_cost - cur_cost) < self.cost_tol
-
-            old_cost = cur_cost
-            if converged:
+            if np.abs((old_cost - cost) / cost) < self.tol:
                 break
+            old_cost = cost
 
-    def final_cost_function(self, all_states, **kwargs):
-        """Calculates the true cost at the final timestep.
+        # generate control and state trajectories for all agents
+        state_trajs, costs, ctrl_signals = self.create_outputs(
+            start_dist,
+            num_timesteps,
+            state_args,
+            ctrl_args,
+            cost_args,
+            inv_state_args,
+            inv_ctrl_args,
+            show_animation,
+            fig,
+            plt_inds,
+            cmap,
+        )
 
-        Wrapper around base class version,
-        see :py:meth:`caser.guidance.base.BaseELQR.final_cost_function`
+        if show_animation and save_animation:
+            plt.pause(0.01)
+            self.save_animation(fig, fig_h, fig_w, frame_list)
 
-        Args:
-            all_states (Ng x N numpy array): array of the ending statess for
-                all gaussians
-            **kwargs : passed through to base class version
+        details = (costs, ctrl_signals, fig, frame_list)
+        return (state_trajs, *details) if provide_details else state_trajs
+
+
+class ELQROSPA(ELQR):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self._end_states = np.array([])
+
+    def get_state_dist(self, tt):
+        """Calculates the current state distribution.
+
+        Parameters
+        ----------
+        tt : float
+            Current timestep.
+
+        Returns
+        -------
+        Na x N numpy array
+            State distribution, one row per agent
         """
-        cost = 0
-        for state in all_states:
-            goal = self.find_nearest_target(state)
-            cost += super().final_cost_function(state, goal, **kwargs)
-        return cost
+        kk = int(np.argmin(np.abs(tt - self._time_vec)))
+        return np.vstack([params["traj"][kk, :].flatten() for params in self._elqr_lst])
 
-    def find_nearest_target(self, state):
-        """ Finds target closest to the given state.
+    def non_quad_fun_factory(self):
+        """Factory for creating the non-quadratic cost function.
 
-        Uses the :math:`L_2` distance to find the closest target.
+        This should generate a function of the same form needed by the single
+        agent controller, that is time, state, control input, end state,
+        is initial flag, is final flag, *args. For this class, it implements
+        a GM density based cost function. Specifically, the returned function
+        takes time, state, control input, end state, is initial flag,
+        is final flag, goal distribution, *args. It returns
+        a float for the non-quadratic part of the cost.
 
-        Args:
-            state (N x 1 numpy array): current state
-
-        Returns:
-            (N x 1 numpy array): nearest target
+        Returns
+        -------
+        callable
+            function to calculate cost.
         """
-        x_end = []
-        min_dist = np.inf
-        for goal in self.targets.means:
-            dist = la.norm(state.squeeze() - goal.squeeze())
-            if dist < min_dist:
-                min_dist = dist
-                x_end = goal.copy()
-        return x_end
 
+        def non_quadratic_fun(
+            tt,
+            state,
+            ctrl_input,
+            end_state,
+            is_initial,
+            is_final,
+            goal_dist,
+            core_method,
+            inds,
+            cutoff,
+        ):
+            # TODO: autoscale cutoff to be larger than max dist between target and current?
 
-class ELQR:
-    def __init__(self, max_iters=1e3, tol=1e-4):
-        super().__init__()
+            start_dist = self.get_state_dist(tt)
+            start_dist[self._cur_ind, :] = state.flatten()
+            start_dist = start_dist[:, inds].T.reshape(
+                (len(inds), 1, start_dist.shape[0])
+            )
 
-        self.max_iters = int(max_iters)
-        self.tol = tol
+            end_dist = goal_dist[:, inds].T.reshape((len(inds), 1, goal_dist.shape[0]))
 
-        self._single_elqr = ELQR()
+            return calculate_ospa(
+                start_dist, end_dist, cutoff, 1, core_method=core_method
+            )[0].item()
 
-    def non_quadratic_cost(
-        self,
-        t,
-        state_dist,
-        ctrl_input,
-        goal_dist,
-        is_initial,
-        is_final,
-        safety_factor,
-        y_ref,
+        return non_quadratic_fun
+
+    def find_end_state(self, cur_state, end_dist):
+        """Finds the ending state for the given current state.
+
+        Parameters
+        ----------
+        cur_state : N x 1 numpy array
+            Current state.
+        end_dist : Nt x N numpy array
+            Ending states, one per row.
+
+        Returns
+        -------
+        N x 1 numpy array
+            Best ending state given the current state.
+        """
+        diff = end_dist - cur_state.reshape((1, -1))
+        min_ind = int(np.argmin(np.sum(diff * diff, axis=1)))
+
+        return end_dist[min_ind].reshape((-1, 1))
+
+    def init_elqr_lst(self, tt, start_dist, end_dist):
+        """Initialize the list of single agent ELQR controllers.
+
+        Parameters
+        ----------
+        tt : float
+            current time.
+        start_dist : Na x N numpy array
+            Starting states, one per row.
+        end_dist : Nt x N numpy array
+            Ending states, one per row.
+
+        Returns
+        -------
+        num_timesteps : int
+            total number of timesteps.
+        """
+        self._elqr_lst = []
+        for s in start_dist:
+            p = {}
+            p["elqr"] = deepcopy(self._singleELQR)
+            end_state = self.find_end_state(s, end_dist)
+            p["old_cost"], num_timesteps, p["traj"], self._time_vec = p["elqr"].reset(
+                tt, s.reshape((-1, 1)), end_state
+            )
+            self._elqr_lst.append(p)
+        return num_timesteps
+
+    def targets_to_wayareas(self, end_states):
+        warn("targets_to_wayareas not used by ELQROSPA")
+        return None
+
+    def draw_init_states(
+        self, fig, states, plt_inds, marker, zorder, color=None, cmap=None
     ):
-        r"""Implements the density based cost function.
+        kwargs = dict(marker=marker, zorder=zorder,)
+        if color is not None:
+            kwargs["color"] = color
 
-        Implements the following cost function based on the difference between
-        Gaussian mixtures, with additional terms to improve convergence when
-        far from the targets.
+        for c_ind, s in enumerate(states):
+            if cmap is not None:
+                kwargs["color"] = cmap(c_ind)
+            fig.axes[0].scatter(s[plt_inds[0]], s[plt_inds[1]], **kwargs)
 
-        .. math::
-            J &= \sum_{k=1}^{T} 10 N_g\sigma_{g,max}^2 \left( \sum_{j=1}^{N_g}
-                    \sum_{i=1}^{N_g} w_{g,k}^{(j)} w_{g,k}^{(i)}
-                    \mathcal{N}( \mathbf{m}^{(j)}_{g,k}; \mathbf{m}^{(i)}_{g,k},
-                    P^{(j)}_{g, k} + P^{(i)}_{g, k} ) \right. \\
-                &- \left. 20 \sigma_{d, max}^2 N_d \sum_{j=1}^{N_d} \sum_{i=1}^{N_g}
-                    w_{d,k}^{(j)} w_{g,k}^{(i)} \mathcal{N}(
-                    \mathbf{m}^{(j)}_{d, k}; \mathbf{m}^{(i)}_{g, k},
-                    P^{(j)}_{d, k} + P^{(i)}_{g, k} ) \right) \\
-                &+ \sum_{j=1}^{N_d} \sum_{i=1}^{N_d} w_{d,k}^{(j)}
-                    w_{d,k}^{(i)} \mathcal{N}( \mathbf{m}^{(j)}_{d,k};
-                    \mathbf{m}^{(i)}_{d,k}, P^{(j)}_{d, k} + P^{(i)}_{d, k} ) \\
-                &+ \alpha \sum_{j=1}^{N_d} \sum_{i=1}^{N_g} w_{d,k}^{(j)}
-                    w_{g,k}^{(i)} \ln{\mathcal{N}( \mathbf{m}^{(j)}_{d,k};
-                    \mathbf{m}^{(i)}_{g,k}, P^{(j)}_{d, k} + P^{(i)}_{g, k} )}
+    def reset(self, start_dist):
+        pass
 
-        Args:
-            obj_states (N x Ng numpy array): Matrix of all the object's states,
-                each column is one objects state
-            obj_weights (list of floats): weight of each state, same order as
-                obj_states
-            obj_covariances (list): list of N x N numpy arrays representing
-                each states covariance matrix
+    def create_outputs(
+        self,
+        start_dist,
+        num_timesteps,
+        state_args,
+        ctrl_args,
+        cost_args,
+        inv_state_args,
+        inv_ctrl_args,
+        show_animation,
+        fig,
+        plt_inds,
+        cmap,
+    ):
+        costs = []
+        state_trajs = []
+        ctrl_signals = []
+        for c_ind, (s, params) in enumerate(zip(start_dist, self._elqr_lst)):
+            self.output_helper(
+                c_ind,
+                num_timesteps,
+                s.reshape((-1, 1)),
+                params,
+                state_args,
+                ctrl_args,
+                cost_args,
+                inv_state_args,
+                inv_ctrl_args,
+                costs,
+                state_trajs,
+                ctrl_signals,
+                show_animation,
+                fig,
+                plt_inds,
+                cmap,
+            )
 
-        Returns:
-            (float): density based cost
-        """
-        all_goals = np.array([m.ravel().tolist() for m in goal_dist.means])
-        all_states = np.array([m.ravel().tolist() for m in state_dist.means])
-        target_center = np.mean(all_goals, axis=0).reshape((-1, 1))
-        num_targets = all_goals.shape[0]
-        num_objects = all_states.shape[0]
-        state_dim = all_states.shape[1]
-
-        # find radius of influence and shift
-        diff = all_goals - target_center.T
-        max_dist = np.sqrt(np.max(np.sum(diff * diff, axis=1)))
-        radius_of_influence = safety_factor * max_dist
-        shift = radius_of_influence + np.log(1 / y_ref - 1)
-
-        # get actiavation term
-        diff = all_states - target_center.T
-        max_dist = np.sqrt(np.max(np.sum(diff * diff, axis=1)))
-        activator = 1 / (1 + np.exp(-(max_dist - shift)))
-
-        # get maximum variance
-        max_var_obj = max(
-            map(lambda x: float(np.max(np.diag(x))), state_dist.covariances)
-        )
-        max_var_target = max(
-            map(lambda x: float(np.max(np.diag(x))), goal_dist.covariances)
-        )
-
-        # Loop for all double summation terms
-        sum_obj_obj = 0
-        sum_obj_target = 0
-        quad = 0
-        for out_w, out_dist in state_dist:
-            # create temporary gaussian object for calculations
-            temp_gauss = smodels.Gaussian(mean=out_dist.mean)
-
-            # object to object cost
-            for in_w, in_dist in state_dist:
-                temp_gauss.covariance = out_dist.covariance + in_dist.covariance
-                sum_obj_obj += in_w * out_w * temp_gauss.pdf(in_dist.mean)
-
-            # object to target and quadratic
-            for tar_w, tar_dist in goal_dist:
-                # object to target
-                temp_gauss.covariance = out_dist.covariance + tar_dist.covariance
-                sum_obj_target += tar_w * out_w * temp_gauss.pdf(tar_dist.mean)
-
-                # quadratic
-                diff = out_dist.mean - tar_dist.mean
-                log_term = (
-                    np.log(
-                        (2 * np.pi) ** (-0.5 * state_dim)
-                        / np.sqrt(la.det(temp_gauss.covariance))
-                    )
-                    - 0.5 * diff.T @ la.inv(temp_gauss.covariance) @ diff
-                )
-                quad += out_w * tar_w * log_term.item()
-
-        sum_target_target = 0
-        for out_w, out_dist in goal_dist:
-            temp_gauss = smodels.Gaussian(mean=out_dist.mean)
-            for in_w, in_dist in goal_dist:
-                temp_gauss.covariance = out_dist.covariance + in_dist.covariance
-                sum_target_target += out_w * in_w * temp_gauss.pdf(in_dist.mean)
-
-        return (
-            10
-            * num_objects
-            * max_var_obj
-            * (sum_obj_obj - 2 * max_var_target * num_targets * sum_obj_target)
-            + sum_target_target
-            + activator * quad
-        )
+        return state_trajs, costs, ctrl_signals
 
     def plan(self, tt, start_dist, end_dist, **kwargs):
-        for ii in range(self.max_iters):
-            # TODO: update control for each gaussian
-            # TODO: forward pass for each gaussian
-            # TODO: quadratize final cost for each gaussian
-            # TODO: backward pass for each gaussian
-            pass
+        return super().plan(tt, start_dist, end_dist, **kwargs)
