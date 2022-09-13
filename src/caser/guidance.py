@@ -15,6 +15,7 @@ import gncpy.control as gcontrol
 import gncpy.plotting as gplot
 import serums.models as smodels
 from serums.distances import calculate_ospa
+from serums.enums import SingleObjectDistance
 
 
 def gaussian_density_cost(state_dist, goal_dist, safety_factor, y_ref):
@@ -159,6 +160,8 @@ class ELQR:
 
         self.max_iters = int(max_iters)
         self.tol = tol
+        self.end_dist = smodels.GaussianMixture()
+        self.non_quad_weight = 1
 
         self._singleELQR = gcontrol.ELQR()
         self._elqr_lst = []
@@ -166,6 +169,10 @@ class ELQR:
         self._start_weights = []
         self._time_vec = np.array([])
         self._cur_ind = None
+        self._non_quad_fun = None
+
+        self.__safety_factor = 1
+        self.__y_ref = 0.5
 
     def get_state_dist(self, tt):
         """Calculates the current state distribution.
@@ -196,10 +203,9 @@ class ELQR:
         This should generate a function of the same form needed by the single
         agent controller, that is time, state, control input, end state,
         is initial flag, is final flag, *args. For this class, it implements
-        a GM density based cost function. Specifically, the returned function
-        takes time, state, control input, end state, is initial flag,
-        is final flag, goal distribution, safety factor, and y ref. It returns
-        a float for the non-quadratic part of the cost.
+        a GM density based cost function plus an optional additional cost function
+        of the same form. It returns a float for the non-quadratic part of
+        the cost.
 
         Returns
         -------
@@ -208,15 +214,7 @@ class ELQR:
         """
 
         def non_quadratic_fun(
-            tt,
-            state,
-            ctrl_input,
-            end_state,
-            is_initial,
-            is_final,
-            goal_dist,
-            safety_factor,
-            y_ref,
+            tt, state, ctrl_input, end_state, is_initial, is_final, *args
         ):
             state_dist = self.get_state_dist(tt)
             state_dist.remove_components(
@@ -227,11 +225,66 @@ class ELQR:
                 self._start_covs[self._cur_ind],
                 self._start_weights[self._cur_ind],
             )
-            return gaussian_density_cost(state_dist, goal_dist, safety_factor, y_ref)
+            cost = gaussian_density_cost(
+                state_dist, self.end_dist, self.__safety_factor, self.__y_ref
+            )
+            if self._non_quad_fun is not None:
+                cost += self.non_quad_weight * self._non_quad_fun(
+                    tt, state, ctrl_input, end_state, is_initial, is_final, *args
+                )
+            return cost
 
         return non_quadratic_fun
 
-    def set_control_model(self, singleELQR, quad_modifier=None):
+    def set_cost_model(
+        self, safety_factor=None, y_ref=None, non_quad_fun=None, quad_modifier=None, non_quad_weight=None
+    ):
+        """Set the parameters for the cost non-quadratic function.
+
+        This sets the parameters for the built-in non-quadratic cost function
+        and allows specifying an additional non-quadratic function (see
+        :meth:`gncpy.control.ELQR`) for the agents. Any additional non-quadratic
+        terms must be set here instead of within the single control model directly
+        due to the built-in multi-agent non-quadratic cost.
+
+        Parameters
+        ----------
+        safety_factor : float, optional
+            Additional scaling factor on the radius of influence. The default
+            is None.
+        y_ref : float, optional
+            Reference point on the sigmoid function to use when determining
+            th radius of influence. Should be between 0 and 1 (non-inclusive).
+            The default is None.
+        non_quad_fun : callable, optional
+            Optional additional non-quadratic cost. Must have the same form as
+            that of the single agent controller. See :meth:`gncpy.control.ELQR`.
+            The default is None.
+        quad_modifier : callable, optional
+            Function to modify the quadratization process, see
+            :meth:`gncpy.control.ELQR`. The default is None.
+        non_quad_weight : float
+            Additional scaling to be applied to the additional non_quadratic
+            cost (the non built-in term). The default is None
+        """
+        if safety_factor is not None:
+            self.__safety_factor = safety_factor
+
+        if y_ref is not None:
+            self.__y_ref = y_ref
+
+        if non_quad_fun is not None:
+            self._non_quad_fun = non_quad_fun
+
+        if quad_modifier is not None:
+            self._singleELQR.set_cost_model(
+                quad_modifier=quad_modifier, skip_validity_check=True
+            )
+
+        if non_quad_weight is not None:
+            self.non_quad_weight = non_quad_weight
+
+    def set_control_model(self, singleELQR):
         """Sets the single agent control model used.
 
         Parameters
@@ -244,31 +297,26 @@ class ELQR:
         """
         self._singleELQR = deepcopy(singleELQR)
 
-        if quad_modifier is not None:
-            self._singleELQR.set_cost_model(quad_modifier=quad_modifier)
-
-    def find_end_state(self, cur_state, end_dist):
+    def find_end_state(self, cur_state):
         """Finds the ending state for the given current state.
 
         Parameters
         ----------
         cur_state : N x 1 numpy array
             Current state.
-        end_dist : :class:`serums.models.GaussianMixture`
-            Ending state distribution.
 
         Returns
         -------
         N x 1 numpy array
             Best ending state given the current state.
         """
-        all_ends = np.vstack([m.ravel() for m in end_dist.means])
+        all_ends = np.vstack([m.ravel() for m in self.end_dist.means])
         diff = all_ends - cur_state.T
         min_ind = int(np.argmin(np.sum(diff * diff, axis=1)))
 
-        return end_dist.means[min_ind]
+        return self.end_dist.means[min_ind]
 
-    def init_elqr_lst(self, tt, start_dist, end_dist):
+    def init_elqr_lst(self, tt, start_dist):
         """Initialize the list of single agent ELQR controllers.
 
         Parameters
@@ -277,8 +325,6 @@ class ELQR:
             current time.
         start_dist : :class:`serums.models.GaussianMixture`
             Starting gaussian mixture.
-        end_dist : :class:`serums.models.GaussianMixture`
-            Ending distribution.
 
         Returns
         -------
@@ -289,7 +335,7 @@ class ELQR:
         for w, dist in start_dist:
             p = {}
             p["elqr"] = deepcopy(self._singleELQR)
-            end_state = self.find_end_state(dist.location, end_dist)
+            end_state = self.find_end_state(dist.location)
             p["old_cost"], num_timesteps, p["traj"], self._time_vec = p["elqr"].reset(
                 tt, dist.location, end_state
             )
@@ -472,7 +518,6 @@ class ELQR:
         save_animation,
         cmap,
         start_dist,
-        end_dist,
         fig,
         plt_opts,
         ttl,
@@ -501,7 +546,7 @@ class ELQR:
                 # draw start
                 self.draw_init_states(fig, start_dist, plt_inds, "o", 1000, cmap=cmap)
 
-            self.draw_init_states(fig, end_dist, plt_inds, "x", 1000, color="r")
+            self.draw_init_states(fig, self.end_dist, plt_inds, "x", 1000, color="r")
 
             fig.tight_layout()
             plt.pause(0.1)
@@ -699,7 +744,9 @@ class ELQR:
         if inv_ctrl_args is None:
             inv_ctrl_args = ()
 
-        num_timesteps = self.init_elqr_lst(tt, start_dist, end_dist)
+        self.end_dist = end_dist
+
+        num_timesteps = self.init_elqr_lst(tt, start_dist)
         old_cost = float("inf")
         self.reset(start_dist)
 
@@ -708,7 +755,6 @@ class ELQR:
             save_animation,
             cmap,
             start_dist,
-            end_dist,
             fig,
             plt_opts,
             ttl,
@@ -747,7 +793,7 @@ class ELQR:
                     skip_validity_check=True,
                 )
                 params["elqr"].end_state = self.find_end_state(
-                    params["traj"][-1, :].reshape((-1, 1)), end_dist
+                    params["traj"][-1, :].reshape((-1, 1)),
                 )
                 params["traj"] = params["elqr"].quadratize_final_cost(
                     itr, num_timesteps, params["traj"], self._time_vec, cost_args
@@ -801,7 +847,7 @@ class ELQR:
                         inv_ctrl_args,
                     )
                 params["elqr"].end_state = self.find_end_state(
-                    params["traj"][-1, :].reshape((-1, 1)), end_dist
+                    params["traj"][-1, :].reshape((-1, 1))
                 )
                 cost += params["elqr"].cost_function(
                     self._time_vec[-1],
@@ -869,7 +915,11 @@ class ELQROSPA(ELQR):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self._end_states = np.array([])
+        self.end_dist = np.array([])
+
+        self.__ospa_inds = []
+        self.__ospa_cutoff = 1e3
+        self.__ospa_core = SingleObjectDistance.EUCLIDEAN
 
     def get_state_dist(self, tt):
         """Calculates the current state distribution.
@@ -893,10 +943,9 @@ class ELQROSPA(ELQR):
         This should generate a function of the same form needed by the single
         agent controller, that is time, state, control input, end state,
         is initial flag, is final flag, *args. For this class, it implements
-        a GM density based cost function. Specifically, the returned function
-        takes time, state, control input, end state, is initial flag,
-        is final flag, goal distribution, *args. It returns
-        a float for the non-quadratic part of the cost.
+        an OSPA based cost function plus an optional additional cost function
+        of the same form. It returns a float for the non-quadratic part of
+        the cost.
 
         Returns
         -------
@@ -905,54 +954,106 @@ class ELQROSPA(ELQR):
         """
 
         def non_quadratic_fun(
-            tt,
-            state,
-            ctrl_input,
-            end_state,
-            is_initial,
-            is_final,
-            goal_dist,
-            core_method,
-            inds,
-            cutoff,
+            tt, state, ctrl_input, end_state, is_initial, is_final, *args
         ):
-            # TODO: autoscale cutoff to be larger than max dist between target and current?
-
+            if self.__ospa_inds is None:
+                inds = [i for i in range(state.size)]
+            else:
+                inds = self.__ospa_inds
             start_dist = self.get_state_dist(tt)
             start_dist[self._cur_ind, :] = state.flatten()
             start_dist = start_dist[:, inds].T.reshape(
                 (len(inds), 1, start_dist.shape[0])
             )
 
-            end_dist = goal_dist[:, inds].T.reshape((len(inds), 1, goal_dist.shape[0]))
+            end_dist = self.end_dist[:, inds].T.reshape(
+                (len(inds), 1, self.end_dist.shape[0])
+            )
 
-            return calculate_ospa(
-                start_dist, end_dist, cutoff, 1, core_method=core_method
+            cost = calculate_ospa(
+                start_dist,
+                end_dist,
+                self.__ospa_cutoff,
+                1,
+                core_method=self.__ospa_core,
             )[0].item()
+            if self._non_quad_fun is not None:
+                cost += self.non_quad_weight * self._non_quad_fun(
+                    tt, state, ctrl_input, end_state, is_initial, is_final, *args
+                )
+            return cost
 
         return non_quadratic_fun
 
-    def find_end_state(self, cur_state, end_dist):
+    def set_cost_model(
+        self,
+        ospa_inds=None,
+        ospa_cutoff=None,
+        ospa_method=None,
+        non_quad_fun=None,
+        quad_modifier=None,
+        non_quad_weight=None,
+    ):
+        """Set the parameters for the cost non-quadratic function.
+
+        This sets the parameters for the built-in non-quadratic cost function
+        and allows specifying an additional non-quadratic function (see
+        :meth:`gncpy.control.ELQR`) for the agents. Any additional non-quadratic
+        terms must be set here instead of within the single control model directly
+        due to the built-in multi-agent non-quadratic cost.
+
+        Parameters
+        ----------
+        non_quad_fun : callable, optional
+            Optional additional non-quadratic cost. Must have the same form as
+            that of the single agent controller. See :meth:`gncpy.control.ELQR`.
+            The default is None.
+        quad_modifier : callable, optional
+            Function to modify the quadratization process, see
+            :meth:`gncpy.control.ELQR`. The default is None.
+        non_quad_weight : float
+            Additional scaling to be applied to the additional non_quadratic
+            cost (the non built-in term). The default is None
+        """
+        if ospa_inds is not None:
+            self.__ospa_inds = ospa_inds
+
+        if ospa_cutoff is not None:
+            self.__ospa_cutoff = ospa_cutoff
+
+        if ospa_method is not None:
+            self.__ospa_core = ospa_method
+
+        if non_quad_fun is not None:
+            self._non_quad_fun = non_quad_fun
+
+        if quad_modifier is not None:
+            self._singleELQR.set_cost_model(
+                quad_modifier=quad_modifier, skip_validity_check=True
+            )
+
+        if non_quad_weight is not None:
+            self.non_quad_weight = non_quad_weight
+
+    def find_end_state(self, cur_state):
         """Finds the ending state for the given current state.
 
         Parameters
         ----------
         cur_state : N x 1 numpy array
             Current state.
-        end_dist : Nt x N numpy array
-            Ending states, one per row.
 
         Returns
         -------
         N x 1 numpy array
             Best ending state given the current state.
         """
-        diff = end_dist - cur_state.reshape((1, -1))
+        diff = self.end_dist - cur_state.reshape((1, -1))
         min_ind = int(np.argmin(np.sum(diff * diff, axis=1)))
 
-        return end_dist[min_ind].reshape((-1, 1))
+        return self.end_dist[min_ind].reshape((-1, 1))
 
-    def init_elqr_lst(self, tt, start_dist, end_dist):
+    def init_elqr_lst(self, tt, start_dist):
         """Initialize the list of single agent ELQR controllers.
 
         Parameters
@@ -961,8 +1062,6 @@ class ELQROSPA(ELQR):
             current time.
         start_dist : Na x N numpy array
             Starting states, one per row.
-        end_dist : Nt x N numpy array
-            Ending states, one per row.
 
         Returns
         -------
@@ -973,7 +1072,7 @@ class ELQROSPA(ELQR):
         for s in start_dist:
             p = {}
             p["elqr"] = deepcopy(self._singleELQR)
-            end_state = self.find_end_state(s, end_dist)
+            end_state = self.find_end_state(s)
             p["old_cost"], num_timesteps, p["traj"], self._time_vec = p["elqr"].reset(
                 tt, s.reshape((-1, 1)), end_state
             )
