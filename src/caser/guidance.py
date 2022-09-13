@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from copy import deepcopy
 from warnings import warn
+from scipy.optimize import linear_sum_assignment
 
 import gncpy.control as gcontrol
 import gncpy.plotting as gplot
@@ -198,11 +199,11 @@ class ELQR:
         )
 
     def non_quad_fun_factory(self):
-        """Factory for creating the non-quadratic cost function.
+        r"""Factory for creating the non-quadratic cost function.
 
         This should generate a function of the same form needed by the single
-        agent controller, that is time, state, control input, end state,
-        is initial flag, is final flag, *args. For this class, it implements
+        agent controller, that is `time, state, control input, end state,
+        is initial flag, is final flag, *args`. For this class, it implements
         a GM density based cost function plus an optional additional cost function
         of the same form. It returns a float for the non-quadratic part of
         the cost.
@@ -237,7 +238,12 @@ class ELQR:
         return non_quadratic_fun
 
     def set_cost_model(
-        self, safety_factor=None, y_ref=None, non_quad_fun=None, quad_modifier=None, non_quad_weight=None
+        self,
+        safety_factor=None,
+        y_ref=None,
+        non_quad_fun=None,
+        quad_modifier=None,
+        non_quad_weight=None,
     ):
         """Set the parameters for the cost non-quadratic function.
 
@@ -297,11 +303,15 @@ class ELQR:
         """
         self._singleELQR = deepcopy(singleELQR)
 
-    def find_end_state(self, cur_state):
+    def find_end_state(self, tt, cur_ind, cur_state):
         """Finds the ending state for the given current state.
 
         Parameters
         ----------
+        tt : float
+            Current timestep
+        cur_ind : int
+            Current index into the state distribution
         cur_state : N x 1 numpy array
             Current state.
 
@@ -332,14 +342,20 @@ class ELQR:
             total number of timesteps.
         """
         self._elqr_lst = []
-        for w, dist in start_dist:
+        for ind, (w, dist) in enumerate(start_dist):
             p = {}
             p["elqr"] = deepcopy(self._singleELQR)
-            end_state = self.find_end_state(dist.location)
+            end_state = np.zeros((dist.location.size, 1))
             p["old_cost"], num_timesteps, p["traj"], self._time_vec = p["elqr"].reset(
                 tt, dist.location, end_state
             )
             self._elqr_lst.append(p)
+
+        # reset with proper end state
+        for ind, ((w, dist), p) in enumerate(zip(start_dist, self._elqr_lst)):
+            end_state = self.find_end_state(tt, ind, dist.location)
+            p["elqr"].reset(tt, dist.location, end_state)
+
         return num_timesteps
 
     def targets_to_wayareas(self, end_states):
@@ -793,7 +809,7 @@ class ELQR:
                     skip_validity_check=True,
                 )
                 params["elqr"].end_state = self.find_end_state(
-                    params["traj"][-1, :].reshape((-1, 1)),
+                    self._time_vec[-1], c_ind, params["traj"][-1, :].reshape((-1, 1)),
                 )
                 params["traj"] = params["elqr"].quadratize_final_cost(
                     itr, num_timesteps, params["traj"], self._time_vec, cost_args
@@ -847,7 +863,7 @@ class ELQR:
                         inv_ctrl_args,
                     )
                 params["elqr"].end_state = self.find_end_state(
-                    params["traj"][-1, :].reshape((-1, 1))
+                    self._time_vec[-1], ind, params["traj"][-1, :].reshape((-1, 1))
                 )
                 cost += params["elqr"].cost_function(
                     self._time_vec[-1],
@@ -917,6 +933,8 @@ class ELQROSPA(ELQR):
 
         self.end_dist = np.array([])
 
+        self.loiter_dist = 1
+
         self.__ospa_inds = []
         self.__ospa_cutoff = 1e3
         self.__ospa_core = SingleObjectDistance.EUCLIDEAN
@@ -941,8 +959,8 @@ class ELQROSPA(ELQR):
         """Factory for creating the non-quadratic cost function.
 
         This should generate a function of the same form needed by the single
-        agent controller, that is time, state, control input, end state,
-        is initial flag, is final flag, *args. For this class, it implements
+        agent controller, that is `time, state, control input, end state,
+        is initial flag, is final flag, *args`. For this class, it implements
         an OSPA based cost function plus an optional additional cost function
         of the same form. It returns a float for the non-quadratic part of
         the cost.
@@ -1035,11 +1053,15 @@ class ELQROSPA(ELQR):
         if non_quad_weight is not None:
             self.non_quad_weight = non_quad_weight
 
-    def find_end_state(self, cur_state):
+    def find_end_state(self, tt, cur_ind, cur_state):
         """Finds the ending state for the given current state.
 
         Parameters
         ----------
+        tt : float
+            Current timestep
+        cur_ind : int
+            Current index into the state distribution
         cur_state : N x 1 numpy array
             Current state.
 
@@ -1048,10 +1070,62 @@ class ELQROSPA(ELQR):
         N x 1 numpy array
             Best ending state given the current state.
         """
-        diff = self.end_dist - cur_state.reshape((1, -1))
-        min_ind = int(np.argmin(np.sum(diff * diff, axis=1)))
+        if self.__ospa_inds is None:
+            inds = [i for i in range(cur_state.size)]
+        else:
+            inds = self.__ospa_inds
+        dist = self.get_state_dist(tt)
+        dist[cur_ind] = cur_state.ravel()
+        dist = dist[:, inds]
 
-        return self.end_dist[min_ind].reshape((-1, 1))
+        end_dist = self.end_dist[:, inds]
+        if end_dist.shape[0] < dist.shape[0]:
+            if end_dist.shape[0] > 1:
+                center = np.mean(end_dist, axis=0).reshape((1, -1))
+            else:
+                # direction from end to current state
+                direc = cur_state.ravel()[inds] - end_dist[0]
+                mag = np.linalg.norm(direc)
+                if mag > 1e-16:
+                    direc /= mag
+                else:
+                    # current agent is at the only target, use all agents center instead
+                    a_cent = np.mean(dist, axis=0)
+                    direc = a_cent - end_dist[0]
+                    mag = np.linalg.norm(direc)
+                    if mag > 1e-16:
+                        direc /= mag
+                    else:
+                        # all agents center is at the only target...just pick x direction
+                        direc = np.zeros(len(inds))
+                        direc[0] = 1
+                direc *= self.loiter_dist
+                center = (end_dist[0] + direc).reshape((1, -1))
+
+            # add enough "fake" targets so there is a 1-to-1 matching
+            n_miss = end_dist.shape[0] - dist.shape[0]
+            end_dist = np.vstack((end_dist, center * np.ones((n_miss, len(inds)))))
+
+        distances, a_exists, t_exists = calculate_ospa(
+            dist.T.reshape((len(inds), 1, -1)),
+            end_dist.T.reshape((len(inds), 1, -1)),
+            self.__ospa_cutoff,
+            1,
+            core_method=self.__ospa_core,
+            use_empty=False,
+        )[6:]
+        cont_sub = distances[
+            0 : np.sum(a_exists).astype(int), 0 : np.sum(t_exists).astype(int), 0
+        ]
+        tar_inds = linear_sum_assignment(cont_sub)[1]
+
+        min_ind = tar_inds[cur_ind]
+        if min_ind > self.end_dist.shape[0]:
+            out = np.zeros((self.end_dist.shape[1], 1))
+            out[inds] = end_dist[min_ind]
+        else:
+            out = self.end_dist[min_ind, :].reshape((-1, 1))
+        return out
 
     def init_elqr_lst(self, tt, start_dist):
         """Initialize the list of single agent ELQR controllers.
@@ -1069,14 +1143,21 @@ class ELQROSPA(ELQR):
             total number of timesteps.
         """
         self._elqr_lst = []
-        for s in start_dist:
+        # initialize with fake end state
+        for ind, s in enumerate(start_dist):
             p = {}
             p["elqr"] = deepcopy(self._singleELQR)
-            end_state = self.find_end_state(s)
+            end_state = np.zeros((s.size, 1))
             p["old_cost"], num_timesteps, p["traj"], self._time_vec = p["elqr"].reset(
                 tt, s.reshape((-1, 1)), end_state
             )
             self._elqr_lst.append(p)
+
+        # reset with proper end state
+        for ind, (s, p) in enumerate(zip(start_dist, self._elqr_lst)):
+            end_state = self.find_end_state(tt, ind, s)
+            p["elqr"].reset(tt, s.reshape((-1, 1)), end_state)
+
         return num_timesteps
 
     def targets_to_wayareas(self, end_states):

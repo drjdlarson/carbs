@@ -181,7 +181,7 @@ def elqr_ospa_obstacles():
     time_horizon = 150 * dt  # run for 120 timesteps
 
     # define starting and ending state for control calculation
-    end_states = np.array([[1.5, 2, 90 * d2r], [0, 2.5, 90 * d2r], [-1.5, 2, 90 * d2r]])
+    end_states = np.array([[1.5, 2, 90 * d2r], [0, 0.75, 90 * d2r], [-1.5, 2, 90 * d2r]])
     start_states = np.array([[-1, -0.15, 90 * d2r], [1, -0.15, 90 * d2r]])
 
     # define nominal control input

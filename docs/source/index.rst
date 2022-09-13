@@ -7,10 +7,11 @@ Welcome to CASER's documentation!
 
    api
    toolchain
+   usage
    References
    license
 
-   
+
 Todos
 -----
 .. todolist::
