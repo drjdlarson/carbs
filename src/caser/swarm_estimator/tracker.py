@@ -282,7 +282,7 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
         valid.sort()
         return [meas[ii] for ii in valid]
 
-    def _ospa_setup_tmat(self, truth, state_dim, true_covs):
+    def _ospa_setup_tmat(self, truth, state_dim, true_covs, state_inds):
         # get sizes
         num_timesteps = len(truth)
         num_objs = 0
@@ -298,15 +298,17 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
         for tt, lst in enumerate(truth):
             for obj_num, s in enumerate(lst):
                 if s is not None:
-                    true_mat[:, tt, obj_num] = s.ravel()
+                    true_mat[:, tt, obj_num] = s.ravel()[state_inds]
+
         if true_covs is not None:
             for tt, lst in enumerate(true_covs):
                 for obj_num, c in enumerate(lst):
                     if c is not None:
-                        true_cov_mat[:, :, tt, obj_num] = c
+                        true_cov_mat[:, :, tt, obj_num] = c[state_inds, state_inds]
+
         return true_mat, true_cov_mat
 
-    def _ospa_setup_emat(self, state_dim):
+    def _ospa_setup_emat(self, state_dim, state_inds):
         # get sizes
         num_timesteps = len(self._states)
         num_objs = 0
@@ -322,12 +324,14 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
         for tt, lst in enumerate(self._states):
             for obj_num, s in enumerate(lst):
                 if s is not None:
-                    est_mat[:, tt, obj_num] = s.ravel()
+                    est_mat[:, tt, obj_num] = s.ravel()[state_inds]
+
         if self.save_covs:
             for tt, lst in enumerate(self._covs):
                 for obj_num, c in enumerate(lst):
                     if c is not None:
-                        est_cov_mat[:, :, tt, obj_num] = c
+                        est_cov_mat[:, :, tt, obj_num] = c[state_inds, state_inds]
+
         return est_mat, est_cov_mat
 
     def _ospa_input_check(self, core_method, truth, true_covs):
@@ -362,7 +366,8 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
                     break
         return state_dim
 
-    def calculate_ospa(self, truth, c, p, core_method=None, true_covs=None):
+    def calculate_ospa(self, truth, c, p, core_method=None,
+                       true_covs=None, state_inds=None):
         """Calculates the OSPA distance between the truth at all timesteps.
 
         Wrapper for :func:`serums.distances.calculate_ospa`.
@@ -388,12 +393,20 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
             order must be consistent with the truth data given. This is only
             needed for core methods :attr:`SingleObjectDistance.HELLINGER`. The defautl
             value is None.
+        state_inds : list, optional
+            Indices in the state vector to use, will be applied to the truth
+            data as well. The default is None which means the full state is
+            used.
         """
         # error checking on optional input arguments
         core_method = self._ospa_input_check(core_method, truth, true_covs)
 
         # setup data structures
-        state_dim = self._ospa_find_s_dim(truth)
+        if state_inds is None:
+            state_dim = self._ospa_find_s_dim(truth)
+            state_inds = range(state_dim)
+        else:
+            state_dim = len(state_inds)
         if state_dim is None:
             warnings.warn("Failed to get state dimension. SKIPPING OSPA calculation")
 
@@ -405,8 +418,10 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
             self._ospa_params["cutoff"] = c
             self._ospa_params["power"] = p
             return
-        true_mat, true_cov_mat = self._ospa_setup_tmat(truth, state_dim, true_covs)
-        est_mat, est_cov_mat = self._ospa_setup_emat(state_dim)
+
+        true_mat, true_cov_mat = self._ospa_setup_tmat(truth, state_dim,
+                                                       true_covs, state_inds)
+        est_mat, est_cov_mat = self._ospa_setup_emat(state_dim, state_inds)
 
         # find OSPA
         (
@@ -2896,7 +2911,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
                 extract_kwargs = {}
             self.extract_states(**extract_kwargs)
 
-    def _ospa_setup_emat(self, state_dim):
+    def _ospa_setup_emat(self, state_dim, state_inds):
         # get sizes
         num_timesteps = len(self.states)
         num_objs = 0
@@ -2919,29 +2934,61 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
                 if lbl is None:
                     continue
                 obj_num = lbl_to_ind[str(lbl)]
-                est_mat[:, tt, obj_num] = s.ravel()
+                est_mat[:, tt, obj_num] = s.ravel()[state_inds]
+
         if self.save_covs:
             for tt, (lbl_lst, c_lst) in enumerate(zip(self.labels, self.covariances)):
                 for lbl, c in zip(lbl_lst, c_lst):
                     if lbl is None:
                         continue
-                    est_cov_mat[:, :, tt, lbl_to_ind[str(lbl)]] = c
+                    est_cov_mat[:, :, tt, lbl_to_ind[str(lbl)]] = c[state_inds, state_inds]
+
         return est_mat, est_cov_mat
 
-    def calculate_ospa2(
-        self,
-        truth,
-        c,
-        p,
-        win_len,
-        true_covs=None,
-        core_method=SingleObjectDistance.MANHATTAN,
-    ):
+    def calculate_ospa2(self, truth, c, p, win_len, true_covs=None,
+                        core_method=SingleObjectDistance.MANHATTAN,
+                        state_inds=None):
+        """Calculates the OSPA(2) distance between the truth at all timesteps.
+
+        Wrapper for :func:`serums.distances.calculate_ospa2`.
+
+        Parameters
+        ----------
+        truth : list
+            Each element represents a timestep and is a list of N x 1 numpy array,
+            one per true agent in the swarm.
+        c : float
+            Distance cutoff for considering a point properly assigned. This
+            influences how cardinality errors are penalized. For :math:`p = 1`
+            it is the penalty given false point estimate.
+        p : int
+            The power of the distance term. Higher values penalize outliers
+            more.
+        win_len : int
+            Number of samples to include in window.
+        core_method : :class:`serums.enums.SingleObjectDistance`, Optional
+            The main distance measure to use for the localization component.
+            The default value is :attr:`.SingleObjectDistance.MANHATTAN`.
+        true_covs : list, Optional
+            Each element represents a timestep and is a list of N x N numpy arrays
+            corresonponding to the uncertainty about the true states. Note the
+            order must be consistent with the truth data given. This is only
+            needed for core methods :attr:`SingleObjectDistance.HELLINGER`. The defautl
+            value is None.
+        state_inds : list, optional
+            Indices in the state vector to use, will be applied to the truth
+            data as well. The default is None which means the full state is
+            used.
+        """
         # error checking on optional input arguments
         core_method = self._ospa_input_check(core_method, truth, true_covs)
 
         # setup data structures
-        state_dim = self._ospa_find_s_dim(truth)
+        if state_inds is None:
+            state_dim = self._ospa_find_s_dim(truth)
+            state_inds = range(state_dim)
+        else:
+            state_dim = len(state_inds)
         if state_dim is None:
             warnings.warn("Failed to get state dimension. SKIPPING OSPA(2) calculation")
 
@@ -2954,8 +3001,10 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             self._ospa2_params["power"] = p
             self._ospa2_params["win_len"] = win_len
             return
-        true_mat, true_cov_mat = self._ospa_setup_tmat(truth, state_dim, true_covs)
-        est_mat, est_cov_mat = self._ospa_setup_emat(state_dim)
+
+        true_mat, true_cov_mat = self._ospa_setup_tmat(truth, state_dim,
+                                                       true_covs, state_inds)
+        est_mat, est_cov_mat = self._ospa_setup_emat(state_dim, state_inds)
 
         # find OSPA
         (
