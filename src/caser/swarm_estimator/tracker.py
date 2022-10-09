@@ -1640,7 +1640,7 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
 
         return f_hndl
 
-    def plot_card_history(self, true_card=None, **kwargs):
+    def plot_card_history(self, ttl=None, true_card=None, **kwargs):
         """Plots the current cardinality time history.
 
         This assumes that the cardinality distribution has been calculated by
@@ -1648,6 +1648,9 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
 
         Parameters
         ----------
+        ttl : string
+            String for the title, if None a default is created. The default is
+            None.
         true_card : array like
             List of the true cardinality at each time
         **kwargs : dict, optional
@@ -1670,6 +1673,8 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
         sig_bnd = opts['sig_bnd']
         time_vec = opts['time_vec']
         lgnd_loc = opts['lgnd_loc']
+        if ttl is None:
+            ttl="Cardinality History"
 
         if len(self._card_time_hist) == 0:
             raise RuntimeWarning("Empty Cardinality")
@@ -1717,7 +1722,7 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
 
         plt.grid(True)
         pltUtil.set_title_label(f_hndl, 0, opts,
-                                ttl="Cardinality History",
+                                ttl=ttl,
                                 x_lbl="Time", y_lbl="Cardinality")
 
         plt.tight_layout()
@@ -1893,6 +1898,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         self._ospa2_params = {}
 
         super().__init__(**kwargs)
+        self._states = [[]]
 
     def save_filter_state(self):
         """Saves filter variables so they can be restored later.
@@ -3069,7 +3075,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
 
         return f_hndl
 
-    def plot_card_dist(self, **kwargs):
+    def plot_card_dist(self, ttl=None, **kwargs):
         """Plots the current cardinality distribution.
 
         This assumes that the cardinality distribution has been calculated by
@@ -3081,6 +3087,12 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
 
             - f_hndl
 
+        Parameters
+        ----------
+        ttl : string
+            Title of the plot, if None a default title is generated. The default
+            is None.
+
         Returns
         -------
         Matplotlib figure
@@ -3088,6 +3100,8 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         """
         opts = pltUtil.init_plotting_opts(**kwargs)
         f_hndl = opts['f_hndl']
+        if ttl is None:
+            ttl="Cardinality Distribution"
 
         if len(self._card_dist) == 0:
             raise RuntimeWarning("Empty Cardinality")
@@ -3101,7 +3115,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         f_hndl.axes[0].bar(x_vals, self._card_dist)
 
         pltUtil.set_title_label(f_hndl, 0, opts,
-                                ttl="Cardinality Distribution",
+                                ttl=ttl,
                                 x_lbl="Cardinality", y_lbl="Probability")
         plt.tight_layout()
 

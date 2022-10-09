@@ -628,7 +628,7 @@ class ELQR:
                 linestyle="-",
                 color=cmap(c_ind),
             )
-            plt.pause(0.001)
+            plt.pause(0.01)
 
     def create_outputs(
         self,
@@ -759,6 +759,8 @@ class ELQR:
             inv_state_args = ()
         if inv_ctrl_args is None:
             inv_ctrl_args = ()
+        if plt_inds is None:
+            plt_inds = [0, 1]
 
         self.end_dist = end_dist
 
@@ -1103,7 +1105,7 @@ class ELQROSPA(ELQR):
                 center = (end_dist[0] + direc).reshape((1, -1))
 
             # add enough "fake" targets so there is a 1-to-1 matching
-            n_miss = end_dist.shape[0] - dist.shape[0]
+            n_miss = dist.shape[0] - end_dist.shape[0]
             end_dist = np.vstack((end_dist, center * np.ones((n_miss, len(inds)))))
 
         distances, a_exists, t_exists = calculate_ospa(
@@ -1120,9 +1122,9 @@ class ELQROSPA(ELQR):
         tar_inds = linear_sum_assignment(cont_sub)[1]
 
         min_ind = tar_inds[cur_ind]
-        if min_ind > self.end_dist.shape[0]:
+        if min_ind >= self.end_dist.shape[0]:
             out = np.zeros((self.end_dist.shape[1], 1))
-            out[inds] = end_dist[min_ind]
+            out[inds] = end_dist[min_ind].reshape(out[inds].shape)
         else:
             out = self.end_dist[min_ind, :].reshape((-1, 1))
         return out
