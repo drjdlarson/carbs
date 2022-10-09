@@ -299,13 +299,11 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
             for obj_num, s in enumerate(lst):
                 if s is not None:
                     true_mat[:, tt, obj_num] = s.ravel()[state_inds]
-
         if true_covs is not None:
             for tt, lst in enumerate(true_covs):
                 for obj_num, c in enumerate(lst):
                     if c is not None:
                         true_cov_mat[:, :, tt, obj_num] = c[state_inds, state_inds]
-
         return true_mat, true_cov_mat
 
     def _ospa_setup_emat(self, state_dim, state_inds):
@@ -325,13 +323,11 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
             for obj_num, s in enumerate(lst):
                 if s is not None:
                     est_mat[:, tt, obj_num] = s.ravel()[state_inds]
-
         if self.save_covs:
             for tt, lst in enumerate(self._covs):
                 for obj_num, c in enumerate(lst):
                     if c is not None:
                         est_cov_mat[:, :, tt, obj_num] = c[state_inds, state_inds]
-
         return est_mat, est_cov_mat
 
     def _ospa_input_check(self, core_method, truth, true_covs):
@@ -366,8 +362,9 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
                     break
         return state_dim
 
-    def calculate_ospa(self, truth, c, p, core_method=None,
-                       true_covs=None, state_inds=None):
+    def calculate_ospa(
+        self, truth, c, p, core_method=None, true_covs=None, state_inds=None
+    ):
         """Calculates the OSPA distance between the truth at all timesteps.
 
         Wrapper for :func:`serums.distances.calculate_ospa`.
@@ -418,9 +415,9 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
             self._ospa_params["cutoff"] = c
             self._ospa_params["power"] = p
             return
-
-        true_mat, true_cov_mat = self._ospa_setup_tmat(truth, state_dim,
-                                                       true_covs, state_inds)
+        true_mat, true_cov_mat = self._ospa_setup_tmat(
+            truth, state_dim, true_covs, state_inds
+        )
         est_mat, est_cov_mat = self._ospa_setup_emat(state_dim, state_inds)
 
         # find OSPA
@@ -2935,19 +2932,26 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
                     continue
                 obj_num = lbl_to_ind[str(lbl)]
                 est_mat[:, tt, obj_num] = s.ravel()[state_inds]
-
         if self.save_covs:
             for tt, (lbl_lst, c_lst) in enumerate(zip(self.labels, self.covariances)):
                 for lbl, c in zip(lbl_lst, c_lst):
                     if lbl is None:
                         continue
-                    est_cov_mat[:, :, tt, lbl_to_ind[str(lbl)]] = c[state_inds, state_inds]
-
+                    est_cov_mat[:, :, tt, lbl_to_ind[str(lbl)]] = c[
+                        state_inds, state_inds
+                    ]
         return est_mat, est_cov_mat
 
-    def calculate_ospa2(self, truth, c, p, win_len, true_covs=None,
-                        core_method=SingleObjectDistance.MANHATTAN,
-                        state_inds=None):
+    def calculate_ospa2(
+        self,
+        truth,
+        c,
+        p,
+        win_len,
+        true_covs=None,
+        core_method=SingleObjectDistance.MANHATTAN,
+        state_inds=None,
+    ):
         """Calculates the OSPA(2) distance between the truth at all timesteps.
 
         Wrapper for :func:`serums.distances.calculate_ospa2`.
@@ -3001,9 +3005,9 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             self._ospa2_params["power"] = p
             self._ospa2_params["win_len"] = win_len
             return
-
-        true_mat, true_cov_mat = self._ospa_setup_tmat(truth, state_dim,
-                                                       true_covs, state_inds)
+        true_mat, true_cov_mat = self._ospa_setup_tmat(
+            truth, state_dim, true_covs, state_inds
+        )
         est_mat, est_cov_mat = self._ospa_setup_emat(state_dim, state_inds)
 
         # find OSPA
@@ -3742,7 +3746,9 @@ class _IMMGLMBBase:
         return new_f_state, new_s, new_c, new_w
 
 
-class IMMGeneralizedLabeledMultiBernoulli(_IMMGLMBBase, GeneralizedLabeledMultiBernoulli):
+class IMMGeneralizedLabeledMultiBernoulli(
+    _IMMGLMBBase, GeneralizedLabeledMultiBernoulli
+):
     """An implementation of the IMM-GLMB algorithm."""
 
     def __init__(self, **kwargs):
