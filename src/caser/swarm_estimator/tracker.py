@@ -979,7 +979,7 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         scat.set_offsets(x[plt_inds[0:2], :].T)
         return scat
 
-    def plot_states(self, plt_inds, state_lbl='States', state_color=None,
+    def plot_states(self, plt_inds, state_lbl='States', ttl=None, state_color=None,
                     **kwargs):
         """Plots the best estimate for the states.
 
@@ -1006,6 +1006,9 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         state_lbl : string
             Value to appear in legend for the states. Only appears if the
             legend is shown
+        ttl : string, optional
+            Title for the plot, if None a default title is generated. The default
+            is None.
 
         Returns
         -------
@@ -1020,6 +1023,8 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         meas_inds = opts['meas_inds']
         lgnd_loc = opts['lgnd_loc']
         marker = opts['marker']
+        if ttl is None:
+            ttl = "State Estimates"
 
         if rng is None:
             rng = rnd.default_rng(1)
@@ -1144,7 +1149,7 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
                                        edgecolors=(0, 0, 0))
 
         f_hndl.axes[0].grid(True)
-        pltUtil.set_title_label(f_hndl, 0, opts, ttl="State Estimates",
+        pltUtil.set_title_label(f_hndl, 0, opts, ttl=ttl,
                                 x_lbl="x-position", y_lbl="y-position")
         if lgnd_loc is not None:
             plt.legend(loc=lgnd_loc)
@@ -1452,7 +1457,7 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
 
         qz_temp = np.zeros((plen, zlen))
         mean_temp = np.zeros((zlen, xdim, plen))
-        cov_temp = np.zeros((plen, xdim, xdim))
+        cov_temp = np.zeros((zlen, plen, xdim, xdim))
 
         for z_ind in range(0, zlen):
             for p_ind in range(0, plen):
@@ -1461,20 +1466,14 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
 
                 (mean, qz) = self.filter.correct(timestep, meas[z_ind], state,
                                                  **filt_args)
-                cov = self.filter.cov
                 qz_temp[p_ind, z_ind] = qz
                 mean_temp[z_ind, :, p_ind] = np.ndarray.flatten(mean)
-                cov_temp[[p_ind], :, :] = cov
+                cov_temp[z_ind, p_ind, :, :] = self.filter.cov.copy()
 
         xivals = np.zeros(zlen)
         pdc = self.prob_detection / self.clutter_den
         for e in range(0, zlen):
             xivals[e] = pdc * np.dot(w_pred.T, qz_temp[:, [e]])
-            # xilog = []
-            # for c in range(0, len(w_pred)):
-            #     xilog.append(np.log(w_pred[[c]]).item())
-            #     xilog.append(np.log(qz_temp[c, e]))
-            # xivals[e] = np.exp(np.log(pdc) + np.sum(xilog))
 
         esfvals_E = get_elem_sym_fnc(xivals)
         esfvals_D = np.zeros((zlen, zlen))
@@ -1536,7 +1535,6 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
         gmix = deepcopy(probDensity)
         w_update = ((ups1_E.T @ self._card_dist)
                     / (ups0_E.T @ self._card_dist)) * self.prob_miss_detection * w_pred
-        # w_update = np.exp(w_update)
 
         gmix.weights = [x.item() for x in w_update]
 
@@ -1546,7 +1544,7 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
             w_temp = wt_1 * wt_2
             for ww in range(0, w_temp.shape[0]):
                 gmix.add_components(mean_temp[ee, :, ww].reshape((xdim, 1)),
-                                    cov_temp[ww, :, :], w_temp[ww].item())
+                                    cov_temp[ee, ww, :, :], w_temp[ww].item())
 
         cdn_update = self._card_dist.copy()
         for ii in range(0, len(cdn_update)):
@@ -1573,7 +1571,7 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
         while ii < s_weights.size and tot_agents < self.cardinality:
             idx = int(s_weights[ii])
 
-            n_agents = round(self._gaussMix.weights[idx])
+            n_agents = np.ceil(self._gaussMix.weights[idx])
             if n_agents <= 0:
                 msg = "Gaussian weights are 0 before reaching cardinality"
                 warnings.warn(msg, RuntimeWarning)
