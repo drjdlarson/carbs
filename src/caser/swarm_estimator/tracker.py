@@ -60,9 +60,19 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
         by a function call.
     """
 
-    def __init__(self, in_filter=None, prob_detection=1, prob_survive=1,
-                 birth_terms=None, clutter_rate=0, clutter_den=0,
-                 inv_chi2_gate=0, save_covs=False, debug_plots=False, **kwargs):
+    def __init__(
+        self,
+        in_filter=None,
+        prob_detection=1,
+        prob_survive=1,
+        birth_terms=None,
+        clutter_rate=0,
+        clutter_den=0,
+        inv_chi2_gate=0,
+        save_covs=False,
+        debug_plots=False,
+        **kwargs
+    ):
         if birth_terms is None:
             birth_terms = []
         self.filter = deepcopy(in_filter)
@@ -85,7 +95,9 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
         self._ospa_params = {}
 
         self._states = []  # local copy for internal modification
-        self._meas_tab = []  # list of lists, one per timestep, inner is all meas at time
+        self._meas_tab = (
+            []
+        )  # list of lists, one per timestep, inner is all meas at time
         self._covs = []  # local copy for internal modification
 
         super().__init__(**kwargs)
@@ -93,14 +105,14 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
     @property
     def ospa_method(self):
         """The distance metric used in the OSPA calculation (read only)."""
-        if 'core' in self._ospa_params:
-            return self._ospa_params['core']
+        if "core" in self._ospa_params:
+            return self._ospa_params["core"]
         else:
             return None
 
     @ospa_method.setter
     def ospa_method(self, val):
-        warnings.warn('OSPA method is read only. SKIPPING')
+        warnings.warn("OSPA method is read only. SKIPPING")
 
     @abc.abstractmethod
     def save_filter_state(self):
@@ -114,27 +126,25 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
         """
         filt_state = {}
         if self.filter is not None:
-            filt_state['filter'] = (type(self.filter),
-                                    self.filter.save_filter_state())
+            filt_state["filter"] = (type(self.filter), self.filter.save_filter_state())
         else:
-            filt_state['filter'] = (None, self.filter)
+            filt_state["filter"] = (None, self.filter)
+        filt_state["prob_detection"] = self.prob_detection
+        filt_state["prob_survive"] = self.prob_survive
+        filt_state["birth_terms"] = self.birth_terms
+        filt_state["clutter_rate"] = self.clutter_rate
+        filt_state["clutter_den"] = self.clutter_den
+        filt_state["inv_chi2_gate"] = self.inv_chi2_gate
+        filt_state["save_covs"] = self.save_covs
+        filt_state["debug_plots"] = self.debug_plots
+        filt_state["ospa"] = self.ospa
+        filt_state["ospa_localization"] = self.ospa_localization
+        filt_state["ospa_cardinality"] = self.ospa_cardinality
 
-        filt_state['prob_detection'] = self.prob_detection
-        filt_state['prob_survive'] = self.prob_survive
-        filt_state['birth_terms'] = self.birth_terms
-        filt_state['clutter_rate'] = self.clutter_rate
-        filt_state['clutter_den'] = self.clutter_den
-        filt_state['inv_chi2_gate'] = self.inv_chi2_gate
-        filt_state['save_covs'] = self.save_covs
-        filt_state['debug_plots'] = self.debug_plots
-        filt_state['ospa'] = self.ospa
-        filt_state['ospa_localization'] = self.ospa_localization
-        filt_state['ospa_cardinality'] = self.ospa_cardinality
-
-        filt_state['_states'] = self._states
-        filt_state['_meas_tab'] = self._meas_tab
-        filt_state['_covs'] = self._covs
-        filt_state['_ospa_params'] = self._ospa_params
+        filt_state["_states"] = self._states
+        filt_state["_meas_tab"] = self._meas_tab
+        filt_state["_covs"] = self._covs
+        filt_state["_ospa_params"] = self._ospa_params
 
         return filt_state
 
@@ -148,29 +158,28 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
         filter save function such that a new instance would generate the same
         output as the original instance that called the save function.
         """
-        cls_type = filt_state['filter'][0]
+        cls_type = filt_state["filter"][0]
         if cls_type is not None:
             self.filter = cls_type()
-            self.filter.load_filter_state(filt_state['filter'][1])
+            self.filter.load_filter_state(filt_state["filter"][1])
         else:
-            self.filter = filt_state['filter']
+            self.filter = filt_state["filter"]
+        self.prob_detection = filt_state["prob_detection"]
+        self.prob_survive = filt_state["prob_survive"]
+        self.birth_terms = filt_state["birth_terms"]
+        self.clutter_rate = filt_state["clutter_rate"]
+        self.clutter_den = filt_state["clutter_den"]
+        self.inv_chi2_gate = filt_state["inv_chi2_gate"]
+        self.save_covs = filt_state["save_covs"]
+        self.debug_plots = filt_state["debug_plots"]
+        self.ospa = filt_state["ospa"]
+        self.ospa_localization = filt_state["ospa_localization"]
+        self.ospa_cardinality = filt_state["ospa_cardinality"]
 
-        self.prob_detection = filt_state['prob_detection']
-        self.prob_survive = filt_state['prob_survive']
-        self.birth_terms = filt_state['birth_terms']
-        self.clutter_rate = filt_state['clutter_rate']
-        self.clutter_den = filt_state['clutter_den']
-        self.inv_chi2_gate = filt_state['inv_chi2_gate']
-        self.save_covs = filt_state['save_covs']
-        self.debug_plots = filt_state['debug_plots']
-        self.ospa = filt_state['ospa']
-        self.ospa_localization = filt_state['ospa_localization']
-        self.ospa_cardinality = filt_state['ospa_cardinality']
-
-        self._states = filt_state['_states']
-        self._meas_tab = filt_state['_meas_tab']
-        self._covs = filt_state['_covs']
-        self._ospa_params = filt_state['_ospa_params']
+        self._states = filt_state["_states"]
+        self._meas_tab = filt_state["_meas_tab"]
+        self._covs = filt_state["_covs"]
+        self._ospa_params = filt_state["_ospa_params"]
 
     @property
     def prob_miss_detection(self):
@@ -222,8 +231,7 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
         """
         pass
 
-    def _gate_meas(self, meas, means, covs, meas_mat_args={},
-                   est_meas_args={}):
+    def _gate_meas(self, meas, means, covs, meas_mat_args={}, est_meas_args={}):
         """Gates measurements based on current estimates.
 
         Notes
@@ -268,10 +276,9 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
                 if ii in valid:
                     continue
                 inov = z - est
-                dist = np.sum((inv_sqrt_m_cov.T @ inov)**2)
+                dist = np.sum((inv_sqrt_m_cov.T @ inov) ** 2)
                 if dist < self.inv_chi2_gate:
                     valid.append(ii)
-
         valid.sort()
         return [meas[ii] for ii in valid]
 
@@ -281,25 +288,22 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
         num_objs = 0
 
         for lst in truth:
-            num_objs = np.max([num_objs,
-                               np.sum([_x is not None for _x in lst]).astype(int)])
-
+            num_objs = np.max(
+                [num_objs, np.sum([_x is not None for _x in lst]).astype(int)]
+            )
         # create matrices
         true_mat = np.nan * np.ones((state_dim, num_timesteps, num_objs))
-        true_cov_mat = np.nan * np.ones((state_dim, state_dim, num_timesteps,
-                                         num_objs))
+        true_cov_mat = np.nan * np.ones((state_dim, state_dim, num_timesteps, num_objs))
 
         for tt, lst in enumerate(truth):
             for obj_num, s in enumerate(lst):
                 if s is not None:
                     true_mat[:, tt, obj_num] = s.ravel()[state_inds]
-
         if true_covs is not None:
             for tt, lst in enumerate(true_covs):
                 for obj_num, c in enumerate(lst):
                     if c is not None:
                         true_cov_mat[:, :, tt, obj_num] = c[state_inds, state_inds]
-
         return true_mat, true_cov_mat
 
     def _ospa_setup_emat(self, state_dim, state_inds):
@@ -308,41 +312,35 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
         num_objs = 0
 
         for lst in self._states:
-            num_objs = np.max([num_objs,
-                               np.sum([_x is not None for _x in lst]).astype(int)])
-
+            num_objs = np.max(
+                [num_objs, np.sum([_x is not None for _x in lst]).astype(int)]
+            )
         # create matrices
         est_mat = np.nan * np.ones((state_dim, num_timesteps, num_objs))
-        est_cov_mat = np.nan * np.ones((state_dim, state_dim, num_timesteps,
-                                        num_objs))
+        est_cov_mat = np.nan * np.ones((state_dim, state_dim, num_timesteps, num_objs))
 
         for tt, lst in enumerate(self._states):
             for obj_num, s in enumerate(lst):
                 if s is not None:
                     est_mat[:, tt, obj_num] = s.ravel()[state_inds]
-
         if self.save_covs:
             for tt, lst in enumerate(self._covs):
                 for obj_num, c in enumerate(lst):
                     if c is not None:
                         est_cov_mat[:, :, tt, obj_num] = c[state_inds, state_inds]
-
         return est_mat, est_cov_mat
 
     def _ospa_input_check(self, core_method, truth, true_covs):
         if core_method is None:
             core_method = SingleObjectDistance.EUCLIDEAN
-
         elif core_method is SingleObjectDistance.MAHALANOBIS and not self.save_covs:
-            msg = 'Must save covariances to calculate {:s} OSPA. Using {:s} instead'
+            msg = "Must save covariances to calculate {:s} OSPA. Using {:s} instead"
             warnings.warn(msg.format(core_method, SingleObjectDistance.EUCLIDEAN))
             core_method = SingleObjectDistance.EUCLIDEAN
-
         elif core_method is SingleObjectDistance.HELLINGER and true_covs is None:
-            msg = 'Must save covariances to calculate {:s} OSPA. Using {:s} instead'
+            msg = "Must save covariances to calculate {:s} OSPA. Using {:s} instead"
             warnings.warn(msg.format(core_method, SingleObjectDistance.EUCLIDEAN))
             core_method = SingleObjectDistance.EUCLIDEAN
-
         return core_method
 
     def _ospa_find_s_dim(self, truth):
@@ -354,7 +352,6 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
                     break
             if state_dim is not None:
                 break
-
         if state_dim is None:
             for lst in self._states:
                 for _x in lst:
@@ -363,11 +360,11 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
                         break
                 if state_dim is not None:
                     break
-
         return state_dim
 
-    def calculate_ospa(self, truth, c, p, core_method=None,
-                       true_covs=None, state_inds=None):
+    def calculate_ospa(
+        self, truth, c, p, core_method=None, true_covs=None, state_inds=None
+    ):
         """Calculates the OSPA distance between the truth at all timesteps.
 
         Wrapper for :func:`serums.distances.calculate_ospa`.
@@ -408,88 +405,97 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
         else:
             state_dim = len(state_inds)
         if state_dim is None:
-            warnings.warn('Failed to get state dimension. SKIPPING OSPA calculation')
+            warnings.warn("Failed to get state dimension. SKIPPING OSPA calculation")
 
             nt = len(self._states)
             self.ospa = np.zeros(nt)
             self.ospa_localization = np.zeros(nt)
             self.ospa_cardinality = np.zeros(nt)
-            self._ospa_params['core'] = core_method
-            self._ospa_params['cutoff'] = c
-            self._ospa_params['power'] = p
+            self._ospa_params["core"] = core_method
+            self._ospa_params["cutoff"] = c
+            self._ospa_params["power"] = p
             return
-
-        true_mat, true_cov_mat = self._ospa_setup_tmat(truth, state_dim,
-                                                       true_covs, state_inds)
+        true_mat, true_cov_mat = self._ospa_setup_tmat(
+            truth, state_dim, true_covs, state_inds
+        )
         est_mat, est_cov_mat = self._ospa_setup_emat(state_dim, state_inds)
 
         # find OSPA
-        (self.ospa, self.ospa_localization, self.ospa_cardinality,
-         self._ospa_params['core'], self._ospa_params['cutoff'],
-         self._ospa_params['power']) = calculate_ospa(est_mat,
-                                                      true_mat, c, p,
-                                                      use_empty=True,
-                                                      core_method=core_method,
-                                                      true_cov_mat=true_cov_mat,
-                                                      est_cov_mat=est_cov_mat)[0:6]
+        (
+            self.ospa,
+            self.ospa_localization,
+            self.ospa_cardinality,
+            self._ospa_params["core"],
+            self._ospa_params["cutoff"],
+            self._ospa_params["power"],
+        ) = calculate_ospa(
+            est_mat,
+            true_mat,
+            c,
+            p,
+            use_empty=True,
+            core_method=core_method,
+            true_cov_mat=true_cov_mat,
+            est_cov_mat=est_cov_mat,
+        )[
+            0:6
+        ]
 
     def _plt_ospa_hist(self, y_val, time_units, time, ttl, y_lbl, opts):
-        fig = opts['f_hndl']
+        fig = opts["f_hndl"]
 
         if fig is None:
             fig = plt.figure()
             fig.add_subplot(1, 1, 1)
-
         if time is None:
             time = np.arange(y_val.size, dtype=int)
-
         fig.axes[0].grid(True)
         fig.axes[0].ticklabel_format(useOffset=False)
         fig.axes[0].plot(time, y_val)
 
-        pltUtil.set_title_label(fig, 0, opts, ttl=ttl,
-                                x_lbl='Time ({})'.format(time_units),
-                                y_lbl=y_lbl)
+        pltUtil.set_title_label(
+            fig, 0, opts, ttl=ttl, x_lbl="Time ({})".format(time_units), y_lbl=y_lbl
+        )
         fig.tight_layout()
 
         return fig
 
     def _plt_ospa_hist_subs(self, y_vals, time_units, time, ttl, y_lbls, opts):
-        fig = opts['f_hndl']
+        fig = opts["f_hndl"]
         new_plot = fig is None
         num_subs = len(y_vals)
 
         if new_plot:
             fig = plt.figure()
-
         pltUtil.set_title_label(fig, 0, opts, ttl=ttl)
         for ax, (y_val, y_lbl) in enumerate(zip(y_vals, y_lbls)):
             if new_plot:
                 if ax > 0:
-                    kwargs = {'sharex': fig.axes[0]}
+                    kwargs = {"sharex": fig.axes[0]}
                 else:
                     kwargs = {}
                 fig.add_subplot(num_subs, 1, ax + 1, **kwargs)
                 fig.axes[ax].grid(True)
                 fig.axes[ax].ticklabel_format(useOffset=False)
-                kwargs = {'y_lbl': y_lbl}
+                kwargs = {"y_lbl": y_lbl}
                 if ax == len(y_vals) - 1:
-                    kwargs['x_lbl'] = 'Time ({})'.format(time_units)
-
+                    kwargs["x_lbl"] = "Time ({})".format(time_units)
                 pltUtil.set_title_label(fig, ax, opts, **kwargs)
-
             if time is None:
                 time = np.arange(y_val.size, dtype=int)
-
             fig.axes[ax].plot(time, y_val)
-
         if new_plot:
             fig.tight_layout()
-
         return fig
 
-    def plot_ospa_history(self, time_units='index', time=None, main_opts=None,
-                          sub_opts=None, plot_subs=True):
+    def plot_ospa_history(
+        self,
+        time_units="index",
+        time=None,
+        main_opts=None,
+        sub_opts=None,
+        plot_subs=True,
+    ):
         """Plots the OSPA history.
 
         This requires that the OSPA has been calcualted by the approriate
@@ -523,37 +529,45 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
             Dictionary of matplotlib figure objects the data was plotted on.
         """
         if self.ospa is None:
-            warnings.warn('OSPA must be calculated before plotting')
+            warnings.warn("OSPA must be calculated before plotting")
             return
-
         if main_opts is None:
             main_opts = pltUtil.init_plotting_opts()
-
         if sub_opts is None and plot_subs:
             sub_opts = pltUtil.init_plotting_opts()
-
-        fmt = '{:s} OSPA (c = {:.1f}, p = {:d})'
-        ttl = fmt.format(self._ospa_params['core'],
-                         self._ospa_params['cutoff'],
-                         self._ospa_params['power'])
-        y_lbl = 'OSPA'
+        fmt = "{:s} OSPA (c = {:.1f}, p = {:d})"
+        ttl = fmt.format(
+            self._ospa_params["core"],
+            self._ospa_params["cutoff"],
+            self._ospa_params["power"],
+        )
+        y_lbl = "OSPA"
 
         figs = {}
-        figs['OSPA'] = self._plt_ospa_hist(self.ospa, time_units, time, ttl,
-                                           y_lbl, main_opts)
+        figs["OSPA"] = self._plt_ospa_hist(
+            self.ospa, time_units, time, ttl, y_lbl, main_opts
+        )
 
         if plot_subs:
-            fmt = '{:s} OSPA Components (c = {:.1f}, p = {:d})'
-            ttl = fmt.format(self._ospa_params['core'],
-                             self._ospa_params['cutoff'],
-                             self._ospa_params['power'])
-            y_lbls = ['Localiztion', 'Cardinality']
-            figs['OSPA_subs'] = self._plt_ospa_hist_subs([self.ospa_localization,
-                                                          self.ospa_cardinality],
-                                                         time_units, time, ttl,
-                                                         y_lbls, main_opts)
-
+            fmt = "{:s} OSPA Components (c = {:.1f}, p = {:d})"
+            ttl = fmt.format(
+                self._ospa_params["core"],
+                self._ospa_params["cutoff"],
+                self._ospa_params["power"],
+            )
+            y_lbls = ["Localiztion", "Cardinality"]
+            figs["OSPA_subs"] = self._plt_ospa_hist_subs(
+                [self.ospa_localization, self.ospa_cardinality],
+                time_units,
+                time,
+                ttl,
+                y_lbls,
+                main_opts,
+            )
         return figs
+
+
+# class InteractiveMultipleModelBase()
 
 
 class ProbabilityHypothesisDensity(RandomFiniteSetBase):
@@ -584,9 +598,16 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
 
     """
 
-    def __init__(self, gating_on=False, inv_chi2_gate=0, extract_threshold=0.5,
-                 prune_threshold=10**-5, merge_threshold=4, max_gauss=100,
-                 **kwargs):
+    def __init__(
+        self,
+        gating_on=False,
+        inv_chi2_gate=0,
+        extract_threshold=0.5,
+        prune_threshold=10 ** -5,
+        merge_threshold=4,
+        max_gauss=100,
+        **kwargs
+    ):
         self.gating_on = gating_on
         self.inv_chi2_gate = inv_chi2_gate
         self.extract_threshold = extract_threshold
@@ -602,7 +623,7 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         """Saves filter variables so they can be restored later."""
         filt_state = super().save_filter_state()
 
-        raise RuntimeError('Not implmented yet')
+        raise RuntimeError("Not implmented yet")
         return filt_state
 
     def load_filter_state(self, filt_state):
@@ -615,7 +636,7 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         """
         super().load_filter_state(filt_state)
 
-        raise RuntimeError('Not implmented yet')
+        raise RuntimeError("Not implmented yet")
 
     @property
     def states(self):
@@ -681,8 +702,7 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         None.
 
         """
-        self._gaussMix = self._predict_prob_density(timestep, self._gaussMix,
-                                                    filt_args)
+        self._gaussMix = self._predict_prob_density(timestep, self._gaussMix, filt_args)
 
         for gm in self.birth_terms:
             self._gaussMix.add_components(gm.means, gm.covariances, gm.weights)
@@ -711,18 +731,18 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         weights = [self.prob_survive * x for x in probDensity.weights.copy()]
         covariances = []
         means = []
-        for ii, (m, P) in enumerate(zip(probDensity.means,
-                                        probDensity.covariances)):
+        for ii, (m, P) in enumerate(zip(probDensity.means, probDensity.covariances)):
             self.filter.cov = P
             n_mean = self.filter.predict(timestep, m, **filt_args)
             covariances.append(self.filter.cov.copy())
             means.append(n_mean)
+        return smodels.GaussianMixture(
+            means=means, covariances=covariances, weights=weights
+        )
 
-        return smodels.GaussianMixture(means=means, covariances=covariances,
-                                       weights=weights)
-
-    def correct(self, timestep, meas_in, meas_mat_args={}, est_meas_args={},
-                filt_args={}):
+    def correct(
+        self, timestep, meas_in, meas_mat_args={}, est_meas_args={}, filt_args={}
+    ):
         """Correction step of the PHD filter.
 
         This corrects the hypotheses based on the measurements and gates the
@@ -758,10 +778,13 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         meas = deepcopy(meas_in)
 
         if self.gating_on:
-            meas = self._gate_meas(meas, self._gaussMix.means,
-                                   self._gaussMix.covariances, meas_mat_args,
-                                   est_meas_args)
-
+            meas = self._gate_meas(
+                meas,
+                self._gaussMix.means,
+                self._gaussMix.covariances,
+                meas_mat_args,
+                est_meas_args,
+            )
         self._meas_tab.append(meas)
 
         gmix = deepcopy(self._gaussMix)
@@ -807,11 +830,12 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
                 means.append(mean)
                 covariances.append(cov)
                 w_lst.append(w)
-            weights.extend([x / (self.clutter_rate * self.clutter_den + sum(w_lst))
-                            for x in w_lst])
-
-        return smodels.GaussianMixture(means=means, covariances=covariances,
-                                       weights=weights)
+            weights.extend(
+                [x / (self.clutter_rate * self.clutter_den + sum(w_lst)) for x in w_lst]
+            )
+        return smodels.GaussianMixture(
+            means=means, covariances=covariances, weights=weights
+        )
 
     def _prune(self):
         """Removes hypotheses below a threshold.
@@ -819,8 +843,7 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         This should be called once per time step after the correction and
         before the state extraction.
         """
-        inds = np.where(np.asarray(self._gaussMix.weights)
-                        < self.prune_threshold)[0]
+        inds = np.where(np.asarray(self._gaussMix.weights) < self.prune_threshold)[0]
         self._gaussMix.remove_components(inds.flatten().tolist())
 
     def _merge(self):
@@ -839,13 +862,25 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
                 val = diff.T @ inv_cov @ diff
                 if val <= self.merge_threshold:
                     comp_inds.append(ii)
-
             w_new = sum([self._gaussMix.weights[ii] for ii in comp_inds])
-            m_new = sum([self._gaussMix.weights[ii] * self._gaussMix.means[ii]
-                         for ii in comp_inds]) / w_new
-            p_new = sum([self._gaussMix.weights[ii]
-                         * self._gaussMix.covariances[ii]
-                         for ii in comp_inds]) / w_new
+            m_new = (
+                sum(
+                    [
+                        self._gaussMix.weights[ii] * self._gaussMix.means[ii]
+                        for ii in comp_inds
+                    ]
+                )
+                / w_new
+            )
+            p_new = (
+                sum(
+                    [
+                        self._gaussMix.weights[ii] * self._gaussMix.covariances[ii]
+                        for ii in comp_inds
+                    ]
+                )
+                / w_new
+            )
 
             w_lst.append(w_new)
             m_lst.append(m_new)
@@ -854,9 +889,9 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
             loop_inds = loop_inds.symmetric_difference(comp_inds)
             for ii in comp_inds:
                 self._gaussMix.weights[ii] = -1
-
-        self._gaussMix = smodels.GaussianMixture(means=m_lst, covariances=p_lst,
-                                                 weights=w_lst)
+        self._gaussMix = smodels.GaussianMixture(
+            means=m_lst, covariances=p_lst, weights=w_lst
+        )
 
     def _cap(self):
         """Removes least likely hypotheses until a maximum number is reached.
@@ -867,9 +902,10 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         if len(self._gaussMix.weights) > self.max_gauss:
             idx = np.argsort(self._gaussMix.weights)
             w = sum(self._gaussMix.weights)
-            self._gaussMix.remove_components(idx[0:-self.max_gauss])
-            self._gaussMix.weights = [x * (w / sum(self._gaussMix.weights))
-                                      for x in self._gaussMix.weights]
+            self._gaussMix.remove_components(idx[0 : -self.max_gauss])
+            self._gaussMix.weights = [
+                x * (w / sum(self._gaussMix.weights)) for x in self._gaussMix.weights
+            ]
 
     def extract_states(self):
         """Extracts the best state estimates.
@@ -877,8 +913,7 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         This extracts the best states from the distribution. It should be
         called once per time step after the correction function.
         """
-        inds = np.where(np.asarray(self._gaussMix.weights)
-                        >= self.extract_threshold)
+        inds = np.where(np.asarray(self._gaussMix.weights) >= self.extract_threshold)
         inds = np.ndarray.flatten(inds[0])
         s_lst = []
         c_lst = []
@@ -892,8 +927,9 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         if self.save_covs:
             self._covs.append(c_lst)
 
-    def cleanup(self, enable_prune=True, enable_cap=True, enable_merge=True,
-                enable_extract=True):
+    def cleanup(
+        self, enable_prune=True, enable_cap=True, enable_merge=True, enable_extract=True
+    ):
         """Performs the cleanup step of the filter.
 
         This can prune, cap, and extract states. It must be called once per
@@ -921,31 +957,44 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         """
         if enable_prune:
             self._prune()
-
         if enable_merge:
             self._merge()
-
         if enable_cap:
             self._cap()
-
         if enable_extract:
             self.extract_states()
 
-    def __ani_state_plotting(self, f_hndl, tt, states, show_sig, plt_inds, sig_bnd,
-                             color, marker, state_lbl, added_sig_lbl,
-                             added_state_lbl, scat=None):
+    def __ani_state_plotting(
+        self,
+        f_hndl,
+        tt,
+        states,
+        show_sig,
+        plt_inds,
+        sig_bnd,
+        color,
+        marker,
+        state_lbl,
+        added_sig_lbl,
+        added_state_lbl,
+        scat=None,
+    ):
         if scat is None:
             if not added_state_lbl:
-                scat = f_hndl.axes[0].scatter([], [], color=color,
-                                              edgecolors=(0, 0, 0),
-                                              marker=marker)
+                scat = f_hndl.axes[0].scatter(
+                    [], [], color=color, edgecolors=(0, 0, 0), marker=marker
+                )
             else:
-                scat = f_hndl.axes[0].scatter([], [], color=color,
-                                              edgecolors=(0, 0, 0),
-                                              marker=marker, label=state_lbl)
+                scat = f_hndl.axes[0].scatter(
+                    [],
+                    [],
+                    color=color,
+                    edgecolors=(0, 0, 0),
+                    marker=marker,
+                    label=state_lbl,
+                )
         if len(states) == 0:
             return scat
-
         x = np.concatenate(states, axis=1)
         if show_sig:
             sigs = [None] * len(states)
@@ -956,31 +1005,41 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
                 sig[1, 0] = cov[plt_inds[1], plt_inds[0]]
                 sig[1, 1] = cov[plt_inds[1], plt_inds[1]]
                 sigs[ii] = sig
-
             # plot
             for ii, sig in enumerate(sigs):
                 if sig is None:
                     continue
                 w, h, a = pltUtil.calc_error_ellipse(sig, sig_bnd)
                 if not added_sig_lbl:
-                    s = r'${}\sigma$ Error Ellipses'.format(sig_bnd)
-                    e = Ellipse(xy=x[plt_inds, ii], width=w,
-                                height=h, angle=a, zorder=-10000,
-                                animated=True, label=s)
+                    s = r"${}\sigma$ Error Ellipses".format(sig_bnd)
+                    e = Ellipse(
+                        xy=x[plt_inds, ii],
+                        width=w,
+                        height=h,
+                        angle=a,
+                        zorder=-10000,
+                        animated=True,
+                        label=s,
+                    )
                 else:
-                    e = Ellipse(xy=x[plt_inds, ii], width=w,
-                                height=h, angle=a, zorder=-10000,
-                                animated=True)
+                    e = Ellipse(
+                        xy=x[plt_inds, ii],
+                        width=w,
+                        height=h,
+                        angle=a,
+                        zorder=-10000,
+                        animated=True,
+                    )
                 e.set_clip_box(f_hndl.axes[0].bbox)
                 e.set_alpha(0.15)
                 e.set_facecolor(color)
                 f_hndl.axes[0].add_patch(e)
-
         scat.set_offsets(x[plt_inds[0:2], :].T)
         return scat
 
-    def plot_states(self, plt_inds, state_lbl='States', ttl=None, state_color=None,
-                    **kwargs):
+    def plot_states(
+        self, plt_inds, state_lbl="States", ttl=None, state_color=None, **kwargs
+    ):
         """Plots the best estimate for the states.
 
         This assumes that the states have been extracted. It's designed to plot
@@ -1016,19 +1075,17 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
             Instance of the matplotlib figure used
         """
         opts = pltUtil.init_plotting_opts(**kwargs)
-        f_hndl = opts['f_hndl']
-        true_states = opts['true_states']
-        sig_bnd = opts['sig_bnd']
-        rng = opts['rng']
-        meas_inds = opts['meas_inds']
-        lgnd_loc = opts['lgnd_loc']
-        marker = opts['marker']
+        f_hndl = opts["f_hndl"]
+        true_states = opts["true_states"]
+        sig_bnd = opts["sig_bnd"]
+        rng = opts["rng"]
+        meas_inds = opts["meas_inds"]
+        lgnd_loc = opts["lgnd_loc"]
+        marker = opts["marker"]
         if ttl is None:
             ttl = "State Estimates"
-
         if rng is None:
             rng = rnd.default_rng(1)
-
         plt_meas = meas_inds is not None
         show_sig = sig_bnd is not None and self.save_covs
 
@@ -1038,13 +1095,11 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         if f_hndl is None:
             f_hndl = plt.figure()
             f_hndl.add_subplot(1, 1, 1)
-
         # get state dimension
         for states in s_lst:
             if len(states) > 0:
                 x_dim = states[0].size
                 break
-
         # get array of all state values for each label
         added_sig_lbl = False
         added_true_lbl = False
@@ -1060,7 +1115,6 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         for tt, states in enumerate(s_lst):
             if len(states) == 0:
                 continue
-
             x = np.concatenate(states, axis=1)
             if show_sig:
                 sigs = [None] * len(states)
@@ -1071,36 +1125,52 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
                     sig[1, 0] = cov[plt_inds[1], plt_inds[0]]
                     sig[1, 1] = cov[plt_inds[1], plt_inds[1]]
                     sigs[ii] = sig
-
                 # plot
                 for ii, sig in enumerate(sigs):
                     if sig is None:
                         continue
                     w, h, a = pltUtil.calc_error_ellipse(sig, sig_bnd)
                     if not added_sig_lbl:
-                        s = r'${}\sigma$ Error Ellipses'.format(sig_bnd)
-                        e = Ellipse(xy=x[plt_inds, ii], width=w,
-                                    height=h, angle=a, zorder=-10000,
-                                    label=s)
+                        s = r"${}\sigma$ Error Ellipses".format(sig_bnd)
+                        e = Ellipse(
+                            xy=x[plt_inds, ii],
+                            width=w,
+                            height=h,
+                            angle=a,
+                            zorder=-10000,
+                            label=s,
+                        )
                         added_sig_lbl = True
                     else:
-                        e = Ellipse(xy=x[plt_inds, ii], width=w,
-                                    height=h, angle=a, zorder=-10000)
+                        e = Ellipse(
+                            xy=x[plt_inds, ii],
+                            width=w,
+                            height=h,
+                            angle=a,
+                            zorder=-10000,
+                        )
                     e.set_clip_box(f_hndl.axes[0].bbox)
                     e.set_alpha(0.15)
                     e.set_facecolor(color)
                     f_hndl.axes[0].add_patch(e)
-
             if not added_state_lbl:
-                f_hndl.axes[0].scatter(x[plt_inds[0], :], x[plt_inds[1], :],
-                                       color=color, edgecolors=(0, 0, 0),
-                                       marker=marker, label=state_lbl)
+                f_hndl.axes[0].scatter(
+                    x[plt_inds[0], :],
+                    x[plt_inds[1], :],
+                    color=color,
+                    edgecolors=(0, 0, 0),
+                    marker=marker,
+                    label=state_lbl,
+                )
                 added_state_lbl = True
             else:
-                f_hndl.axes[0].scatter(x[plt_inds[0], :], x[plt_inds[1], :],
-                                       color=color, edgecolors=(0, 0, 0),
-                                       marker=marker)
-
+                f_hndl.axes[0].scatter(
+                    x[plt_inds[0], :],
+                    x[plt_inds[1], :],
+                    color=color,
+                    edgecolors=(0, 0, 0),
+                    marker=marker,
+                )
         # if true states are available then plot them
         if true_states is not None:
             if x_dim is None:
@@ -1108,25 +1178,28 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
                     if len(states) > 0:
                         x_dim = states[0].size
                         break
-
             max_true = max([len(x) for x in true_states])
             x = np.nan * np.ones((x_dim, len(true_states), max_true))
             for tt, states in enumerate(true_states):
                 for ii, state in enumerate(states):
                     x[:, [tt], ii] = state.copy()
-
             for ii in range(0, max_true):
                 if not added_true_lbl:
-                    f_hndl.axes[0].plot(x[plt_inds[0], :, ii],
-                                        x[plt_inds[1], :, ii],
-                                        color='k', marker='.',
-                                        label='True Trajectories')
+                    f_hndl.axes[0].plot(
+                        x[plt_inds[0], :, ii],
+                        x[plt_inds[1], :, ii],
+                        color="k",
+                        marker=".",
+                        label="True Trajectories",
+                    )
                     added_true_lbl = True
                 else:
-                    f_hndl.axes[0].plot(x[plt_inds[0], :, ii],
-                                        x[plt_inds[1], :, ii],
-                                        color='k', marker='.')
-
+                    f_hndl.axes[0].plot(
+                        x[plt_inds[0], :, ii],
+                        x[plt_inds[1], :, ii],
+                        color="k",
+                        marker=".",
+                    )
         if plt_meas:
             meas_x = []
             meas_y = []
@@ -1139,27 +1212,48 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
             meas_x = np.asarray(meas_x)
             meas_y = np.asarray(meas_y)
             if not added_meas_lbl:
-                f_hndl.axes[0].scatter(meas_x, meas_y, zorder=-1, alpha=0.35,
-                                       color=color, marker='^',
-                                       edgecolors=(0, 0, 0),
-                                       label='Measurements')
+                f_hndl.axes[0].scatter(
+                    meas_x,
+                    meas_y,
+                    zorder=-1,
+                    alpha=0.35,
+                    color=color,
+                    marker="^",
+                    edgecolors=(0, 0, 0),
+                    label="Measurements",
+                )
             else:
-                f_hndl.axes[0].scatter(meas_x, meas_y, zorder=-1, alpha=0.35,
-                                       color=color, marker='^',
-                                       edgecolors=(0, 0, 0))
-
+                f_hndl.axes[0].scatter(
+                    meas_x,
+                    meas_y,
+                    zorder=-1,
+                    alpha=0.35,
+                    color=color,
+                    marker="^",
+                    edgecolors=(0, 0, 0),
+                )
         f_hndl.axes[0].grid(True)
-        pltUtil.set_title_label(f_hndl, 0, opts, ttl=ttl,
-                                x_lbl="x-position", y_lbl="y-position")
+        pltUtil.set_title_label(
+            f_hndl, 0, opts, ttl=ttl, x_lbl="x-position", y_lbl="y-position"
+        )
+
         if lgnd_loc is not None:
             plt.legend(loc=lgnd_loc)
         plt.tight_layout()
 
         return f_hndl
 
-    def animate_state_plot(self, plt_inds, state_lbl='States', state_color=None,
-                           interval=250, repeat=True, repeat_delay=1000,
-                           save_path=None, **kwargs):
+    def animate_state_plot(
+        self,
+        plt_inds,
+        state_lbl="States",
+        state_color=None,
+        interval=250,
+        repeat=True,
+        repeat_delay=1000,
+        save_path=None,
+        **kwargs
+    ):
         """Creates an animated plot of the states.
 
         Parameters
@@ -1198,26 +1292,36 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
 
         """
         opts = pltUtil.init_plotting_opts(**kwargs)
-        f_hndl = opts['f_hndl']
-        sig_bnd = opts['sig_bnd']
-        rng = opts['rng']
-        meas_inds = opts['meas_inds']
-        lgnd_loc = opts['lgnd_loc']
-        marker = opts['marker']
+        f_hndl = opts["f_hndl"]
+        sig_bnd = opts["sig_bnd"]
+        rng = opts["rng"]
+        meas_inds = opts["meas_inds"]
+        lgnd_loc = opts["lgnd_loc"]
+        marker = opts["marker"]
 
         plt_meas = meas_inds is not None
         show_sig = sig_bnd is not None and self.save_covs
 
         f_hndl.axes[0].grid(True)
-        pltUtil.set_title_label(f_hndl, 0, opts, ttl="State Estimates",
-                                x_lbl="x-position", y_lbl="y-position")
+        pltUtil.set_title_label(
+            f_hndl,
+            0,
+            opts,
+            ttl="State Estimates",
+            x_lbl="x-position",
+            y_lbl="y-position",
+        )
 
-        fr_number = f_hndl.axes[0].annotate("0", (0, 1),
-                                            xycoords="axes fraction",
-                                            xytext=(10, -10),
-                                            textcoords="offset points",
-                                            ha="left", va="top",
-                                            animated=False)
+        fr_number = f_hndl.axes[0].annotate(
+            "0",
+            (0, 1),
+            xycoords="axes fraction",
+            xytext=(10, -10),
+            textcoords="offset points",
+            ha="left",
+            va="top",
+            animated=False,
+        )
 
         added_sig_lbl = False
         added_state_lbl = False
@@ -1229,30 +1333,37 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
             s_color = (r, g, b)
         else:
             s_color = state_color
-
-        state_scat = f_hndl.axes[0].scatter([], [], color=s_color,
-                                            edgecolors=(0, 0, 0),
-                                            marker=marker, label=state_lbl)
+        state_scat = f_hndl.axes[0].scatter(
+            [], [], color=s_color, edgecolors=(0, 0, 0), marker=marker, label=state_lbl
+        )
         meas_scat = None
         if plt_meas:
             m_color = (128 / 255, 128 / 255, 128 / 255)
 
             if meas_scat is None:
                 if not added_meas_lbl:
-                    lbl = 'Measurements'
-                    meas_scat = f_hndl.axes[0].scatter([], [], zorder=-1,
-                                                       alpha=0.35,
-                                                       color=m_color,
-                                                       marker='^',
-                                                       edgecolors='k',
-                                                       label=lbl)
+                    lbl = "Measurements"
+                    meas_scat = f_hndl.axes[0].scatter(
+                        [],
+                        [],
+                        zorder=-1,
+                        alpha=0.35,
+                        color=m_color,
+                        marker="^",
+                        edgecolors="k",
+                        label=lbl,
+                    )
                     added_meas_lbl = True
                 else:
-                    meas_scat = f_hndl.axes[0].scatter([], [], zorder=-1,
-                                                       alpha=0.35,
-                                                       color=m_color,
-                                                       marker='^',
-                                                       edgecolors='k')
+                    meas_scat = f_hndl.axes[0].scatter(
+                        [],
+                        [],
+                        zorder=-1,
+                        alpha=0.35,
+                        color=m_color,
+                        marker="^",
+                        edgecolors="k",
+                    )
 
         def update(tt, *fargs):
             nonlocal added_sig_lbl
@@ -1265,12 +1376,20 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
             fr_number.set_text("Timestep: {j}".format(j=tt))
 
             states = self._states[tt]
-            state_scat = self.__ani_state_plotting(f_hndl, tt, states,
-                                                   show_sig, plt_inds,
-                                                   sig_bnd, s_color, marker,
-                                                   state_lbl, added_sig_lbl,
-                                                   added_state_lbl,
-                                                   scat=state_scat)
+            state_scat = self.__ani_state_plotting(
+                f_hndl,
+                tt,
+                states,
+                show_sig,
+                plt_inds,
+                sig_bnd,
+                s_color,
+                marker,
+                state_lbl,
+                added_sig_lbl,
+                added_state_lbl,
+                scat=state_scat,
+            )
             added_sig_lbl = True
             added_state_lbl = True
 
@@ -1285,19 +1404,20 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
                 meas_scat.set_offsets(np.array([meas_x, meas_y]).T)
 
         # plt.figure(f_hndl.number)
-        anim = animation.FuncAnimation(f_hndl, update,
-                                       frames=len(self._states),
-                                       interval=interval,
-                                       repeat_delay=repeat_delay,
-                                       repeat=repeat)
+        anim = animation.FuncAnimation(
+            f_hndl,
+            update,
+            frames=len(self._states),
+            interval=interval,
+            repeat_delay=repeat_delay,
+            repeat=repeat,
+        )
 
         if lgnd_loc is not None:
             plt.legend(loc=lgnd_loc)
-
         if save_path is not None:
             writer = animation.PillowWriter(fps=30)
             anim.save(save_path, writer=writer)
-
         return anim
 
 
@@ -1324,7 +1444,9 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
         self.agents_per_state = agents_per_state
         self._max_expected_card = max_expected_card
 
-        self._card_dist = np.zeros(self.max_expected_card + 1)  # local copy for internal modification
+        self._card_dist = np.zeros(
+            self.max_expected_card + 1
+        )  # local copy for internal modification
         self._card_dist[0] = 1
         self._card_time_hist = []  # local copy for internal modification
         self._n_states_per_time = []
@@ -1381,7 +1503,6 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
                 temp.append((i - j) * np.log(self.prob_death))
                 terms[i, 0] = np.exp(np.sum(temp)) * self._card_dist[i]
             survive_cdn_predict[j] = np.sum(terms)
-
         cdn_predict = np.zeros(self.max_expected_card + 1)
         for n in range(0, self.max_expected_card + 1):
             terms = np.zeros((self.max_expected_card + 1, 1))
@@ -1397,8 +1518,9 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
             cdn_predict[n] = np.sum(terms)
         self._card_dist = (cdn_predict / np.sum(cdn_predict)).copy()
 
-    def correct(self, timestep, meas_in, meas_mat_args={}, est_meas_args={},
-                filt_args={}):
+    def correct(
+        self, timestep, meas_in, meas_mat_args={}, est_meas_args={}, filt_args={}
+    ):
         """Correction step of the CPHD filter.
 
         This corrects the hypotheses based on the measurements and gates the
@@ -1430,10 +1552,13 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
         meas = deepcopy(meas_in)
 
         if self.gating_on:
-            meas = self._gate_meas(meas, self._gaussMix.means,
-                                   self._gaussMix.covariances, meas_mat_args,
-                                   est_meas_args)
-
+            meas = self._gate_meas(
+                meas,
+                self._gaussMix.means,
+                self._gaussMix.covariances,
+                meas_mat_args,
+                est_meas_args,
+            )
         self._meas_tab.append(meas)
 
         gmix = deepcopy(self._gaussMix)  # predicted gm
@@ -1449,7 +1574,6 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
         w_pred = np.zeros((len(probDensity.weights), 1))
         for i in range(0, len(probDensity.weights)):
             w_pred[i] = probDensity.weights[i]
-
         xdim = len(probDensity.means[0])
 
         plen = len(probDensity.means)
@@ -1464,17 +1588,16 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
                 self.filter.cov = probDensity.covariances[p_ind]
                 state = probDensity.means[p_ind]
 
-                (mean, qz) = self.filter.correct(timestep, meas[z_ind], state,
-                                                 **filt_args)
+                (mean, qz) = self.filter.correct(
+                    timestep, meas[z_ind], state, **filt_args
+                )
                 qz_temp[p_ind, z_ind] = qz
                 mean_temp[z_ind, :, p_ind] = np.ndarray.flatten(mean)
                 cov_temp[z_ind, p_ind, :, :] = self.filter.cov.copy()
-
         xivals = np.zeros(zlen)
         pdc = self.prob_detection / self.clutter_den
         for e in range(0, zlen):
             xivals[e] = pdc * np.dot(w_pred.T, qz_temp[:, [e]])
-
         esfvals_E = get_elem_sym_fnc(xivals)
         esfvals_D = np.zeros((zlen, zlen))
 
@@ -1482,7 +1605,6 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
             xi_temp = xivals.copy()
             xi_temp = np.delete(xi_temp, j)
             esfvals_D[:, [j]] = get_elem_sym_fnc(xi_temp)
-
         ups0_E = np.zeros((self.max_expected_card + 1, 1))
         ups1_E = np.zeros((self.max_expected_card + 1, 1))
         ups1_D = np.zeros((self.max_expected_card + 1, zlen))
@@ -1491,8 +1613,7 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
         for nn in range(0, self.max_expected_card + 1):
             terms0_E = np.zeros((min(zlen, nn) + 1))
             for jj in range(0, min(zlen, nn) + 1):
-                t1 = -self.clutter_rate + (zlen - jj) \
-                    * np.log(self.clutter_rate)
+                t1 = -self.clutter_rate + (zlen - jj) * np.log(self.clutter_rate)
                 t2 = sum([np.log(x) for x in range(1, nn + 1)])
                 t3 = -1 * sum([np.log(x) for x in range(1, nn - jj + 1)])
                 t4 = (nn - jj) * np.log(self.prob_death)
@@ -1503,15 +1624,12 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
             terms1_E = np.zeros((min(zlen, nn) + 1))
             for jj in range(0, min(zlen, nn) + 1):
                 if nn >= jj + 1:
-                    t1 = -self.clutter_rate + (zlen - jj) \
-                        * np.log(self.clutter_rate)
+                    t1 = -self.clutter_rate + (zlen - jj) * np.log(self.clutter_rate)
                     t2 = sum([np.log(x) for x in range(1, nn + 1)])
-                    t3 = -1 * sum([np.log(x)
-                                   for x in range(1, nn - (jj + 1) + 1)])
+                    t3 = -1 * sum([np.log(x) for x in range(1, nn - (jj + 1) + 1)])
                     t4 = (nn - (jj + 1)) * np.log(self.prob_death)
                     t5 = -(jj + 1) * np.log(tot_w_pred)
-                    terms1_E[jj] = np.exp(t1 + t2 + t3 + t4 + t5) \
-                        * esfvals_E[jj]
+                    terms1_E[jj] = np.exp(t1 + t2 + t3 + t4 + t5) * esfvals_E[jj]
             ups1_E[nn] = np.sum(terms1_E)
 
             if zlen != 0:
@@ -1519,40 +1637,47 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
                 for ell in range(1, zlen + 1):
                     for jj in range(0, min((zlen - 1), nn) + 1):
                         if nn >= jj + 1:
-                            t1 = -self.clutter_rate + ((zlen - 1) - jj) \
-                                * np.log(self.clutter_rate)
+                            t1 = -self.clutter_rate + ((zlen - 1) - jj) * np.log(
+                                self.clutter_rate
+                            )
                             t2 = sum([np.log(x) for x in range(1, nn + 1)])
-                            t3 = -1 * sum([np.log(x)
-                                           for x in range(1,
-                                                          nn - (jj + 1) + 1)])
+                            t3 = -1 * sum(
+                                [np.log(x) for x in range(1, nn - (jj + 1) + 1)]
+                            )
                             t4 = (nn - (jj + 1)) * np.log(self.prob_death)
                             t5 = -(jj + 1) * np.log(tot_w_pred)
-                            terms1_D[jj, ell - 1] = np.exp(t1 + t2 + t3
-                                                           + t4 + t5) \
-                                * esfvals_D[jj, ell - 1]
+                            terms1_D[jj, ell - 1] = (
+                                np.exp(t1 + t2 + t3 + t4 + t5) * esfvals_D[jj, ell - 1]
+                            )
                 ups1_D[nn, :] = np.sum(terms1_D, axis=0)
-
         gmix = deepcopy(probDensity)
-        w_update = ((ups1_E.T @ self._card_dist)
-                    / (ups0_E.T @ self._card_dist)) * self.prob_miss_detection * w_pred
+        w_update = (
+            ((ups1_E.T @ self._card_dist) / (ups0_E.T @ self._card_dist))
+            * self.prob_miss_detection
+            * w_pred
+        )
 
         gmix.weights = [x.item() for x in w_update]
 
         for ee in range(0, zlen):
-            wt_1 = ((ups1_D[:, [ee]].T @ self._card_dist) / (ups0_E.T @ self._card_dist)).reshape((1, 1))
+            wt_1 = (
+                (ups1_D[:, [ee]].T @ self._card_dist) / (ups0_E.T @ self._card_dist)
+            ).reshape((1, 1))
             wt_2 = self.prob_detection * qz_temp[:, [ee]] / self.clutter_den * w_pred
             w_temp = wt_1 * wt_2
             for ww in range(0, w_temp.shape[0]):
-                gmix.add_components(mean_temp[ee, :, ww].reshape((xdim, 1)),
-                                    cov_temp[ee, ww, :, :], w_temp[ww].item())
-
+                gmix.add_components(
+                    mean_temp[ee, :, ww].reshape((xdim, 1)),
+                    cov_temp[ee, ww, :, :],
+                    w_temp[ww].item(),
+                )
         cdn_update = self._card_dist.copy()
         for ii in range(0, len(cdn_update)):
             cdn_update[ii] = ups0_E[ii] * self._card_dist[ii]
-
         self._card_dist = cdn_update / np.sum(cdn_update)
-        self._card_time_hist.append((np.argmax(self._card_dist).item(),
-                                     np.std(self._card_dist)))
+        self._card_time_hist.append(
+            (np.argmax(self._card_dist).item(), np.std(self._card_dist))
+        )
 
         return gmix
 
@@ -1576,16 +1701,13 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
                 msg = "Gaussian weights are 0 before reaching cardinality"
                 warnings.warn(msg, RuntimeWarning)
                 break
-
             tot_agents += n_agents
             self.agents_per_state.append(n_agents)
 
             s_lst.append(self._gaussMix.means[idx])
             if self.save_covs:
                 c_lst.append(self._gaussMix.covariances[idx])
-
             ii += 1
-
         self._states.append(s_lst)
         if self.save_covs:
             self._covs.append(c_lst)
@@ -1618,22 +1740,25 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
             If the cardinality distribution is empty.
         """
         opts = pltUtil.init_plotting_opts(**kwargs)
-        f_hndl = opts['f_hndl']
+        f_hndl = opts["f_hndl"]
 
         if len(self._card_dist) == 0:
             raise RuntimeWarning("Empty Cardinality")
             return f_hndl
-
         if f_hndl is None:
             f_hndl = plt.figure()
             f_hndl.add_subplot(1, 1, 1)
-
         x_vals = np.arange(0, len(self._card_dist))
         f_hndl.axes[0].bar(x_vals, self._card_dist)
 
-        pltUtil.set_title_label(f_hndl, 0, opts,
-                                ttl="Cardinality Distribution",
-                                x_lbl="Cardinality", y_lbl="Probability")
+        pltUtil.set_title_label(
+            f_hndl,
+            0,
+            opts,
+            ttl="Cardinality Distribution",
+            x_lbl="Cardinality",
+            y_lbl="Probability",
+        )
         plt.tight_layout()
 
         return f_hndl
@@ -1667,17 +1792,15 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
             Instance of the matplotlib figure used
         """
         opts = pltUtil.init_plotting_opts(**kwargs)
-        f_hndl = opts['f_hndl']
-        sig_bnd = opts['sig_bnd']
-        time_vec = opts['time_vec']
-        lgnd_loc = opts['lgnd_loc']
+        f_hndl = opts["f_hndl"]
+        sig_bnd = opts["sig_bnd"]
+        time_vec = opts["time_vec"]
+        lgnd_loc = opts["lgnd_loc"]
         if ttl is None:
-            ttl="Cardinality History"
-
+            ttl = "Cardinality History"
         if len(self._card_time_hist) == 0:
             raise RuntimeWarning("Empty Cardinality")
             return f_hndl
-
         if sig_bnd is not None:
             stds = [sig_bnd * x[1] for x in self._card_time_hist]
         card = [x[0] for x in self._card_time_hist]
@@ -1685,43 +1808,50 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
         if f_hndl is None:
             f_hndl = plt.figure()
             f_hndl.add_subplot(1, 1, 1)
-
         if time_vec is None:
             x_vals = [ii for ii in range(0, len(card))]
         else:
             x_vals = time_vec
-
         if true_card is not None:
             if len(true_card) != len(x_vals):
                 c_len = len(true_card)
                 t_len = len(x_vals)
-                msg = "True Cardinality vector length ({})".format(c_len) \
-                    + " does not match time vector length ({})".format(t_len)
+                msg = "True Cardinality vector length ({})".format(
+                    c_len
+                ) + " does not match time vector length ({})".format(t_len)
                 warnings.warn(msg)
             else:
-                f_hndl.axes[0].plot(x_vals, true_card, color='g',
-                                    label='True Cardinality',
-                                    linestyle='-')
-
-        f_hndl.axes[0].plot(x_vals, card, label='Cardinality', color='k',
-                            linestyle='--')
+                f_hndl.axes[0].plot(
+                    x_vals,
+                    true_card,
+                    color="g",
+                    label="True Cardinality",
+                    linestyle="-",
+                )
+        f_hndl.axes[0].plot(
+            x_vals, card, label="Cardinality", color="k", linestyle="--"
+        )
 
         if sig_bnd is not None:
-            lbl = r'${}\sigma$ Bound'.format(sig_bnd)
-            f_hndl.axes[0].plot(x_vals, [x + s for (x, s) in zip(card, stds)],
-                                linestyle='--', color='r', label=lbl)
-            f_hndl.axes[0].plot(x_vals, [x - s for (x, s) in zip(card, stds)],
-                                linestyle='--', color='r')
-
+            lbl = r"${}\sigma$ Bound".format(sig_bnd)
+            f_hndl.axes[0].plot(
+                x_vals,
+                [x + s for (x, s) in zip(card, stds)],
+                linestyle="--",
+                color="r",
+                label=lbl,
+            )
+            f_hndl.axes[0].plot(
+                x_vals, [x - s for (x, s) in zip(card, stds)], linestyle="--", color="r"
+            )
         f_hndl.axes[0].ticklabel_format(useOffset=False)
 
         if lgnd_loc is not None:
             plt.legend(loc=lgnd_loc)
-
         plt.grid(True)
-        pltUtil.set_title_label(f_hndl, 0, opts,
-                                ttl=ttl,
-                                x_lbl="Time", y_lbl="Cardinality")
+        pltUtil.set_title_label(
+            f_hndl, 0, opts, ttl=ttl, x_lbl="Time", y_lbl="Cardinality"
+        )
 
         plt.tight_layout()
 
@@ -1752,28 +1882,30 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
 
         """
         opts = pltUtil.init_plotting_opts(**kwargs)
-        f_hndl = opts['f_hndl']
-        lgnd_loc = opts['lgnd_loc']
+        f_hndl = opts["f_hndl"]
+        lgnd_loc = opts["lgnd_loc"]
 
         if not self.debug_plots:
-            msg = 'Debug plots turned off'
+            msg = "Debug plots turned off"
             warnings.warn(msg)
             return f_hndl
-
         if f_hndl is None:
             f_hndl = plt.figure()
             f_hndl.add_subplot(1, 1, 1)
-
         if lgnd_loc is not None:
             plt.legend(loc=lgnd_loc)
-
         x_vals = [ii for ii in range(0, len(self._n_states_per_time))]
 
         f_hndl.axes[0].plot(x_vals, self._n_states_per_time)
         plt.grid(True)
-        pltUtil.set_title_label(f_hndl, 0, opts,
-                                ttl="Gaussians per Timestep",
-                                x_lbl="Time", y_lbl="Number of Gaussians")
+        pltUtil.set_title_label(
+            f_hndl,
+            0,
+            opts,
+            ttl="Gaussians per Timestep",
+            x_lbl="Time",
+            y_lbl="Number of Gaussians",
+        )
 
         return f_hndl
 
@@ -1818,10 +1950,14 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             self.label = ()  # time step born, index of birth model born from
             self.distrib_weights_hist = []  # list of weights of the probDensity
             self.filt_states = []  # list of dictionaries from filters save function
-            self.meas_assoc_hist = []  # list indices into measurement list per time step
+            self.meas_assoc_hist = (
+                []
+            )  # list indices into measurement list per time step
 
             self.state_hist = []  # list of lists of numpy arrays for each timestep
-            self.cov_hist = []  # list of lists of numpy arrays for each timestep (or None)
+            self.cov_hist = (
+                []
+            )  # list of lists of numpy arrays for each timestep (or None)
 
             """ linear index corresponding to timestep, manually updated. Used
             to index things since timestep in label can have decimals."""
@@ -1835,8 +1971,9 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             self.meas_assoc_hist = tab.meas_assoc_hist.copy()
 
             self.state_hist = [s.copy() for s in [s_lst for s_lst in tab.state_hist]]
-            self.cov_hist = [c.copy() if c else []
-                             for c in [c_lst for c_lst in tab.cov_hist]]
+            self.cov_hist = [
+                c.copy() if c else [] for c in [c_lst for c_lst in tab.cov_hist]
+            ]
 
             self.time_index = tab.time_index
 
@@ -1859,9 +1996,18 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             self.states = []
             self.covs = []
 
-    def __init__(self, req_births=None, req_surv=None, req_upd=None,
-                 gating_on=False, prune_threshold=10**-15, max_hyps=3000,
-                 decimal_places=2, save_measurements=False, **kwargs):
+    def __init__(
+        self,
+        req_births=None,
+        req_surv=None,
+        req_upd=None,
+        gating_on=False,
+        prune_threshold=10 ** -15,
+        max_hyps=3000,
+        decimal_places=2,
+        save_measurements=False,
+        **kwargs
+    ):
         self.req_births = req_births
         self.req_surv = req_surv
         self.req_upd = req_upd
@@ -1906,33 +2052,34 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         """
         filt_state = super().save_filter_state()
 
-        filt_state['req_births'] = self.req_births
-        filt_state['req_surv'] = self.req_surv
-        filt_state['req_upd'] = self.req_upd
-        filt_state['gating_on'] = self.gating_on
-        filt_state['prune_threshold'] = self.prune_threshold
-        filt_state['max_hyps'] = self.max_hyps
-        filt_state['decimal_places'] = self.decimal_places
-        filt_state['save_measurements'] = self.save_measurements
+        filt_state["req_births"] = self.req_births
+        filt_state["req_surv"] = self.req_surv
+        filt_state["req_upd"] = self.req_upd
+        filt_state["gating_on"] = self.gating_on
+        filt_state["prune_threshold"] = self.prune_threshold
+        filt_state["max_hyps"] = self.max_hyps
+        filt_state["decimal_places"] = self.decimal_places
+        filt_state["save_measurements"] = self.save_measurements
 
-        filt_state['_track_tab'] = self._track_tab
-        filt_state['_labels'] = self._labels
-        filt_state['_extractable_hists'] = self._extractable_hists
+        filt_state["_track_tab"] = self._track_tab
+        filt_state["_labels"] = self._labels
+        filt_state["_extractable_hists"] = self._extractable_hists
 
         if self._baseFilter is not None:
-            filt_state['_baseFilter'] = (type(self._baseFilter),
-                                         self._baseFilter.save_filter_state())
+            filt_state["_baseFilter"] = (
+                type(self._baseFilter),
+                self._baseFilter.save_filter_state(),
+            )
         else:
-            filt_state['_baseFilter'] = (None, self._baseFilter)
+            filt_state["_baseFilter"] = (None, self._baseFilter)
+        filt_state["_hypotheses"] = self._hypotheses
+        filt_state["_card_dist"] = self._card_dist
+        filt_state["_time_index_cntr"] = self._time_index_cntr
 
-        filt_state['_hypotheses'] = self._hypotheses
-        filt_state['_card_dist'] = self._card_dist
-        filt_state['_time_index_cntr'] = self._time_index_cntr
-
-        filt_state['ospa2'] = self.ospa2
-        filt_state['ospa2_localization'] = self.ospa2_localization
-        filt_state['ospa2_cardinality'] = self.ospa2_cardinality
-        filt_state['_ospa2_params'] = self._ospa_params
+        filt_state["ospa2"] = self.ospa2
+        filt_state["ospa2_localization"] = self.ospa2_localization
+        filt_state["ospa2_cardinality"] = self.ospa2_cardinality
+        filt_state["_ospa2_params"] = self._ospa_params
 
         return filt_state
 
@@ -1946,34 +2093,33 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         """
         super().load_filter_state(filt_state)
 
-        self.req_births = filt_state['req_births']
-        self.req_surv = filt_state['req_surv']
-        self.req_upd = filt_state['req_upd']
-        self.gating_on = filt_state['gating_on']
-        self.prune_threshold = filt_state['prune_threshold']
-        self.max_hyps = filt_state['max_hyps']
-        self.decimal_places = filt_state['decimal_places']
-        self.save_measurements = filt_state['save_measurements']
+        self.req_births = filt_state["req_births"]
+        self.req_surv = filt_state["req_surv"]
+        self.req_upd = filt_state["req_upd"]
+        self.gating_on = filt_state["gating_on"]
+        self.prune_threshold = filt_state["prune_threshold"]
+        self.max_hyps = filt_state["max_hyps"]
+        self.decimal_places = filt_state["decimal_places"]
+        self.save_measurements = filt_state["save_measurements"]
 
-        self._track_tab = filt_state['_track_tab']
-        self._labels = filt_state['_labels']
-        self._extractable_hists = filt_state['_extractable_hists']
+        self._track_tab = filt_state["_track_tab"]
+        self._labels = filt_state["_labels"]
+        self._extractable_hists = filt_state["_extractable_hists"]
 
-        cls_type = filt_state['_baseFilter'][0]
+        cls_type = filt_state["_baseFilter"][0]
         if cls_type is not None:
             self._baseFilter = cls_type()
-            self._baseFilter.load_filter_state(filt_state['_baseFilter'][1])
+            self._baseFilter.load_filter_state(filt_state["_baseFilter"][1])
         else:
             self._baseFilter = None
+        self._hypotheses = filt_state["_hypotheses"]
+        self._card_dist = filt_state["_card_dist"]
+        self._time_index_cntr = filt_state["_time_index_cntr"]
 
-        self._hypotheses = filt_state['_hypotheses']
-        self._card_dist = filt_state['_card_dist']
-        self._time_index_cntr = filt_state['_time_index_cntr']
-
-        self.ospa2 = filt_state['ospa2']
-        self.ospa2_localization = filt_state['ospa2_localization']
-        self.ospa2_cardinality = filt_state['ospa2_cardinality']
-        self._ospa2_params = filt_state['_ospa2_params']
+        self.ospa2 = filt_state["ospa2"]
+        self.ospa2_localization = filt_state["ospa2_localization"]
+        self.ospa2_cardinality = filt_state["ospa2_cardinality"]
+        self._ospa2_params = filt_state["_ospa2_params"]
 
     @property
     def states(self):
@@ -2038,11 +2184,11 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         weights = distrib.weights.copy()
         for ii, (m, cov) in enumerate(zip(distrib.means, distrib.covariances)):
             self._baseFilter.cov = cov.copy()
-            if (isinstance(self._baseFilter, gfilts.UnscentedKalmanFilter)
-                    or isinstance(self._baseFilter, gfilts.UKFGaussianScaleMixtureFilter)):
+            if isinstance(self._baseFilter, gfilts.UnscentedKalmanFilter) or isinstance(
+                self._baseFilter, gfilts.UKFGaussianScaleMixtureFilter
+            ):
                 self._baseFilter.init_sigma_points(m)
             filt_states[ii] = self._baseFilter.save_filter_state()
-
         return filt_states, weights, states, covs
 
     def _gen_birth_tab(self, timestep):
@@ -2055,12 +2201,15 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             entry.state_hist = [None]
             entry.cov_hist = [None]
             entry.distrib_weights_hist = [None]
-            (entry.filt_states, entry.distrib_weights_hist[0], entry.state_hist[0],
-             entry.cov_hist[0]) = self._init_filt_states(distrib)
+            (
+                entry.filt_states,
+                entry.distrib_weights_hist[0],
+                entry.state_hist[0],
+                entry.cov_hist[0],
+            ) = self._init_filt_states(distrib)
             entry.label = (round(timestep, self.decimal_places), ii)
             entry.time_index = self._time_index_cntr
             birth_tab.append(entry)
-
         return birth_tab, log_cost
 
     def _gen_birth_hyps(self, paths, hyp_costs):
@@ -2075,7 +2224,6 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         lse = log_sum_exp([x.assoc_prob for x in birth_hyps])
         for ii in range(0, len(birth_hyps)):
             birth_hyps[ii].assoc_prob = np.exp(birth_hyps[ii].assoc_prob - lse)
-
         return birth_hyps
 
     def _inner_predict(self, timestep, filt_state, state, filt_args):
@@ -2086,7 +2234,6 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             new_cov = self.filter.cov.copy()
         else:
             new_cov = None
-
         return new_f_state, new_s, new_cov
 
     def _predict_track_tab_entry(self, tab, timestep, filt_args):
@@ -2095,10 +2242,12 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         new_f_states = [None] * len(newTab.filt_states)
         new_s_hist = [None] * len(newTab.filt_states)
         new_c_hist = [None] * len(newTab.filt_states)
-        for ii, (f_state, state) in enumerate(zip(newTab.filt_states, newTab.state_hist[-1])):
-            (new_f_states[ii], new_s_hist[ii],
-             new_c_hist[ii]) = self._inner_predict(timestep, f_state, state, filt_args)
-
+        for ii, (f_state, state) in enumerate(
+            zip(newTab.filt_states, newTab.state_hist[-1])
+        ):
+            (new_f_states[ii], new_s_hist[ii], new_c_hist[ii]) = self._inner_predict(
+                timestep, f_state, state, filt_args
+            )
         newTab.filt_states = new_f_states
         newTab.state_hist.append(new_s_hist)
         newTab.cov_hist.append(new_c_hist)
@@ -2111,12 +2260,12 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             entry = self._predict_track_tab_entry(track, timestep, filt_args)
 
             surv_tab.append(entry)
-
         return surv_tab
 
     def _gen_surv_hyps(self, avg_prob_survive, avg_prob_death):
         surv_hyps = []
         sum_sqrt_w = 0
+        # avg_prob_mm =
         for hyp in self._hypotheses:
             sum_sqrt_w = sum_sqrt_w + np.sqrt(hyp.assoc_prob)
         for hyp in self._hypotheses:
@@ -2126,30 +2275,26 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
                 new_hyp.track_set = hyp.track_set
                 surv_hyps.append(new_hyp)
             else:
-                cost = avg_prob_survive[hyp.track_set] \
-                    / avg_prob_death[hyp.track_set]
+                cost = avg_prob_survive[hyp.track_set] / avg_prob_death[hyp.track_set]
                 log_cost = -np.log(cost)  # this is length hyp.num_tracks
-                k = np.round(self.req_surv * np.sqrt(hyp.assoc_prob)
-                             / sum_sqrt_w)
+                k = np.round(self.req_surv * np.sqrt(hyp.assoc_prob) / sum_sqrt_w)
                 (paths, hyp_cost) = k_shortest(np.array(log_cost), k)
 
-                pdeath_log = np.sum([np.log(avg_prob_death[ii])
-                                     for ii in hyp.track_set])
+                pdeath_log = np.sum(
+                    [np.log(avg_prob_death[ii]) for ii in hyp.track_set]
+                )
 
                 for (p, c) in zip(paths, hyp_cost):
                     new_hyp = self._HypothesisHelper()
-                    new_hyp.assoc_prob = pdeath_log \
-                        + np.log(hyp.assoc_prob) - c.item()
+                    new_hyp.assoc_prob = pdeath_log + np.log(hyp.assoc_prob) - c.item()
                     if len(p) > 0:
                         new_hyp.track_set = [hyp.track_set[ii] for ii in p]
                     else:
                         new_hyp.track_set = []
                     surv_hyps.append(new_hyp)
-
         lse = log_sum_exp([x.assoc_prob for x in surv_hyps])
         for ii in range(0, len(surv_hyps)):
             surv_hyps[ii].assoc_prob = np.exp(surv_hyps[ii].assoc_prob - lse)
-
         return surv_hyps
 
     def _calc_avg_prob_surv_death(self):
@@ -2171,7 +2316,6 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
                     surv_lst.append(x + len(birth_tab))
                 new_hyp.track_set = b_hyp.track_set + surv_lst
                 self._hypotheses.append(new_hyp)
-
         for ii in range(0, len(self._hypotheses)):
             n_val = self._hypotheses[ii].assoc_prob / tot_w
             self._hypotheses[ii].assoc_prob = n_val
@@ -2179,8 +2323,9 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
     def _calc_card_dist(self, hyp_lst):
         """Calucaltes the cardinality distribution."""
         if len(hyp_lst) == 0:
-            return [1, ]
-
+            return [
+                1,
+            ]
         card_dist = []
         for ii in range(0, max(map(lambda x: x.num_tracks, hyp_lst)) + 1):
             card = 0
@@ -2199,9 +2344,8 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
                 sorted_inds = hyp.track_set.copy()
                 sorted_inds.sort()
                 lst = [int(x) for x in sorted_inds]
-            h = hash('*'.join(map(str, lst)))
+            h = hash("*".join(map(str, lst)))
             hash_lst.append(h)
-
         new_hyps = []
         used_hash = []
         for ii, h in enumerate(hash_lst):
@@ -2243,8 +2387,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         surv_tab = self._gen_surv_tab(timestep, filt_args)
 
         # Calculation for average survival/death probabilities
-        (avg_prob_survive,
-         avg_prob_death) = self._calc_avg_prob_surv_death()
+        (avg_prob_survive, avg_prob_death) = self._calc_avg_prob_surv_death()
 
         # loop over postierior components
         surv_hyps = self._gen_surv_hyps(avg_prob_survive, avg_prob_death)
@@ -2257,7 +2400,9 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
 
         self._clean_predictions()
 
-    def _inner_correct(self, timestep, meas, filt_state, distrib_weight, state, filt_args):
+    def _inner_correct(
+        self, timestep, meas, filt_state, distrib_weight, state, filt_args
+    ):
         self.filter.load_filter_state(filt_state)
         cor_state, likely = self.filter.correct(timestep, meas, state, **filt_args)
         new_f_state = self.filter.save_filter_state()
@@ -2277,19 +2422,26 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         new_c_hist = [None] * len(newTab.filt_states)
         new_w = [None] * len(newTab.filt_states)
         depleted = False
-        for ii, (f_state, state, w) in enumerate(zip(newTab.filt_states,
-                                                     newTab.state_hist[-1],
-                                                     newTab.distrib_weights_hist[-1])):
+        for ii, (f_state, state, w) in enumerate(
+            zip(
+                newTab.filt_states,
+                newTab.state_hist[-1],
+                newTab.distrib_weights_hist[-1],
+            )
+        ):
             try:
-                (new_f_states[ii], new_s_hist[ii],
-                 new_c_hist[ii], new_w[ii]) = self._inner_correct(timestep, meas,
-                                                                  f_state, w, state,
-                                                                  filt_args)
-            except (gerr.ParticleDepletionError,
-                    gerr.ParticleEstimationDomainError,
-                    gerr.ExtremeMeasurementNoiseError):
+                (
+                    new_f_states[ii],
+                    new_s_hist[ii],
+                    new_c_hist[ii],
+                    new_w[ii],
+                ) = self._inner_correct(timestep, meas, f_state, w, state, filt_args)
+            except (
+                gerr.ParticleDepletionError,
+                gerr.ParticleEstimationDomainError,
+                gerr.ExtremeMeasurementNoiseError,
+            ):
                 return None, 0
-
         newTab.filt_states = new_f_states
         newTab.state_hist[-1] = new_s_hist
         newTab.cov_hist[-1] = new_c_hist
@@ -2299,7 +2451,6 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             newTab.distrib_weights_hist[-1] = [w / cost for w in new_w]
         else:
             cost = 0
-
         return newTab, cost
 
     def _gen_cor_tab(self, num_meas, meas, timestep, filt_args):
@@ -2309,14 +2460,14 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         for ii, track in enumerate(self._track_tab):
             up_tab[ii] = self._TabEntry().setup(track)
             up_tab[ii].meas_assoc_hist.append(None)
-
         # measurement updated tracks
         all_cost_m = np.zeros((num_pred, num_meas))
         for emm, z in enumerate(meas):
             for ii, ent in enumerate(self._track_tab):
                 s_to_ii = num_pred * emm + ii + num_pred
-                (up_tab[s_to_ii], cost) = \
-                    self._correct_track_tab_entry(z, ent, timestep, filt_args)
+                (up_tab[s_to_ii], cost) = self._correct_track_tab_entry(
+                    z, ent, timestep, filt_args
+                )
 
                 # update association history with current measurement index
                 if up_tab[s_to_ii] is not None:
@@ -2324,16 +2475,17 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
                 all_cost_m[ii, emm] = cost
         return up_tab, all_cost_m
 
-    def _gen_cor_hyps(self, num_meas, avg_prob_detect, avg_prob_miss_detect,
-                      all_cost_m):
+    def _gen_cor_hyps(
+        self, num_meas, avg_prob_detect, avg_prob_miss_detect, all_cost_m
+    ):
         num_pred = len(self._track_tab)
         up_hyps = []
         if num_meas == 0:
             for hyp in self._hypotheses:
-                pmd_log = np.sum([np.log(avg_prob_miss_detect[ii])
-                                  for ii in hyp.track_set])
-                hyp.assoc_prob = -self.clutter_rate + pmd_log \
-                    + np.log(hyp.assoc_prob)
+                pmd_log = np.sum(
+                    [np.log(avg_prob_miss_detect[ii]) for ii in hyp.track_set]
+                )
+                hyp.assoc_prob = -self.clutter_rate + pmd_log + np.log(hyp.assoc_prob)
                 up_hyps.append(hyp)
         else:
             clutter = self.clutter_rate * self.clutter_den
@@ -2343,11 +2495,13 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             for p_hyp in self._hypotheses:
                 if p_hyp.num_tracks == 0:  # all clutter
                     new_hyp = self._HypothesisHelper()
-                    new_hyp.assoc_prob = -self.clutter_rate + num_meas \
-                        * np.log(clutter) + np.log(p_hyp.assoc_prob)
+                    new_hyp.assoc_prob = (
+                        -self.clutter_rate
+                        + num_meas * np.log(clutter)
+                        + np.log(p_hyp.assoc_prob)
+                    )
                     new_hyp.track_set = p_hyp.track_set.copy()
                     up_hyps.append(new_hyp)
-
                 else:
                     pd = np.array([avg_prob_detect[ii] for ii in p_hyp.track_set])
                     pmd = np.array([avg_prob_miss_detect[ii] for ii in p_hyp.track_set])
@@ -2359,40 +2513,41 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
                     cost_m = np.zeros(all_cost_m[p_hyp.track_set, :].shape)
                     for ii, ts in enumerate(p_hyp.track_set):
                         cost_m[ii, :] = ratio[ii] * all_cost_m[ts, :] / clutter
-
                     max_row_inds, max_col_inds = np.where(cost_m >= np.inf)
                     if max_row_inds.size > 0:
                         cost_m[max_row_inds, max_col_inds] = np.finfo(float).max
-
-                    min_row_inds, min_col_inds = np.where(cost_m <= 0.)
+                    min_row_inds, min_col_inds = np.where(cost_m <= 0.0)
                     if min_row_inds.size > 0:
                         cost_m[min_row_inds, min_col_inds] = np.finfo(float).eps  # 1
-
                     neg_log = -np.log(cost_m)
                     # if max_row_inds.size > 0:
                     #     neg_log[max_row_inds, max_col_inds] = -np.inf
                     # if min_row_inds.size > 0:
                     #     neg_log[min_row_inds, min_col_inds] = np.inf
 
-                    m = np.round(self.req_upd * np.sqrt(p_hyp.assoc_prob)
-                                 / ss_w)
+                    m = np.round(self.req_upd * np.sqrt(p_hyp.assoc_prob) / ss_w)
                     m = int(m.item())
                     [assigns, costs] = murty_m_best(neg_log, m)
 
-                    pmd_log = np.sum([np.log(avg_prob_miss_detect[ii])
-                                      for ii in p_hyp.track_set])
+                    pmd_log = np.sum(
+                        [np.log(avg_prob_miss_detect[ii]) for ii in p_hyp.track_set]
+                    )
                     for (a, c) in zip(assigns, costs):
                         new_hyp = self._HypothesisHelper()
-                        new_hyp.assoc_prob = -self.clutter_rate + num_meas \
-                            * np.log(clutter) + pmd_log \
-                            + np.log(p_hyp.assoc_prob) - c
-                        new_hyp.track_set = list(np.array(p_hyp.track_set) + num_pred * a)
+                        new_hyp.assoc_prob = (
+                            -self.clutter_rate
+                            + num_meas * np.log(clutter)
+                            + pmd_log
+                            + np.log(p_hyp.assoc_prob)
+                            - c
+                        )
+                        new_hyp.track_set = list(
+                            np.array(p_hyp.track_set) + num_pred * a
+                        )
                         up_hyps.append(new_hyp)
-
         lse = log_sum_exp([x.assoc_prob for x in up_hyps])
         for ii in range(0, len(up_hyps)):
             up_hyps[ii].assoc_prob = np.exp(up_hyps[ii].assoc_prob - lse)
-
         return up_hyps
 
     def _calc_avg_prob_det_mdet(self):
@@ -2413,19 +2568,15 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         new_inds = [None] * len(self._track_tab)
         for (ii, v) in zip(nnz_inds, [ii for ii in range(0, track_cnt)]):
             new_inds[ii] = v
-
         new_tab = [self._TabEntry().setup(self._track_tab[ii]) for ii in nnz_inds]
         new_hyps = []
-        for(ii, hyp) in enumerate(self._hypotheses):
+        for (ii, hyp) in enumerate(self._hypotheses):
             if len(hyp.track_set) > 0:
                 track_set = [new_inds[ii] for ii in hyp.track_set]
                 if None in track_set:
                     continue
-
                 hyp.track_set = track_set
-
             new_hyps.append(hyp)
-
         self._track_tab = new_tab
         self._hypotheses = new_hyps
 
@@ -2457,14 +2608,13 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         """
         # gate measurements by tracks
         if self.gating_on:
-            warnings.warn('Gating not implemented yet. SKIPPING', RuntimeWarning)
+            warnings.warn("Gating not implemented yet. SKIPPING", RuntimeWarning)
             # means = []
             # covs = []
             # for ent in self._track_tab:
             #     means.extend(ent.probDensity.means)
             #     covs.extend(ent.probDensity.covariances)
             # meas = self._gate_meas(meas, means, covs)
-
         if self.save_measurements:
             self._meas_tab.append(deepcopy(meas))
         num_meas = len(meas)
@@ -2476,8 +2626,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         avg_prob_det, avg_prob_mdet = self._calc_avg_prob_det_mdet()
 
         # component updates
-        cor_hyps = self._gen_cor_hyps(num_meas, avg_prob_det, avg_prob_mdet,
-                                      all_cost_m)
+        cor_hyps = self._gen_cor_hyps(num_meas, avg_prob_det, avg_prob_mdet, all_cost_m)
 
         # save values and cleanup
         self._track_tab = cor_tab
@@ -2488,51 +2637,54 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
     def _extract_helper(self, track):
         states = [None] * len(track.state_hist)
         covs = [None] * len(track.state_hist)
-        for ii, (w_lst, s_lst, c_lst) in enumerate(zip(track.distrib_weights_hist,
-                                                       track.state_hist,
-                                                       track.cov_hist)):
+        for ii, (w_lst, s_lst, c_lst) in enumerate(
+            zip(track.distrib_weights_hist, track.state_hist, track.cov_hist)
+        ):
             idx = np.argmax(w_lst)
             states[ii] = s_lst[idx]
             if self.save_covs:
                 covs[ii] = c_lst[idx]
-
         return states, covs
 
     def _update_extract_hist(self, idx_cmp):
         used_meas_inds = [[]] * self._time_index_cntr
         used_labels = []
         new_extract_hists = [None] * len(self._hypotheses[idx_cmp].track_set)
-        for ii, track in enumerate([self._track_tab[trk_ind]
-                                    for trk_ind in self._hypotheses[idx_cmp].track_set]):
+        for ii, track in enumerate(
+            [
+                self._track_tab[trk_ind]
+                for trk_ind in self._hypotheses[idx_cmp].track_set
+            ]
+        ):
             new_extract_hists[ii] = self._ExtractHistHelper()
             new_extract_hists[ii].label = track.label
             new_extract_hists[ii].meas_ind_hist = track.meas_assoc_hist.copy()
             new_extract_hists[ii].b_time_index = track.time_index
-            (new_extract_hists[ii].states,
-             new_extract_hists[ii].covs) = self._extract_helper(track)
+            (
+                new_extract_hists[ii].states,
+                new_extract_hists[ii].covs,
+            ) = self._extract_helper(track)
 
             used_labels.append(track.label)
 
-            for t_inds_after_b, meas_ind in enumerate(new_extract_hists[ii].meas_ind_hist):
+            for t_inds_after_b, meas_ind in enumerate(
+                new_extract_hists[ii].meas_ind_hist
+            ):
                 tt = new_extract_hists[ii].b_time_index + t_inds_after_b
                 if meas_ind is not None and meas_ind not in used_meas_inds[tt]:
                     used_meas_inds[tt].append(meas_ind)
-
         good_inds = []
         for ii, existing in enumerate(self._extractable_hists):
             used = existing.label in used_labels
             if used:
                 continue
-
             for t_inds_after_b, meas_ind in enumerate(existing.meas_ind_hist):
                 tt = existing.b_time_index + t_inds_after_b
                 used = meas_ind is not None and meas_ind in used_meas_inds[tt]
                 if used:
                     break
-
             if not used:
                 good_inds.append(ii)
-
         self._extractable_hists = [self._extractable_hists[ii] for ii in good_inds]
         self._extractable_hists.extend(new_extract_hists)
 
@@ -2572,14 +2724,14 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
 
         if len(tracks_per_hyp) == 0:
             return None
-
         idx_cmp = np.argmax(weight_per_hyp * (tracks_per_hyp == card))
         if update:
             self._update_extract_hist(idx_cmp)
-
         if calc_states:
             for existing in self._extractable_hists:
-                for t_inds_after_b, (s, c) in enumerate(zip(existing.states, existing.covs)):
+                for t_inds_after_b, (s, c) in enumerate(
+                    zip(existing.states, existing.covs)
+                ):
                     tt = existing.b_time_index + t_inds_after_b
                     if len(self._labels[tt]) == 0:
                         self._states[tt] = [s]
@@ -2589,10 +2741,8 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
                         self._states[tt].append(s)
                         self._labels[tt].append(existing.label)
                         self._covs[tt].append(c)
-
         if not update and not calc_states:
-            warnings.warn('Extracting states performed no actions')
-
+            warnings.warn("Extracting states performed no actions")
         return idx_cmp
 
     def extract_most_prob_states(self, thresh):
@@ -2627,7 +2777,6 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         idx = loc_self.extract_states()
         if idx is None:
             return (state_sets, label_sets, cov_sets, probs)
-
         state_sets.append(loc_self.states.copy())
         label_sets.append(loc_self.labels.copy())
         if loc_self.save_covs:
@@ -2638,7 +2787,6 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             idx = loc_self.extract_states()
             if idx is None:
                 break
-
             if loc_self._hypotheses[idx].assoc_prob >= thresh:
                 state_sets.append(loc_self.states.copy())
                 label_sets.append(loc_self.labels.copy())
@@ -2648,7 +2796,6 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
                 loc_self._hypotheses[idx].assoc_prob = 0
             else:
                 break
-
         return (state_sets, label_sets, cov_sets, probs)
 
     def _prune(self):
@@ -2660,8 +2807,9 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         # Find hypotheses with low association probabilities
         temp_assoc_probs = np.array([])
         for ii in range(0, len(self._hypotheses)):
-            temp_assoc_probs = np.append(temp_assoc_probs,
-                                         self._hypotheses[ii].assoc_prob)
+            temp_assoc_probs = np.append(
+                temp_assoc_probs, self._hypotheses[ii].assoc_prob
+            )
         keep_indices = np.argwhere(temp_assoc_probs > self.prune_threshold).T
         keep_indices = keep_indices.flatten()
 
@@ -2669,8 +2817,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         new_sum = np.sum(temp_assoc_probs[keep_indices])
         self._hypotheses = [self._hypotheses[ii] for ii in keep_indices]
         for ii in range(0, len(keep_indices)):
-            self._hypotheses[ii].assoc_prob = (self._hypotheses[ii].assoc_prob
-                                               / new_sum)
+            self._hypotheses[ii].assoc_prob = self._hypotheses[ii].assoc_prob / new_sum
         # Re-calculate cardinality
         self._card_dist = self._calc_card_dist(self._hypotheses)
 
@@ -2684,8 +2831,9 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         if len(self._hypotheses) > self.max_hyps:
             temp_assoc_probs = np.array([])
             for ii in range(0, len(self._hypotheses)):
-                temp_assoc_probs = np.append(temp_assoc_probs,
-                                             self._hypotheses[ii].assoc_prob)
+                temp_assoc_probs = np.append(
+                    temp_assoc_probs, self._hypotheses[ii].assoc_prob
+                )
             sorted_indices = np.argsort(temp_assoc_probs)
 
             # Reverse order to get descending array
@@ -2695,7 +2843,6 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             keep_indices = np.array([], dtype=np.int64)
             for ii in range(0, self.max_hyps):
                 keep_indices = np.append(keep_indices, int(sorted_indices[ii]))
-
             # Assign to class
             self._hypotheses = [self._hypotheses[ii] for ii in keep_indices]
 
@@ -2703,16 +2850,20 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             new_sum = 0
             for ii in range(0, len(self._hypotheses)):
                 new_sum = new_sum + self._hypotheses[ii].assoc_prob
-
             for ii in range(0, len(self._hypotheses)):
-                self._hypotheses[ii].assoc_prob = (self._hypotheses[ii].assoc_prob
-                                                   / new_sum)
-
+                self._hypotheses[ii].assoc_prob = (
+                    self._hypotheses[ii].assoc_prob / new_sum
+                )
             # Re-calculate cardinality
             self._card_dist = self._calc_card_dist(self._hypotheses)
 
-    def cleanup(self, enable_prune=True, enable_cap=True, enable_extract=True,
-                extract_kwargs=None):
+    def cleanup(
+        self,
+        enable_prune=True,
+        enable_cap=True,
+        enable_extract=True,
+        extract_kwargs=None,
+    ):
         """Performs the cleanup step of the filter.
 
         This can prune, cap, and extract states. It must be called once per
@@ -2745,10 +2896,8 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
 
         if enable_prune:
             self._prune()
-
         if enable_cap:
             self._cap()
-
         if enable_extract:
             if extract_kwargs is None:
                 extract_kwargs = {}
@@ -2768,33 +2917,36 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
                 if key not in lbl_to_ind:
                     lbl_to_ind[key] = num_objs
                     num_objs += 1
-
         # create matrices
         est_mat = np.nan * np.ones((state_dim, num_timesteps, num_objs))
-        est_cov_mat = np.nan * np.ones((state_dim, state_dim, num_timesteps,
-                                        num_objs))
+        est_cov_mat = np.nan * np.ones((state_dim, state_dim, num_timesteps, num_objs))
 
         for tt, (lbl_lst, s_lst) in enumerate(zip(self.labels, self.states)):
             for lbl, s in zip(lbl_lst, s_lst):
                 if lbl is None:
                     continue
-
                 obj_num = lbl_to_ind[str(lbl)]
                 est_mat[:, tt, obj_num] = s.ravel()[state_inds]
-
         if self.save_covs:
-            for tt, (lbl_lst, c_lst) in enumerate(zip(self.labels,
-                                                      self.covariances)):
+            for tt, (lbl_lst, c_lst) in enumerate(zip(self.labels, self.covariances)):
                 for lbl, c in zip(lbl_lst, c_lst):
                     if lbl is None:
                         continue
-                    est_cov_mat[:, :, tt, lbl_to_ind[str(lbl)]] = c[state_inds, state_inds]
-
+                    est_cov_mat[:, :, tt, lbl_to_ind[str(lbl)]] = c[
+                        state_inds, state_inds
+                    ]
         return est_mat, est_cov_mat
 
-    def calculate_ospa2(self, truth, c, p, win_len, true_covs=None,
-                        core_method=SingleObjectDistance.MANHATTAN,
-                        state_inds=None):
+    def calculate_ospa2(
+        self,
+        truth,
+        c,
+        p,
+        win_len,
+        true_covs=None,
+        core_method=SingleObjectDistance.MANHATTAN,
+        state_inds=None,
+    ):
         """Calculates the OSPA(2) distance between the truth at all timesteps.
 
         Wrapper for :func:`serums.distances.calculate_ospa2`.
@@ -2837,35 +2989,45 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         else:
             state_dim = len(state_inds)
         if state_dim is None:
-            warnings.warn('Failed to get state dimension. SKIPPING OSPA(2) calculation')
+            warnings.warn("Failed to get state dimension. SKIPPING OSPA(2) calculation")
 
             nt = len(self._states)
             self.ospa2 = np.zeros(nt)
             self.ospa2_localization = np.zeros(nt)
             self.ospa2_cardinality = np.zeros(nt)
-            self._ospa2_params['core'] = core_method
-            self._ospa2_params['cutoff'] = c
-            self._ospa2_params['power'] = p
-            self._ospa2_params['win_len'] = win_len
+            self._ospa2_params["core"] = core_method
+            self._ospa2_params["cutoff"] = c
+            self._ospa2_params["power"] = p
+            self._ospa2_params["win_len"] = win_len
             return
-
-        true_mat, true_cov_mat = self._ospa_setup_tmat(truth, state_dim,
-                                                       true_covs, state_inds)
+        true_mat, true_cov_mat = self._ospa_setup_tmat(
+            truth, state_dim, true_covs, state_inds
+        )
         est_mat, est_cov_mat = self._ospa_setup_emat(state_dim, state_inds)
 
         # find OSPA
-        (self.ospa2, self.ospa2_localization, self.ospa2_cardinality,
-         self._ospa2_params['core'], self._ospa2_params['cutoff'],
-         self._ospa2_params['power'],
-         self._ospa2_params['win_len']) = calculate_ospa2(est_mat,
-                                                          true_mat, c,
-                                                          p, win_len,
-                                                          core_method=core_method,
-                                                          true_cov_mat=true_cov_mat,
-                                                                  est_cov_mat=est_cov_mat)
+        (
+            self.ospa2,
+            self.ospa2_localization,
+            self.ospa2_cardinality,
+            self._ospa2_params["core"],
+            self._ospa2_params["cutoff"],
+            self._ospa2_params["power"],
+            self._ospa2_params["win_len"],
+        ) = calculate_ospa2(
+            est_mat,
+            true_mat,
+            c,
+            p,
+            win_len,
+            core_method=core_method,
+            true_cov_mat=true_cov_mat,
+            est_cov_mat=est_cov_mat,
+        )
 
-    def plot_states_labels(self, plt_inds, ttl="Labeled State Trajectories",
-                           meas_tx_fnc=None, **kwargs):
+    def plot_states_labels(
+        self, plt_inds, ttl="Labeled State Trajectories", meas_tx_fnc=None, **kwargs
+    ):
         """Plots the best estimate for the states and labels.
 
         This assumes that the states have been extracted. It's designed to plot
@@ -2900,19 +3062,19 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             Instance of the matplotlib figure used
         """
         opts = pltUtil.init_plotting_opts(**kwargs)
-        f_hndl = opts['f_hndl']
-        true_states = opts['true_states']
-        sig_bnd = opts['sig_bnd']
-        rng = opts['rng']
-        meas_inds = opts['meas_inds']
-        lgnd_loc = opts['lgnd_loc']
+        f_hndl = opts["f_hndl"]
+        true_states = opts["true_states"]
+        sig_bnd = opts["sig_bnd"]
+        rng = opts["rng"]
+        meas_inds = opts["meas_inds"]
+        lgnd_loc = opts["lgnd_loc"]
 
         if rng is None:
             rng = rnd.default_rng(1)
-
-        meas_specs_given = (meas_inds is not None and len(meas_inds) == 2) \
-            or meas_tx_fnc is not None
-        plt_meas = (meas_specs_given and self.save_measurements)
+        meas_specs_given = (
+            meas_inds is not None and len(meas_inds) == 2
+        ) or meas_tx_fnc is not None
+        plt_meas = meas_specs_given and self.save_measurements
         show_sig = sig_bnd is not None and self.save_covs
 
         s_lst = deepcopy(self.states)
@@ -2922,13 +3084,11 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         if f_hndl is None:
             f_hndl = plt.figure()
             f_hndl.add_subplot(1, 1, 1)
-
         # get state dimension
         for states in s_lst:
             if states is not None and len(states) > 0:
                 x_dim = states[0].size
                 break
-
         # get unique labels
         u_lbls = []
         for lbls in l_lst:
@@ -2937,7 +3097,6 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             for lbl in lbls:
                 if lbl not in u_lbls:
                     u_lbls.append(lbl)
-
         cmap = pltUtil.get_cmap(len(u_lbls))
 
         # get array of all state values for each label
@@ -2956,22 +3115,16 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
                     ii = lbls.index(lbl)
                     if s_lst[tt][ii] is not None:
                         x[:, [tt]] = s_lst[tt][ii].copy()
-
                     if show_sig:
                         sig = np.zeros((2, 2))
                         if self._covs[tt][ii] is not None:
-                            sig[0, 0] = self._covs[tt][ii][plt_inds[0],
-                                                           plt_inds[0]]
-                            sig[0, 1] = self._covs[tt][ii][plt_inds[0],
-                                                           plt_inds[1]]
-                            sig[1, 0] = self._covs[tt][ii][plt_inds[1],
-                                                           plt_inds[0]]
-                            sig[1, 1] = self._covs[tt][ii][plt_inds[1],
-                                                           plt_inds[1]]
+                            sig[0, 0] = self._covs[tt][ii][plt_inds[0], plt_inds[0]]
+                            sig[0, 1] = self._covs[tt][ii][plt_inds[0], plt_inds[1]]
+                            sig[1, 0] = self._covs[tt][ii][plt_inds[1], plt_inds[0]]
+                            sig[1, 1] = self._covs[tt][ii][plt_inds[1], plt_inds[1]]
                         else:
                             sig = None
                         sigs[tt] = sig
-
             # plot
             color = cmap(c_idx)
 
@@ -2981,37 +3134,49 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
                         continue
                     w, h, a = pltUtil.calc_error_ellipse(sig, sig_bnd)
                     if not added_sig_lbl:
-                        s = r'${}\sigma$ Error Ellipses'.format(sig_bnd)
-                        e = Ellipse(xy=x[plt_inds, tt], width=w,
-                                    height=h, angle=a, zorder=-10000,
-                                    label=s)
+                        s = r"${}\sigma$ Error Ellipses".format(sig_bnd)
+                        e = Ellipse(
+                            xy=x[plt_inds, tt],
+                            width=w,
+                            height=h,
+                            angle=a,
+                            zorder=-10000,
+                            label=s,
+                        )
                         added_sig_lbl = True
                     else:
-                        e = Ellipse(xy=x[plt_inds, tt], width=w,
-                                    height=h, angle=a, zorder=-10000)
+                        e = Ellipse(
+                            xy=x[plt_inds, tt],
+                            width=w,
+                            height=h,
+                            angle=a,
+                            zorder=-10000,
+                        )
                     e.set_clip_box(f_hndl.axes[0].bbox)
                     e.set_alpha(0.2)
                     e.set_facecolor(color)
                     f_hndl.axes[0].add_patch(e)
-
-            settings = {'color': color, 'markeredgecolor': 'k', 'marker': '.',
-                        'ls': '--'}
+            settings = {
+                "color": color,
+                "markeredgecolor": "k",
+                "marker": ".",
+                "ls": "--",
+            }
             if not added_state_lbl:
-                settings['label'] = 'States'
+                settings["label"] = "States"
                 # f_hndl.axes[0].scatter(x[plt_inds[0], :], x[plt_inds[1], :],
                 #                        color=color, edgecolors='k',
                 #                        label='States')
                 added_state_lbl = True
             # else:
-            f_hndl.axes[0].plot(x[plt_inds[0], :], x[plt_inds[1], :],
-                                **settings)
+            f_hndl.axes[0].plot(x[plt_inds[0], :], x[plt_inds[1], :], **settings)
 
             s = "({}, {})".format(lbl[0], lbl[1])
             tmp = x.copy()
             tmp = tmp[:, ~np.any(np.isnan(tmp), axis=0)]
-            f_hndl.axes[0].text(tmp[plt_inds[0], 0], tmp[plt_inds[1], 0], s,
-                                color=color)
-
+            f_hndl.axes[0].text(
+                tmp[plt_inds[0], 0], tmp[plt_inds[1], 0], s, color=color
+            )
         # if true states are available then plot them
         if true_states is not None and any([len(x) > 0 for x in true_states]):
             if x_dim is None:
@@ -3019,25 +3184,28 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
                     if len(states) > 0:
                         x_dim = states[0].size
                         break
-
             max_true = max([len(x) for x in true_states])
             x = np.nan * np.ones((x_dim, len(true_states), max_true))
             for tt, states in enumerate(true_states):
                 for ii, state in enumerate(states):
                     x[:, [tt], ii] = state.copy()
-
             for ii in range(0, max_true):
                 if not added_true_lbl:
-                    f_hndl.axes[0].plot(x[plt_inds[0], :, ii],
-                                        x[plt_inds[1], :, ii],
-                                        color='k', marker='.',
-                                        label='True Trajectories')
+                    f_hndl.axes[0].plot(
+                        x[plt_inds[0], :, ii],
+                        x[plt_inds[1], :, ii],
+                        color="k",
+                        marker=".",
+                        label="True Trajectories",
+                    )
                     added_true_lbl = True
                 else:
-                    f_hndl.axes[0].plot(x[plt_inds[0], :, ii],
-                                        x[plt_inds[1], :, ii],
-                                        color='k', marker='.')
-
+                    f_hndl.axes[0].plot(
+                        x[plt_inds[0], :, ii],
+                        x[plt_inds[1], :, ii],
+                        color="k",
+                        marker=".",
+                    )
         if plt_meas:
             meas_x = []
             meas_y = []
@@ -3056,17 +3224,23 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             meas_y = np.asarray(meas_y)
             if meas_x.size > 0:
                 if not added_meas_lbl:
-                    f_hndl.axes[0].scatter(meas_x, meas_y, zorder=-1, alpha=0.35,
-                                           color=color, marker='^',
-                                           label='Measurements')
+                    f_hndl.axes[0].scatter(
+                        meas_x,
+                        meas_y,
+                        zorder=-1,
+                        alpha=0.35,
+                        color=color,
+                        marker="^",
+                        label="Measurements",
+                    )
                 else:
-                    f_hndl.axes[0].scatter(meas_x, meas_y, zorder=-1, alpha=0.35,
-                                           color=color, marker='^')
-
+                    f_hndl.axes[0].scatter(
+                        meas_x, meas_y, zorder=-1, alpha=0.35, color=color, marker="^"
+                    )
         f_hndl.axes[0].grid(True)
-        pltUtil.set_title_label(f_hndl, 0, opts,
-                                ttl=ttl,
-                                x_lbl="x-position", y_lbl="y-position")
+        pltUtil.set_title_label(
+            f_hndl, 0, opts, ttl=ttl, x_lbl="x-position", y_lbl="y-position"
+        )
         if lgnd_loc is not None:
             plt.legend(loc=lgnd_loc)
         plt.tight_layout()
@@ -3097,30 +3271,28 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             Instance of the matplotlib figure used
         """
         opts = pltUtil.init_plotting_opts(**kwargs)
-        f_hndl = opts['f_hndl']
+        f_hndl = opts["f_hndl"]
         if ttl is None:
-            ttl="Cardinality Distribution"
-
+            ttl = "Cardinality Distribution"
         if len(self._card_dist) == 0:
             raise RuntimeWarning("Empty Cardinality")
             return f_hndl
-
         if f_hndl is None:
             f_hndl = plt.figure()
             f_hndl.add_subplot(1, 1, 1)
-
         x_vals = np.arange(0, len(self._card_dist))
         f_hndl.axes[0].bar(x_vals, self._card_dist)
 
-        pltUtil.set_title_label(f_hndl, 0, opts,
-                                ttl=ttl,
-                                x_lbl="Cardinality", y_lbl="Probability")
+        pltUtil.set_title_label(
+            f_hndl, 0, opts, ttl=ttl, x_lbl="Cardinality", y_lbl="Probability"
+        )
         plt.tight_layout()
 
         return f_hndl
 
-    def plot_card_history(self, time_units='index', time=None,
-                          ttl='Cardinality History', **kwargs):
+    def plot_card_history(
+        self, time_units="index", time=None, ttl="Cardinality History", **kwargs
+    ):
         """Plots the cardinality history.
 
         Parameters
@@ -3146,28 +3318,37 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         card_history = np.array([len(state_set) for state_set in self.states])
 
         opts = pltUtil.init_plotting_opts(**kwargs)
-        fig = opts['f_hndl']
+        fig = opts["f_hndl"]
 
         if fig is None:
             fig = plt.figure()
             fig.add_subplot(1, 1, 1)
-
         if time is None:
             time = np.arange(card_history.size, dtype=int)
-
         fig.axes[0].grid(True)
-        fig.axes[0].step(time, card_history, where='post', label='estimated')
+        fig.axes[0].step(time, card_history, where="post", label="estimated")
         fig.axes[0].ticklabel_format(useOffset=False)
 
-        pltUtil.set_title_label(fig, 0, opts, ttl=ttl,
-                                x_lbl='Time ({})'.format(time_units),
-                                y_lbl="Cardinality")
+        pltUtil.set_title_label(
+            fig,
+            0,
+            opts,
+            ttl=ttl,
+            x_lbl="Time ({})".format(time_units),
+            y_lbl="Cardinality",
+        )
         fig.tight_layout()
 
         return fig
 
-    def plot_ospa2_history(self, time_units='index', time=None, main_opts=None,
-                           sub_opts=None, plot_subs=True):
+    def plot_ospa2_history(
+        self,
+        time_units="index",
+        time=None,
+        main_opts=None,
+        sub_opts=None,
+        plot_subs=True,
+    ):
         """Plots the OSPA2 history.
 
         This requires that the OSPA2 has been calcualted by the approriate
@@ -3201,38 +3382,43 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             Dictionary of matplotlib figure objects the data was plotted on.
         """
         if self.ospa2 is None:
-            warnings.warn('OSPA must be calculated before plotting')
+            warnings.warn("OSPA must be calculated before plotting")
             return
-
         if main_opts is None:
             main_opts = pltUtil.init_plotting_opts()
-
         if sub_opts is None and plot_subs:
             sub_opts = pltUtil.init_plotting_opts()
-
-        fmt = '{:s} OSPA2 (c = {:.1f}, p = {:d}, w={:d})'
-        ttl = fmt.format(self._ospa2_params['core'],
-                         self._ospa2_params['cutoff'],
-                         self._ospa2_params['power'],
-                         self._ospa2_params['win_len'])
-        y_lbl = 'OSPA2'
+        fmt = "{:s} OSPA2 (c = {:.1f}, p = {:d}, w={:d})"
+        ttl = fmt.format(
+            self._ospa2_params["core"],
+            self._ospa2_params["cutoff"],
+            self._ospa2_params["power"],
+            self._ospa2_params["win_len"],
+        )
+        y_lbl = "OSPA2"
 
         figs = {}
-        figs['OSPA2'] = self._plt_ospa_hist(self.ospa2, time_units, time, ttl,
-                                            y_lbl, main_opts)
+        figs["OSPA2"] = self._plt_ospa_hist(
+            self.ospa2, time_units, time, ttl, y_lbl, main_opts
+        )
 
         if plot_subs:
-            fmt = '{:s} OSPA2 Components (c = {:.1f}, p = {:d}, w={:d})'
-            ttl = fmt.format(self._ospa2_params['core'],
-                             self._ospa2_params['cutoff'],
-                             self._ospa2_params['power'],
-                             self._ospa2_params['win_len'])
-            y_lbls = ['Localiztion', 'Cardinality']
-            figs['OSPA2_subs'] = self._plt_ospa_hist_subs([self.ospa2_localization,
-                                                           self.ospa2_cardinality],
-                                                          time_units, time, ttl,
-                                                          y_lbls, main_opts)
-
+            fmt = "{:s} OSPA2 Components (c = {:.1f}, p = {:d}, w={:d})"
+            ttl = fmt.format(
+                self._ospa2_params["core"],
+                self._ospa2_params["cutoff"],
+                self._ospa2_params["power"],
+                self._ospa2_params["win_len"],
+            )
+            y_lbls = ["Localiztion", "Cardinality"]
+            figs["OSPA2_subs"] = self._plt_ospa_hist_subs(
+                [self.ospa2_localization, self.ospa2_cardinality],
+                time_units,
+                time,
+                ttl,
+                y_lbls,
+                main_opts,
+            )
         return figs
 
 
@@ -3253,24 +3439,24 @@ class _STMGLMBBase:
             if self.save_covs:
                 # no need to copy because cov is already a new object for the student's t-fitler
                 covs[ii] = self.filter.cov
-
         return filt_states, weights, states, covs
 
     def _gate_meas(self, meas, means, covs, **kwargs):
         # TODO: check this implementation
         if len(meas) == 0:
             return []
-
         scalings = []
         for ent in self._track_tab:
             scalings.extend(ent.probDensity.scalings)
-
         valid = []
         for (m, p) in zip(means, scalings):
             meas_mat = self.filter.get_meas_mat(m, **kwargs)
             est = self.filter.get_est_meas(m, **kwargs)
-            factor = self.filter.meas_noise_dof * (self.filter.dof - 2) \
+            factor = (
+                self.filter.meas_noise_dof
+                * (self.filter.dof - 2)
                 / (self.filter.dof * (self.filter.meas_noise_dof - 2))
+            )
             P_zz = meas_mat @ p @ meas_mat.T + factor * self.filter.meas_noise
             inv_P = la.inv(P_zz)
 
@@ -3281,14 +3467,14 @@ class _STMGLMBBase:
                 dist = innov.T @ inv_P @ innov
                 if dist < self.inv_chi2_gate:
                     valid.append(ii)
-
         valid.sort()
         return [meas[ii] for ii in valid]
 
 
 # Note: need inherited classes in this order for proper MRO
-class STMGeneralizedLabeledMultiBernoulli(_STMGLMBBase,
-                                          GeneralizedLabeledMultiBernoulli):
+class STMGeneralizedLabeledMultiBernoulli(
+    _STMGLMBBase, GeneralizedLabeledMultiBernoulli
+):
     """Implementation of a STM-GLMB filter."""
 
     def __init__(self, **kwargs):
@@ -3296,8 +3482,9 @@ class STMGeneralizedLabeledMultiBernoulli(_STMGLMBBase,
 
 
 class _SMCGLMBBase:
-    def __init__(self, compute_prob_detection=None, compute_prob_survive=None,
-                 **kwargs):
+    def __init__(
+        self, compute_prob_detection=None, compute_prob_survive=None, **kwargs
+    ):
         self.compute_prob_detection = compute_prob_detection
         self.compute_prob_survive = compute_prob_survive
 
@@ -3309,13 +3496,19 @@ class _SMCGLMBBase:
 
     def _init_filt_states(self, distrib):
         self._baseFilter.init_from_dist(distrib, make_copy=True)
-        filt_states = [self._baseFilter.save_filter_state(), ]
+        filt_states = [
+            self._baseFilter.save_filter_state(),
+        ]
         states = [distrib.mean]
         if self.save_covs:
-            covs = [distrib.covariance, ]
+            covs = [
+                distrib.covariance,
+            ]
         else:
             covs = []
-        weights = [1, ]  # not needed so set to 1
+        weights = [
+            1,
+        ]  # not needed so set to 1
 
         return filt_states, weights, states, covs
 
@@ -3323,11 +3516,12 @@ class _SMCGLMBBase:
         avg_prob_survive = np.zeros(len(self._track_tab))
         for tabidx, ent in enumerate(self._track_tab):
             # TODO: fix hack so not using "private" variable outside class
-            p_surv = self.compute_prob_survive(ent.filt_states[0]['_particleDist'].particles,
-                                               *self._prob_surv_args)
-            avg_prob_survive[tabidx] = np.sum(np.array(ent.filt_states[0]['_particleDist'].weights)
-                                              * p_surv)
-
+            p_surv = self.compute_prob_survive(
+                ent.filt_states[0]["_particleDist"].particles, *self._prob_surv_args
+            )
+            avg_prob_survive[tabidx] = np.sum(
+                np.array(ent.filt_states[0]["_particleDist"].weights) * p_surv
+            )
         avg_prob_death = 1 - avg_prob_survive
 
         return avg_prob_survive, avg_prob_death
@@ -3339,9 +3533,12 @@ class _SMCGLMBBase:
 
             # manually update weights to account for prob survive
             # TODO: fix hack so not using "private" variable outside class
-            ps = self.compute_prob_survive(self.filter._particleDist.particles,
-                                           *self._prob_surv_args)
-            new_weights = [w * ps[ii] for ii, (p, w) in enumerate(self.filter._particleDist)]
+            ps = self.compute_prob_survive(
+                self.filter._particleDist.particles, *self._prob_surv_args
+            )
+            new_weights = [
+                w * ps[ii] for ii, (p, w) in enumerate(self.filter._particleDist)
+            ]
             tot = sum(new_weights)
             if np.abs(tot) == np.inf:
                 w_lst = [np.inf] * len(new_weights)
@@ -3358,7 +3555,6 @@ class _SMCGLMBBase:
             new_f_state = self.filter.save_filter_state()
             new_s = state
             new_cov = self.filter.cov
-
         return new_f_state, new_s, new_cov
 
     def predict(self, timestep, prob_surv_args=(), **kwargs):
@@ -3385,26 +3581,34 @@ class _SMCGLMBBase:
         avg_prob_detect = np.zeros(len(self._track_tab))
         for tabidx, ent in enumerate(self._track_tab):
             # TODO: fix hack so not using "private" variable outside class
-            p_detect = self.compute_prob_detection(ent.filt_states[0]['_particleDist'].particles,
-                                                   *self._prob_det_args)
-            avg_prob_detect[tabidx] = np.sum(np.array(ent.filt_states[0]['_particleDist'].weights)
-                                             * p_detect)
-
+            p_detect = self.compute_prob_detection(
+                ent.filt_states[0]["_particleDist"].particles, *self._prob_det_args
+            )
+            avg_prob_detect[tabidx] = np.sum(
+                np.array(ent.filt_states[0]["_particleDist"].weights) * p_detect
+            )
         avg_prob_miss_detect = 1 - avg_prob_detect
 
         return avg_prob_detect, avg_prob_miss_detect
 
-    def _inner_correct(self, timestep, meas, filt_state, distrib_weight, state, filt_args):
+    def _inner_correct(
+        self, timestep, meas, filt_state, distrib_weight, state, filt_args
+    ):
         self.filter.load_filter_state(filt_state)
         if self.filter._particleDist.num_particles > 0:
             cor_state, likely = self.filter.correct(timestep, meas, **filt_args)[0:2]
 
             # manually update the particle weights to account for probability of detection
             # TODO: fix hack so not using "private" variable outside class
-            pd = self.compute_prob_detection(self.filter._particleDist.particles,
-                                             *self._prob_det_args)
-            pd_weight = pd * np.array(self.filter._particleDist.weights) + np.finfo(float).eps
-            self.filter._particleDist.update_weights((pd_weight / np.sum(pd_weight)).tolist())
+            pd = self.compute_prob_detection(
+                self.filter._particleDist.particles, *self._prob_det_args
+            )
+            pd_weight = (
+                pd * np.array(self.filter._particleDist.weights) + np.finfo(float).eps
+            )
+            self.filter._particleDist.update_weights(
+                (pd_weight / np.sum(pd_weight)).tolist()
+            )
 
             # determine the partial cost, the remainder is calculated later from
             # the hypothesis
@@ -3421,7 +3625,6 @@ class _SMCGLMBBase:
             new_s = state
             new_c = self.filter.cov
             new_w = 0
-
         return new_f_state, new_s, new_c, new_w
 
     def correct(self, timestep, meas, prob_det_args=(), **kwargs):
@@ -3455,12 +3658,13 @@ class _SMCGLMBBase:
         RuntimeWarning
             Function must be implemented.
         """
-        warnings.warn('Not implemented for this class')
+        warnings.warn("Not implemented for this class")
 
 
 # Note: need inherited classes in this order for proper MRO
-class SMCGeneralizedLabeledMultiBernoulli(_SMCGLMBBase,
-                                          GeneralizedLabeledMultiBernoulli):
+class SMCGeneralizedLabeledMultiBernoulli(
+    _SMCGLMBBase, GeneralizedLabeledMultiBernoulli
+):
     """Implementation of a Sequential Monte Carlo GLMB filter.
 
     This is based on :cite:`Vo2014_LabeledRandomFiniteSetsandtheBayesMultiTargetTrackingFilter`
@@ -3493,6 +3697,61 @@ class GSMGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
         super().__init__(**kwargs)
 
 
+class _IMMGLMBBase:
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def _init_filt_states(self, distrib):
+        filt_states = [None] * len(distrib.means)
+        states = [m.copy() for m in distrib.means]
+        if self.save_covs:
+            covs = [c.copy() for c in distrib.covariances]
+        else:
+            covs = []
+        weights = distrib.weights.copy()
+        for ii, (m, cov) in enumerate(zip(distrib.means, distrib.covariances)):
+            if isinstance(self._baseFilter, gfilts.UnscentedKalmanFilter) or isinstance(
+                self._baseFilter, gfilts.UKFGaussianScaleMixtureFilter
+            ):
+                self._baseFilter.init_sigma_points(m)
+            filt_states[ii] = self._baseFilter.save_filter_state()
+        return filt_states, weights, states, covs
+
+    def _inner_predict(self, timestep, filt_state, state, filt_args):
+        self.filter.load_filter_state(filt_state)
+        new_s = self.filter.predict(timestep, **filt_args)
+        new_f_state = self.filter.save_filter_state()
+        if self.save_covs:
+            new_cov = self.filter.cov.copy()
+        else:
+            new_cov = None
+        return new_f_state, new_s, new_cov
+
+    def _inner_correct(
+        self, timestep, meas, filt_state, distrib_weight, state, filt_args
+    ):
+        self.filter.load_filter_state(filt_state)
+        cor_state, likely = self.filter.correct(timestep, meas, **filt_args)
+        new_f_state = self.filter.save_filter_state()
+        new_s = cor_state
+        if self.save_covs:
+            new_c = self.filter.cov.copy()
+        else:
+            new_c = None
+        new_w = distrib_weight * likely
+
+        return new_f_state, new_s, new_c, new_w
+
+
+class IMMGeneralizedLabeledMultiBernoulli(
+    _IMMGLMBBase, GeneralizedLabeledMultiBernoulli
+):
+    """An implementation of the IMM-GLMB algorithm."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
 class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
     """Implements a Joint Generalized Labeled Multi-Bernoulli Filter.
 
@@ -3508,8 +3767,12 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
     """
 
     def __init__(self, **kwargs):
-        self._old_track_tab = []  # used to store previous track table and initialize survival probability matrix
-        self._update_has_been_called = True # used to denote if the update function should be called or not.
+        self._old_track_tab = (
+            []
+        )  # used to store previous track table and initialize survival probability matrix
+        self._update_has_been_called = (
+            True  # used to denote if the update function should be called or not.
+        )
         super().__init__(**kwargs)
 
     def save_filter_state(self):
@@ -3520,7 +3783,7 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
         """
         filt_state = super().save_filter_state()
 
-        filt_state['_old_track_tab'] = deepcopy(self._old_track_tab)
+        filt_state["_old_track_tab"] = deepcopy(self._old_track_tab)
 
         return filt_state
 
@@ -3534,7 +3797,7 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
         """
         super().load_filter_state(filt_state)
 
-        self._old_track_tab = filt_state['_old_track_tab']
+        self._old_track_tab = filt_state["_old_track_tab"]
 
     def predict(self, timestep, filt_args={}):
         """Prediction step of the JGLMB filter.
@@ -3567,8 +3830,7 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
         surv_tab = self._gen_surv_tab(timestep, filt_args)
 
         # Prediction Track Table
-        # TODO: need to make this self._predict_tab, overwrriting self._track_tab is preventing the surv tab from working properly (i think)
-        # self._predict_tab = birth_tab + surv_tab
+
         self._track_tab = birth_tab + surv_tab
 
     def _unique_faster(self, keys):
@@ -3577,6 +3839,23 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
         mindices = (keys[0][np.where(keyind)]).astype(int)
         return mindices
 
+    def _calc_avg_prob_surv_death(self):
+        avg_surv = np.zeros(len(self.birth_terms) + len(self._old_track_tab))
+        for ii in range(0, avg_surv.shape[0]):
+            if ii <= len(self.birth_terms) - 1:
+                avg_surv[ii] = self.birth_terms[ii][1]
+            else:
+                avg_surv[ii] = self.prob_survive
+        # avg_surv = np.array([avg_surv]).T
+        avg_death = 1 - avg_surv
+        return avg_surv, avg_death
+
+    def _calc_avg_prob_det_mdet(self):
+        avg_detect = self.prob_detection * np.ones(len(self._track_tab))
+        # avg_detect = np.array([avg_detect]).T
+        avg_miss = 1 - avg_detect
+        return avg_detect, avg_miss
+
     def _gen_cor_tab(self, num_meas, meas, timestep, filt_args):
         num_pred = len(self._track_tab)
         up_tab = [None] * (num_meas + 1) * num_pred
@@ -3584,21 +3863,147 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
         for ii, track in enumerate(self._track_tab):
             up_tab[ii] = deepcopy(track)
             up_tab[ii].meas_assoc_hist.append(None)
-
         # measurement updated tracks
         all_cost_m = np.zeros((num_pred, num_meas))
         # for emm, z in enumerate(meas):
         for ii, ent in enumerate(self._track_tab):
             for emm, z in enumerate(meas):
                 s_to_ii = num_pred * emm + ii + num_pred
-                (up_tab[s_to_ii], cost) = \
-                    self._correct_track_tab_entry(z, ent, timestep, filt_args)
+                (up_tab[s_to_ii], cost) = self._correct_track_tab_entry(
+                    z, ent, timestep, filt_args
+                )
 
                 # update association history with current measurement index
                 if up_tab[s_to_ii] is not None:
                     up_tab[s_to_ii].meas_assoc_hist.append(emm)
                 all_cost_m[ii, emm] = cost
         return up_tab, all_cost_m
+
+    def _gen_cor_hyps(
+        self,
+        num_meas,
+        avg_prob_detect,
+        avg_prob_miss_detect,
+        avg_prob_surv,
+        avg_prob_death,
+        all_cost_m,
+    ):
+        # Define clutter
+        clutter = self.clutter_rate * self.clutter_den
+
+        # Joint Cost Matrix
+        joint_cost = np.concatenate(
+            [
+                np.diag(avg_prob_death.flatten()),
+                np.diag(avg_prob_surv.flatten() * avg_prob_miss_detect.flatten()),
+            ],
+            axis=1,
+        )
+
+        other_jc_terms = (
+            np.tile((avg_prob_surv * avg_prob_detect).reshape((-1, 1)), (1, num_meas))
+            * all_cost_m
+            / (clutter)
+        )
+
+        # Full joint cost matrix
+        joint_cost = np.append(joint_cost, other_jc_terms, axis=1)
+
+        # Gated Measurement index matrix
+        gate_meas_indices = np.zeros((len(self._track_tab), num_meas))
+        for ii in range(0, len(self._track_tab)):
+            for jj in range(0, len(self._track_tab[ii].gatemeas)):
+                gate_meas_indices[ii][jj] = self._track_tab[ii].gatemeas[jj]
+        gate_meas_indc = gate_meas_indices >= 0
+
+        # Component updates
+        ss_w = 0
+        up_hyp = []
+        for p_hyp in self._hypotheses:
+            ss_w += np.sqrt(p_hyp.assoc_prob)
+        for p_hyp in self._hypotheses:
+            cpreds = len(self._track_tab)
+            num_births = np.shape(self.birth_terms)[0]
+            num_exists = len(p_hyp.track_set)
+            num_tracks = num_births + num_exists
+
+            # Hypothesis index masking
+            tindices = np.concatenate(
+                (np.arange(0, num_births), num_births + np.array(p_hyp.track_set))
+            ).astype(int)
+            lselmask = np.zeros((len(self._track_tab), num_meas), dtype="bool")
+            lselmask[tindices,] = gate_meas_indc[
+                tindices,
+            ]
+
+            keys = np.array([np.sort(gate_meas_indices[lselmask])])
+            mindices = self._unique_faster(keys)
+
+            comb_tind_cpred = np.append(
+                np.append(tindices, cpreds + tindices), [2 * cpreds + mindices]
+            )
+            cost_m = np.zeros((len(tindices), len(comb_tind_cpred)))
+            cmi = 0
+            for ind in tindices:
+                cost_m[cmi, :] = joint_cost[ind, comb_tind_cpred]
+                cmi = cmi + 1
+            max_row_inds, max_col_inds = np.where(cost_m >= np.inf)
+            if max_row_inds.size > 0:
+                cost_m[max_row_inds, max_col_inds] = np.finfo(float).max
+            min_row_inds, min_col_inds = np.where(cost_m <= 0.0)
+            if min_row_inds.size > 0:
+                cost_m[min_row_inds, min_col_inds] = np.finfo(float).eps
+            neg_log = -np.log(cost_m)
+
+            m = np.round(self.req_upd * np.sqrt(p_hyp.assoc_prob) / ss_w)
+            m = int(m.item()) + 1
+
+            # Gibbs Sampler
+            [assigns, costs] = gibbs(neg_log, m)
+
+            # Process unique assighnments from gibbs sampler
+            assigns[assigns < num_tracks] = -np.inf
+            for ii in range(np.shape(assigns)[0]):
+                if len(np.shape(assigns)) < 2:
+                    if assigns[ii] >= num_tracks and assigns[ii] < 2 * num_tracks:
+                        assigns[ii] = -1
+                else:
+                    for jj in range(np.shape(assigns)[1]):
+                        if (
+                            assigns[ii][jj] >= num_tracks
+                            and assigns[ii][jj] < 2 * num_tracks
+                        ):
+                            assigns[ii][jj] = -1
+            assigns[assigns >= (2 * num_tracks - 1)] -= 2 * num_tracks
+            if assigns[assigns >= 0].size != 0:
+                assigns[assigns >= 0] = mindices[
+                    assigns.astype(int)[assigns.astype(int) >= 0]
+                ]
+            # Assign updated hypotheses from gibbs sampler
+            for c, cst in enumerate(costs.flatten()):
+                update_hyp_cmp_temp = assigns[
+                    c,
+                ]
+                update_hyp_cmp_idx = cpreds * (update_hyp_cmp_temp + 1) + np.append(
+                    np.array([np.arange(0, num_births)]),
+                    num_births + np.array([p_hyp.track_set]),
+                )
+                new_hyp = self._HypothesisHelper()
+                new_hyp.assoc_prob = (
+                    -self.clutter_rate
+                    + num_meas * np.log(clutter)
+                    + np.log(p_hyp.assoc_prob)
+                    - cst
+                )
+                new_hyp.track_set = update_hyp_cmp_idx[update_hyp_cmp_idx >= 0].astype(
+                    int
+                )
+                up_hyp.append(new_hyp)
+        lse = log_sum_exp([x.assoc_prob for x in up_hyp])
+
+        for ii in range(0, len(up_hyp)):
+            up_hyp[ii].assoc_prob = np.exp(up_hyp[ii].assoc_prob - lse)
+        return up_hyp
 
     def correct(self, timestep, meas, filt_args={}):
         """Correction step of the JGLMB filter.
@@ -3629,120 +4034,34 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
         """
         # gating by tracks
         if self.gating_on:
-            RuntimeError('Gating not implemented yet. PLEASE TURN OFF GATING')
+            RuntimeError("Gating not implemented yet. PLEASE TURN OFF GATING")
             # for ent in self._track_tab:
             #     ent.gatemeas = self._gate_meas(meas, ent.probDensity.means,
             #                                     ent.probDensity.covariances)
         else:
             for ent in self._track_tab:
                 ent.gatemeas = np.arange(0, len(meas))
-
         # Pre-calculation of average survival/death probabilities
-        avg_surv = np.zeros(len(self.birth_terms) + len(self._old_track_tab))
-        for ii in range(0, avg_surv.shape[0]):
-            if ii <= len(self.birth_terms) - 1:
-                avg_surv[ii] = self.birth_terms[ii][1]
-            else:
-                avg_surv[ii] = self.prob_survive
-        # avg_surv = np.array([avg_surv]).T
-        avg_death = 1 - avg_surv
+        avg_prob_surv, avg_prob_death = self._calc_avg_prob_surv_death()
 
         # Pre-calculation of average detection/missed probabilities
-        avg_detect = self.prob_detection * np.ones(len(self._track_tab))
-        # avg_detect = np.array([avg_detect]).T
-        avg_miss = 1 - avg_detect
+        avg_prob_detect, avg_prob_miss_detect = self._calc_avg_prob_det_mdet()
 
-        self._meas_tab.append(deepcopy(meas))
+        if self.save_measurements:
+            self._meas_tab.append(deepcopy(meas))
         num_meas = len(meas)
 
         # missed detection tracks
         [up_tab, all_cost_m] = self._gen_cor_tab(num_meas, meas, timestep, filt_args)
 
-        clutter = self.clutter_rate * self.clutter_den
-
-        # Joint Cost Matrix
-        joint_cost = np.concatenate([np.diag(avg_death.flatten()),
-                                     np.diag(avg_surv.flatten() * avg_miss.flatten())], axis=1)
-
-        other_jc_terms = np.tile((avg_surv * avg_detect).reshape((-1, 1)), (1, num_meas)) * all_cost_m / (clutter)
-
-        joint_cost = np.append(joint_cost, other_jc_terms, axis=1)
-
-        # Gated Measurement index matrix
-        gate_meas_indices = np.zeros((len(self._track_tab), num_meas))
-        for ii in range(0, len(self._track_tab)):
-            for jj in range(0, len(self._track_tab[ii].gatemeas)):
-                gate_meas_indices[ii][jj] = self._track_tab[ii].gatemeas[jj]
-        gate_meas_indc = gate_meas_indices >= 0
-
-        # Component updates
-        ss_w = 0
-        up_hyp = []
-        for p_hyp in self._hypotheses:
-            ss_w += np.sqrt(p_hyp.assoc_prob)
-        for p_hyp in self._hypotheses:
-            cpreds = len(self._track_tab)
-            num_births = np.shape(self.birth_terms)[0]
-            num_exists = len(p_hyp.track_set)
-            num_tracks = num_births + num_exists
-            tindices = np.concatenate((np.arange(0, num_births),
-                                       num_births + np.array(p_hyp.track_set))).astype(int)
-            lselmask = np.zeros((len(self._track_tab), num_meas), dtype='bool')
-            lselmask[tindices, ] = gate_meas_indc[tindices, ]
-
-            keys = np.array([np.sort(gate_meas_indices[lselmask])])
-            mindices = self._unique_faster(keys)
-
-            comb_tind_cpred = np.append(np.append(tindices, cpreds + tindices),
-                                        [2 * cpreds + mindices])
-            cost_m = np.zeros((len(tindices),
-                               len(comb_tind_cpred)))
-            cmi = 0
-            for ind in tindices:
-                cost_m[cmi, :] = joint_cost[ind, comb_tind_cpred]
-                cmi = cmi + 1
-
-            max_row_inds, max_col_inds = np.where(cost_m >= np.inf)
-            if max_row_inds.size > 0:
-                cost_m[max_row_inds, max_col_inds] = np.finfo(float).max
-
-            min_row_inds, min_col_inds = np.where(cost_m <= 0.)
-            if min_row_inds.size > 0:
-                cost_m[min_row_inds, min_col_inds] = np.finfo(float).eps
-
-            neg_log = -np.log(cost_m)
-
-            m = np.round(self.req_upd * np.sqrt(p_hyp.assoc_prob) / ss_w)
-            m = int(m.item()) + 1
-
-            [assigns, costs] = gibbs(neg_log, m)
-            assigns[assigns < num_tracks] = -np.inf
-            for ii in range(np.shape(assigns)[0]):
-                if len(np.shape(assigns)) < 2:
-                    if assigns[ii] >= num_tracks and assigns[ii] < 2 * num_tracks:
-                        assigns[ii] = -1
-                else:
-                    for jj in range(np.shape(assigns)[1]):
-                        if assigns[ii][jj] >= num_tracks and assigns[ii][jj] < 2 * num_tracks:
-                            assigns[ii][jj] = -1
-
-            assigns[assigns >= (2 * num_tracks - 1)] -= 2 * num_tracks
-            if assigns[assigns >= 0].size != 0:
-                assigns[assigns >= 0] = mindices[assigns.astype(int)[assigns.astype(int) >= 0]]
-
-            for c, cst in enumerate(costs.flatten()):
-                update_hyp_cmp_temp = assigns[c, ]
-                update_hyp_cmp_idx = cpreds * (update_hyp_cmp_temp + 1) + \
-                    np.append(np.array([np.arange(0, num_births)]), num_births + np.array([p_hyp.track_set]))
-                new_hyp = self._HypothesisHelper()
-                new_hyp.assoc_prob = -self.clutter_rate + num_meas * np.log(clutter) \
-                    + np.log(p_hyp.assoc_prob) - cst
-                new_hyp.track_set = update_hyp_cmp_idx[update_hyp_cmp_idx >= 0].astype(int)
-                up_hyp.append(new_hyp)
-
-        lse = log_sum_exp([x.assoc_prob for x in up_hyp])
-        for ii in range(0, len(up_hyp)):
-            up_hyp[ii].assoc_prob = np.exp(up_hyp[ii].assoc_prob - lse)
+        up_hyp = self._gen_cor_hyps(
+            num_meas,
+            avg_prob_detect,
+            avg_prob_miss_detect,
+            avg_prob_surv,
+            avg_prob_death,
+            all_cost_m,
+        )
 
         self._track_tab = deepcopy(up_tab)
         self._hypotheses = up_hyp
@@ -3753,17 +4072,18 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
         self._old_track_tab = deepcopy(self._track_tab)
 
 
-
-class STMJointGeneralizedLabeledMultiBernoulli(_STMGLMBBase,
-                                               JointGeneralizedLabeledMultiBernoulli):
+class STMJointGeneralizedLabeledMultiBernoulli(
+    _STMGLMBBase, JointGeneralizedLabeledMultiBernoulli
+):
     """Implementation of a STM-JGLMB class."""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
 
-class SMCJointGeneralizedLabeledMultiBernoulli(_SMCGLMBBase,
-                                               JointGeneralizedLabeledMultiBernoulli):
+class SMCJointGeneralizedLabeledMultiBernoulli(
+    _SMCGLMBBase, JointGeneralizedLabeledMultiBernoulli
+):
     """Implementation of a SMC-JGLMB filter."""
 
     def __init__(self, **kwargs):
@@ -3777,6 +4097,15 @@ class GSMJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBerno
     core filters (i.e. QKF GSM, SQKF GSM, UKF GSM, etc.) so this class can use
     any of the GSM inner filters from gncpy.filters
     """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+class IMMJointGeneralizedLabeledMultiBernoulli(
+    _IMMGLMBBase, JointGeneralizedLabeledMultiBernoulli
+):
+    """Implementation of an IMM-JGLMB filter."""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
