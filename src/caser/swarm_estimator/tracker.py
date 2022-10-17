@@ -1037,7 +1037,9 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         scat.set_offsets(x[plt_inds[0:2], :].T)
         return scat
 
-    def plot_states(self, plt_inds, state_lbl="States", state_color=None, **kwargs):
+    def plot_states(
+        self, plt_inds, state_lbl="States", ttl=None, state_color=None, **kwargs
+    ):
         """Plots the best estimate for the states.
 
         This assumes that the states have been extracted. It's designed to plot
@@ -1063,6 +1065,9 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         state_lbl : string
             Value to appear in legend for the states. Only appears if the
             legend is shown
+        ttl : string, optional
+            Title for the plot, if None a default title is generated. The default
+            is None.
 
         Returns
         -------
@@ -1077,7 +1082,8 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         meas_inds = opts["meas_inds"]
         lgnd_loc = opts["lgnd_loc"]
         marker = opts["marker"]
-
+        if ttl is None:
+            ttl = "State Estimates"
         if rng is None:
             rng = rnd.default_rng(1)
         plt_meas = meas_inds is not None
@@ -1228,13 +1234,9 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
                 )
         f_hndl.axes[0].grid(True)
         pltUtil.set_title_label(
-            f_hndl,
-            0,
-            opts,
-            ttl="State Estimates",
-            x_lbl="x-position",
-            y_lbl="y-position",
+            f_hndl, 0, opts, ttl=ttl, x_lbl="x-position", y_lbl="y-position"
         )
+
         if lgnd_loc is not None:
             plt.legend(loc=lgnd_loc)
         plt.tight_layout()
@@ -1579,7 +1581,7 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
 
         qz_temp = np.zeros((plen, zlen))
         mean_temp = np.zeros((zlen, xdim, plen))
-        cov_temp = np.zeros((plen, xdim, xdim))
+        cov_temp = np.zeros((zlen, plen, xdim, xdim))
 
         for z_ind in range(0, zlen):
             for p_ind in range(0, plen):
@@ -1589,19 +1591,13 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
                 (mean, qz) = self.filter.correct(
                     timestep, meas[z_ind], state, **filt_args
                 )
-                cov = self.filter.cov
                 qz_temp[p_ind, z_ind] = qz
                 mean_temp[z_ind, :, p_ind] = np.ndarray.flatten(mean)
-                cov_temp[[p_ind], :, :] = cov
+                cov_temp[z_ind, p_ind, :, :] = self.filter.cov.copy()
         xivals = np.zeros(zlen)
         pdc = self.prob_detection / self.clutter_den
         for e in range(0, zlen):
             xivals[e] = pdc * np.dot(w_pred.T, qz_temp[:, [e]])
-            # xilog = []
-            # for c in range(0, len(w_pred)):
-            #     xilog.append(np.log(w_pred[[c]]).item())
-            #     xilog.append(np.log(qz_temp[c, e]))
-            # xivals[e] = np.exp(np.log(pdc) + np.sum(xilog))
         esfvals_E = get_elem_sym_fnc(xivals)
         esfvals_D = np.zeros((zlen, zlen))
 
@@ -1660,7 +1656,6 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
             * self.prob_miss_detection
             * w_pred
         )
-        # w_update = np.exp(w_update)
 
         gmix.weights = [x.item() for x in w_update]
 
@@ -1673,7 +1668,7 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
             for ww in range(0, w_temp.shape[0]):
                 gmix.add_components(
                     mean_temp[ee, :, ww].reshape((xdim, 1)),
-                    cov_temp[ww, :, :],
+                    cov_temp[ee, ww, :, :],
                     w_temp[ww].item(),
                 )
         cdn_update = self._card_dist.copy()
@@ -1701,7 +1696,7 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
         while ii < s_weights.size and tot_agents < self.cardinality:
             idx = int(s_weights[ii])
 
-            n_agents = round(self._gaussMix.weights[idx])
+            n_agents = np.ceil(self._gaussMix.weights[idx])
             if n_agents <= 0:
                 msg = "Gaussian weights are 0 before reaching cardinality"
                 warnings.warn(msg, RuntimeWarning)
@@ -1768,7 +1763,7 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
 
         return f_hndl
 
-    def plot_card_history(self, true_card=None, **kwargs):
+    def plot_card_history(self, ttl=None, true_card=None, **kwargs):
         """Plots the current cardinality time history.
 
         This assumes that the cardinality distribution has been calculated by
@@ -1776,6 +1771,9 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
 
         Parameters
         ----------
+        ttl : string
+            String for the title, if None a default is created. The default is
+            None.
         true_card : array like
             List of the true cardinality at each time
         **kwargs : dict, optional
@@ -1798,7 +1796,8 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
         sig_bnd = opts["sig_bnd"]
         time_vec = opts["time_vec"]
         lgnd_loc = opts["lgnd_loc"]
-
+        if ttl is None:
+            ttl = "Cardinality History"
         if len(self._card_time_hist) == 0:
             raise RuntimeWarning("Empty Cardinality")
             return f_hndl
@@ -1851,12 +1850,7 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
             plt.legend(loc=lgnd_loc)
         plt.grid(True)
         pltUtil.set_title_label(
-            f_hndl,
-            0,
-            opts,
-            ttl="Cardinality History",
-            x_lbl="Time",
-            y_lbl="Cardinality",
+            f_hndl, 0, opts, ttl=ttl, x_lbl="Time", y_lbl="Cardinality"
         )
 
         plt.tight_layout()
@@ -2048,6 +2042,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         self._ospa2_params = {}
 
         super().__init__(**kwargs)
+        self._states = [[]]
 
     def save_filter_state(self):
         """Saves filter variables so they can be restored later.
@@ -3252,7 +3247,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
 
         return f_hndl
 
-    def plot_card_dist(self, **kwargs):
+    def plot_card_dist(self, ttl=None, **kwargs):
         """Plots the current cardinality distribution.
 
         This assumes that the cardinality distribution has been calculated by
@@ -3264,6 +3259,12 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
 
             - f_hndl
 
+        Parameters
+        ----------
+        ttl : string
+            Title of the plot, if None a default title is generated. The default
+            is None.
+
         Returns
         -------
         Matplotlib figure
@@ -3271,7 +3272,8 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         """
         opts = pltUtil.init_plotting_opts(**kwargs)
         f_hndl = opts["f_hndl"]
-
+        if ttl is None:
+            ttl = "Cardinality Distribution"
         if len(self._card_dist) == 0:
             raise RuntimeWarning("Empty Cardinality")
             return f_hndl
@@ -3282,12 +3284,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         f_hndl.axes[0].bar(x_vals, self._card_dist)
 
         pltUtil.set_title_label(
-            f_hndl,
-            0,
-            opts,
-            ttl="Cardinality Distribution",
-            x_lbl="Cardinality",
-            y_lbl="Probability",
+            f_hndl, 0, opts, ttl=ttl, x_lbl="Cardinality", y_lbl="Probability"
         )
         plt.tight_layout()
 
