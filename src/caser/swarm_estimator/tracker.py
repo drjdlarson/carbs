@@ -603,7 +603,7 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         gating_on=False,
         inv_chi2_gate=0,
         extract_threshold=0.5,
-        prune_threshold=10 ** -5,
+        prune_threshold=1e-5,
         merge_threshold=4,
         max_gauss=100,
         **kwargs
@@ -729,13 +729,14 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
 
         """
         weights = [self.prob_survive * x for x in probDensity.weights.copy()]
-        covariances = []
-        means = []
+        n_terms = len(probDensity.means)
+        covariances = [None] * n_terms
+        means = [None] * n_terms
         for ii, (m, P) in enumerate(zip(probDensity.means, probDensity.covariances)):
             self.filter.cov = P
             n_mean = self.filter.predict(timestep, m, **filt_args)
-            covariances.append(self.filter.cov.copy())
-            means.append(n_mean)
+            covariances[ii] = self.filter.cov.copy()
+            means[ii] = n_mean
         return smodels.GaussianMixture(
             means=means, covariances=covariances, weights=weights
         )
@@ -928,7 +929,12 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
             self._covs.append(c_lst)
 
     def cleanup(
-        self, enable_prune=True, enable_cap=True, enable_merge=True, enable_extract=True
+        self,
+        enable_prune=True,
+        enable_cap=True,
+        enable_merge=True,
+        enable_extract=True,
+        extract_kwargs=None,
     ):
         """Performs the cleanup step of the filter.
 
@@ -949,11 +955,8 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
             Flag indicating if merging should be performed. The default is True.
         enable_extract : bool, optional
             Flag indicating if state extraction should be performed. The default is True.
-
-        Returns
-        -------
-        None.
-
+        extract_kwargs : dict, optional
+            Extra arguments to pass to the extract function.
         """
         if enable_prune:
             self._prune()
@@ -962,7 +965,9 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         if enable_cap:
             self._cap()
         if enable_extract:
-            self.extract_states()
+            if extract_kwargs is None:
+                extract_kwargs = {}
+            self.extract_states(**extract_kwargs)
 
     def __ani_state_plotting(
         self,
@@ -1438,10 +1443,8 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
         number of agents per state. The default is [].
     """
 
-    def __init__(self, agents_per_state=None, max_expected_card=10, **kwargs):
-        if agents_per_state is None:
-            agents_per_state = []
-        self.agents_per_state = agents_per_state
+    def __init__(self, max_expected_card=10, **kwargs):
+        self.agents_per_state = []
         self._max_expected_card = max_expected_card
 
         self._card_dist = np.zeros(
@@ -1492,31 +1495,40 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
         super().predict(timestep, **kwargs)
 
         survive_cdn_predict = np.zeros(self.max_expected_card + 1)
-        for j in range(0, self.max_expected_card):
-            terms = np.zeros((self.max_expected_card + 1, 1))
+        for j in range(0, self.max_expected_card + 1):
+            terms = np.zeros(self.max_expected_card + 1)
             for i in range(j, self.max_expected_card + 1):
-                temp = []
-                temp.append(np.sum(np.log(range(1, i + 1))))
-                temp.append(-np.sum(np.log(range(1, j + 1))))
-                temp.append(np.sum(np.log(range(1, i - j + 1))))
-                temp.append(j * np.log(self.prob_survive))
-                temp.append((i - j) * np.log(self.prob_death))
-                terms[i, 0] = np.exp(np.sum(temp)) * self._card_dist[i]
+                temp = np.array(
+                    [
+                        np.sum(np.log(range(1, i + 1))),
+                        -np.sum(np.log(range(1, j + 1))),
+                        np.sum(np.log(range(1, i - j + 1))),
+                        j * np.log(self.prob_survive),
+                        (i - j) * np.log(self.prob_death),
+                    ]
+                )
+                terms[i] = np.exp(np.sum(temp)) * self._card_dist[i]
             survive_cdn_predict[j] = np.sum(terms)
         cdn_predict = np.zeros(self.max_expected_card + 1)
+        if len(self.birth_terms) != 1:
+            warnings.warn("Only using the first birth term in cardinality update")
+        birth = np.sum(
+            np.array([w for w in self.birth_terms[0].weights])
+        )  # NOTE: assumes 1 GM for the birth model
+        log_birth = np.log(birth)
         for n in range(0, self.max_expected_card + 1):
-            terms = np.zeros((self.max_expected_card + 1, 1))
+            terms = np.zeros(self.max_expected_card + 1)
             for j in range(0, n + 1):
-                temp = []
-                birth = np.zeros(len(self.birth_terms))
-                for b in range(0, len(self.birth_terms)):
-                    birth[b] = self.birth_terms[b].weights[0]
-                temp.append(np.sum(birth))
-                temp.append((n - j) * np.log(np.sum(birth)))
-                temp.append(-np.sum(np.log(range(1, n - j + 1))))
-                terms[j, 0] = np.exp(np.sum(temp)) * survive_cdn_predict[j]
+                temp = np.array(
+                    [birth, (n - j) * log_birth, -np.sum(np.log(range(1, n - j + 1)))]
+                )
+                terms[j] = np.exp(np.sum(temp)) * survive_cdn_predict[j]
             cdn_predict[n] = np.sum(terms)
         self._card_dist = (cdn_predict / np.sum(cdn_predict)).copy()
+
+        self._card_time_hist.append(
+            (np.argmax(self._card_dist).item(), np.std(self._card_dist))
+        )
 
     def correct(
         self, timestep, meas_in, meas_mat_args={}, est_meas_args={}, filt_args={}
@@ -1675,17 +1687,25 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
         for ii in range(0, len(cdn_update)):
             cdn_update[ii] = ups0_E[ii] * self._card_dist[ii]
         self._card_dist = cdn_update / np.sum(cdn_update)
-        self._card_time_hist.append(
-            (np.argmax(self._card_dist).item(), np.std(self._card_dist))
+        # assumes predict is called before correct
+        self._card_time_hist[-1] = (
+            np.argmax(self._card_dist).item(),
+            np.std(self._card_dist),
         )
 
         return gmix
 
-    def extract_states(self):
+    def extract_states(self, allow_multiple=True):
         """Extracts the best state estimates.
 
         This extracts the best states from the distribution. It should be
         called once per time step after the correction function.
+
+        Parameters
+        ----------
+        allow_multiple : bool
+            Flag inicating if extraction is allowed to map a single Gaussian
+            to multiple states. The default is True.
         """
         s_weights = np.argsort(self._gaussMix.weights)[::-1]
         s_lst = []
@@ -1696,11 +1716,16 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
         while ii < s_weights.size and tot_agents < self.cardinality:
             idx = int(s_weights[ii])
 
-            n_agents = np.ceil(self._gaussMix.weights[idx])
-            if n_agents <= 0:
-                msg = "Gaussian weights are 0 before reaching cardinality"
-                warnings.warn(msg, RuntimeWarning)
-                break
+            if allow_multiple:
+                n_agents = np.ceil(self._gaussMix.weights[idx])
+                if n_agents <= 0:
+                    msg = "Gaussian weights are 0 before reaching cardinality"
+                    warnings.warn(msg, RuntimeWarning)
+                    break
+                if tot_agents + n_agents > self.cardinality:
+                    n_agents = self.cardinality - tot_agents
+            else:
+                n_agents = 1
             tot_agents += n_agents
             self.agents_per_state.append(n_agents)
 
@@ -1708,6 +1733,8 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
             if self.save_covs:
                 c_lst.append(self._gaussMix.covariances[idx])
             ii += 1
+        if tot_agents != self.cardinality:
+            warnings.warn("Failed to meet estimated cardinality when extracting!")
         self._states.append(s_lst)
         if self.save_covs:
             self._covs.append(c_lst)
@@ -1763,7 +1790,9 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
 
         return f_hndl
 
-    def plot_card_history(self, ttl=None, true_card=None, **kwargs):
+    def plot_card_history(
+        self, ttl=None, true_card=None, time_units="index", time=None, **kwargs
+    ):
         """Plots the current cardinality time history.
 
         This assumes that the cardinality distribution has been calculated by
@@ -1776,6 +1805,12 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
             None.
         true_card : array like
             List of the true cardinality at each time
+        time_units : string, optional
+            Text representing the units of time in the plot. The default is
+            'index'.
+        time : numpy array, optional
+            Vector to use for the x-axis of the plot. If none is given then
+            vector indices are used. The default is None.
         **kwargs : dict, optional
             Keyword arguments are processed with
             :meth:`gncpy.plotting.init_plotting_opts`. This function
@@ -1794,7 +1829,7 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
         opts = pltUtil.init_plotting_opts(**kwargs)
         f_hndl = opts["f_hndl"]
         sig_bnd = opts["sig_bnd"]
-        time_vec = opts["time_vec"]
+        # time_vec = opts["time_vec"]
         lgnd_loc = opts["lgnd_loc"]
         if ttl is None:
             ttl = "Cardinality History"
@@ -1808,10 +1843,14 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
         if f_hndl is None:
             f_hndl = plt.figure()
             f_hndl.add_subplot(1, 1, 1)
-        if time_vec is None:
+        if time is None:
             x_vals = [ii for ii in range(0, len(card))]
         else:
-            x_vals = time_vec
+            x_vals = time
+        f_hndl.axes[0].step(
+            x_vals, card, label="Cardinality", color="k", linestyle="-", where="post",
+        )
+
         if true_card is not None:
             if len(true_card) != len(x_vals):
                 c_len = len(true_card)
@@ -1821,17 +1860,14 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
                 ) + " does not match time vector length ({})".format(t_len)
                 warnings.warn(msg)
             else:
-                f_hndl.axes[0].plot(
+                f_hndl.axes[0].step(
                     x_vals,
                     true_card,
                     color="g",
                     label="True Cardinality",
-                    linestyle="-",
+                    linestyle="--",
+                    where="post",
                 )
-        f_hndl.axes[0].plot(
-            x_vals, card, label="Cardinality", color="k", linestyle="--"
-        )
-
         if sig_bnd is not None:
             lbl = r"${}\sigma$ Bound".format(sig_bnd)
             f_hndl.axes[0].plot(
@@ -1850,7 +1886,12 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
             plt.legend(loc=lgnd_loc)
         plt.grid(True)
         pltUtil.set_title_label(
-            f_hndl, 0, opts, ttl=ttl, x_lbl="Time", y_lbl="Cardinality"
+            f_hndl,
+            0,
+            opts,
+            ttl=ttl,
+            x_lbl="Time ({})".format(time_units),
+            y_lbl="Cardinality",
         )
 
         plt.tight_layout()
@@ -3326,7 +3367,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         if time is None:
             time = np.arange(card_history.size, dtype=int)
         fig.axes[0].grid(True)
-        fig.axes[0].step(time, card_history, where="post", label="estimated")
+        fig.axes[0].step(time, card_history, where="post", label="estimated", color="k")
         fig.axes[0].ticklabel_format(useOffset=False)
 
         pltUtil.set_title_label(
@@ -3766,13 +3807,17 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
     birthed from the given birth model.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, rng=None, **kwargs):
         self._old_track_tab = (
             []
         )  # used to store previous track table and initialize survival probability matrix
         self._update_has_been_called = (
             True  # used to denote if the update function should be called or not.
         )
+        if rng is None:
+            self._rng = np.random.default_rng()
+        else:
+            self._rng = rng
         super().__init__(**kwargs)
 
     def save_filter_state(self):
@@ -3959,7 +4004,7 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
             m = int(m.item()) + 1
 
             # Gibbs Sampler
-            [assigns, costs] = gibbs(neg_log, m)
+            [assigns, costs] = gibbs(neg_log, m, rng=self._rng)
 
             # Process unique assighnments from gibbs sampler
             assigns[assigns < num_tracks] = -np.inf
