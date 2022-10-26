@@ -71,7 +71,6 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
         inv_chi2_gate=0,
         save_covs=False,
         debug_plots=False,
-        **kwargs
     ):
         if birth_terms is None:
             birth_terms = []
@@ -100,7 +99,7 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
         )  # list of lists, one per timestep, inner is all meas at time
         self._covs = []  # local copy for internal modification
 
-        super().__init__(**kwargs)
+        super().__init__()
 
     @property
     def ospa_method(self):
