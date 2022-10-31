@@ -3066,7 +3066,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         )
 
     def plot_states_labels(
-        self, plt_inds, ttl="Labeled State Trajectories", meas_tx_fnc=None, **kwargs
+        self, plt_inds, ttl="Labeled State Trajectories", x_lbl=None, y_lbl=None, meas_tx_fnc=None, **kwargs
     ):
         """Plots the best estimate for the states and labels.
 
@@ -3091,6 +3091,10 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             List of indices in the state vector to plot
         ttl : string, optional
             Title of the plot.
+        x_lbl : string, optional
+            X-axis label for the plot.
+        y_lbl : string, optional
+            Y-axis label for the plot.
         meas_tx_fnc : callable, optional
             Takes in the measurement vector as an Nm x 1 numpy array and
             returns a numpy array representing the states to plot (size 2). The
@@ -3111,6 +3115,10 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
 
         if rng is None:
             rng = rnd.default_rng(1)
+        if x_lbl is None:
+            x_lbl="x-position"
+        if y_lbl is None:
+            y_lbl="y-position"
         meas_specs_given = (
             meas_inds is not None and len(meas_inds) == 2
         ) or meas_tx_fnc is not None
