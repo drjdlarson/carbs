@@ -2687,7 +2687,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         return states, covs
 
     def _update_extract_hist(self, idx_cmp):
-        used_meas_inds = [[]] * self._time_index_cntr
+        used_meas_inds = [[] for ii in range(self._time_index_cntr)]
         used_labels = []
         new_extract_hists = [None] * len(self._hypotheses[idx_cmp].track_set)
         for ii, track in enumerate(
@@ -2758,9 +2758,9 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         tracks_per_hyp = np.array([x.num_tracks for x in self._hypotheses])
         weight_per_hyp = np.array([x.assoc_prob for x in self._hypotheses])
 
-        self._states = [[]] * self._time_index_cntr
-        self._labels = [[]] * self._time_index_cntr
-        self._covs = [[]] * self._time_index_cntr
+        self._states = [[] for ii in range(self._time_index_cntr)]
+        self._labels = [[] for ii in range(self._time_index_cntr)]
+        self._covs = [[] for ii in range(self._time_index_cntr)]
 
         if len(tracks_per_hyp) == 0:
             return None
@@ -2773,14 +2773,14 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
                     zip(existing.states, existing.covs)
                 ):
                     tt = existing.b_time_index + t_inds_after_b
-                    if len(self._labels[tt]) == 0:
-                        self._states[tt] = [s]
-                        self._labels[tt] = [existing.label]
-                        self._covs[tt] = [c]
-                    else:
-                        self._states[tt].append(s)
-                        self._labels[tt].append(existing.label)
-                        self._covs[tt].append(c)
+                    # if len(self._labels[tt]) == 0:
+                    #     self._states[tt] = [s]
+                    #     self._labels[tt] = [existing.label]
+                    #     self._covs[tt] = [c]
+                    # else:
+                    self._states[tt].append(s)
+                    self._labels[tt].append(existing.label)
+                    self._covs[tt].append(c)
         if not update and not calc_states:
             warnings.warn("Extracting states performed no actions")
         return idx_cmp
@@ -3913,7 +3913,7 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
         up_tab = [None] * (num_meas + 1) * num_pred
 
         for ii, track in enumerate(self._track_tab):
-            up_tab[ii] = deepcopy(track)
+            up_tab[ii] = self._TabEntry().setup(track)
             up_tab[ii].meas_assoc_hist.append(None)
         # measurement updated tracks
         all_cost_m = np.zeros((num_pred, num_meas))
@@ -3942,12 +3942,13 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
     ):
         # Define clutter
         clutter = self.clutter_rate * self.clutter_den
+        # clutter = self.clutter_den
 
         # Joint Cost Matrix
         joint_cost = np.concatenate(
             [
-                np.diag(avg_prob_death.flatten()),
-                np.diag(avg_prob_surv.flatten() * avg_prob_miss_detect.flatten()),
+                np.diag(avg_prob_death.ravel()),
+                np.diag(avg_prob_surv.ravel() * avg_prob_miss_detect.ravel()),
             ],
             axis=1,
         )
@@ -3975,7 +3976,7 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
             ss_w += np.sqrt(p_hyp.assoc_prob)
         for p_hyp in self._hypotheses:
             cpreds = len(self._track_tab)
-            num_births = np.shape(self.birth_terms)[0]
+            num_births = len(self.birth_terms)
             num_exists = len(p_hyp.track_set)
             num_tracks = num_births + num_exists
 
@@ -3999,13 +4000,9 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
             for ind in tindices:
                 cost_m[cmi, :] = joint_cost[ind, comb_tind_cpred]
                 cmi = cmi + 1
-            max_row_inds, max_col_inds = np.where(cost_m >= np.inf)
-            if max_row_inds.size > 0:
-                cost_m[max_row_inds, max_col_inds] = np.finfo(float).max
-            min_row_inds, min_col_inds = np.where(cost_m <= 0.0)
-            if min_row_inds.size > 0:
-                cost_m[min_row_inds, min_col_inds] = np.finfo(float).eps
-            neg_log = -np.log(cost_m)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                neg_log = -np.log(cost_m)
 
             m = np.round(self.req_upd * np.sqrt(p_hyp.assoc_prob) / ss_w)
             m = int(m.item()) + 1
@@ -4026,7 +4023,7 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
                             and assigns[ii][jj] < 2 * num_tracks
                         ):
                             assigns[ii][jj] = -1
-            assigns[assigns >= (2 * num_tracks - 1)] -= 2 * num_tracks
+            assigns[assigns >= 2 * num_tracks] -= 2 * num_tracks
             if assigns[assigns >= 0].size != 0:
                 assigns[assigns >= 0] = mindices[
                     assigns.astype(int)[assigns.astype(int) >= 0]

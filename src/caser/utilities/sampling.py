@@ -62,10 +62,11 @@ def gibbs(in_costs, num_iters, rng=None):
             csum = np.cumsum(temp_samp[temp_samp > 0].ravel())
             hist_in_array[1:] = csum / csum[-1]
 
-            cur_soln[var] = np.digitize(rng.uniform(size=(1, 1)), hist_in_array) - 1
+            cur_soln[var] = np.digitize(rng.uniform(size=(1,1)), hist_in_array) - 1
             if np.any(temp_samp > 0):
                 cur_soln[var] = np.nonzero(temp_samp > 0)[0][cur_soln[var]]
 
+        mask[-1] = True
         assignments[sol] = cur_soln
         costs[sol] = np.sum(in_costs[rows, cur_soln])
 
