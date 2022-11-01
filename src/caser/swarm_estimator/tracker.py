@@ -99,6 +99,9 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
             []
         )  # list of lists, one per timestep, inner is all meas at time
         self._covs = []  # local copy for internal modification
+        self.enable_spawning = False
+        self.spawn_cov = None
+        self.spawn_weight = None
 
         super().__init__(**kwargs)
 
@@ -303,7 +306,7 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
             for tt, lst in enumerate(true_covs):
                 for obj_num, c in enumerate(lst):
                     if c is not None:
-                        true_cov_mat[:, :, tt, obj_num] = c[state_inds, state_inds]
+                        true_cov_mat[:, :, tt, obj_num] = c[state_inds][state_inds]
         return true_mat, true_cov_mat
 
     def _ospa_setup_emat(self, state_dim, state_inds):
@@ -327,7 +330,7 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
             for tt, lst in enumerate(self._covs):
                 for obj_num, c in enumerate(lst):
                     if c is not None:
-                        est_cov_mat[:, :, tt, obj_num] = c[state_inds, state_inds]
+                        est_cov_mat[:, :, tt, obj_num] = c[state_inds][state_inds]
         return est_mat, est_cov_mat
 
     def _ospa_input_check(self, core_method, truth, true_covs):
@@ -681,6 +684,13 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         else:
             return len(self._states[-1])
 
+    def _gen_spawned_targets(self, gaussMix):
+        if self.spawn_cov is not None and self.spawn_weight is not None:
+            gauss_list = [smodels.Gaussian(mean=m, covariance=self.spawn_cov.copy()) for m in gaussMix.means]
+            return smodels.GaussianMixture(distributions=gauss_list, weights=[self.spawn_weight for ii in range(len(gauss_list))])
+        else:
+            raise RuntimeError("self.spawn_cov and self.spawn_weight must be specified.")
+
     def predict(self, timestep, filt_args={}):
         """Prediction step of the PHD filter.
 
@@ -702,7 +712,15 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         None.
 
         """
+        if self.enable_spawning:
+            spawn_mix = self._gen_spawned_targets(self._gaussMix)
+
         self._gaussMix = self._predict_prob_density(timestep, self._gaussMix, filt_args)
+
+        if self.enable_spawning:
+            self._gaussMix.add_components(
+                spawn_mix.means, spawn_mix.covariances, spawn_mix.weights
+            )
 
         for gm in self.birth_terms:
             self._gaussMix.add_components(gm.means, gm.covariances, gm.weights)
@@ -2932,8 +2950,8 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
                 for lbl, c in zip(lbl_lst, c_lst):
                     if lbl is None:
                         continue
-                    est_cov_mat[:, :, tt, lbl_to_ind[str(lbl)]] = c[
-                        state_inds, state_inds
+                    est_cov_mat[:, :, tt, lbl_to_ind[str(lbl)]] = c[state_inds][
+                        state_inds
                     ]
         return est_mat, est_cov_mat
 

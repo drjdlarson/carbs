@@ -671,6 +671,17 @@ def _update_true_agents(true_agents, tt, dt, b_model, rng):
         out.append(x.copy())
     return out
 
+def _update_true_agents_phd_spawn(true_agents, tt, dt, b_model, rng):
+    out = _prop_true(true_agents, tt, dt)
+
+    if any(np.abs(tt - np.array([0, 1, 1.5])) < 1e-8):
+        x = b_model[0].means[0] + (rng.standard_normal(4) * np.ones(4)).reshape((4, 1))
+        out.append(x.copy())
+    
+    if any(np.abs(tt - np.array([2.5, 3.5])) < 1e-8):
+        y = true_agents[0] + (rng.standard_normal(4) * np.ones(4)).reshape((4, 1))
+        out.append(y.copy())
+    return out
 
 def _update_true_agents_prob(true_agents, tt, dt, b_model, rng):
     out = _prop_true(true_agents, tt, dt)
@@ -807,6 +818,80 @@ def test_PHD():  # noqa
     if debug_plots:
         phd.plot_states([0, 1])
     assert len(true_agents) == phd.cardinality, "Wrong cardinality"
+    
+def test_PHD_spawning():
+    print("Test PHD with Target Spawning")
+    rng = rnd.default_rng(global_seed)
+
+    dt = 0.01
+    t0, t1 = 0, 10 + dt
+
+    filt = _setup_double_int_kf(dt)
+    state_mat_args = (dt, "test arg")
+    meas_fun_args = ("useless arg",)
+
+    b_model = _setup_phd_double_int_birth()
+
+    RFS_base_args = {
+        "prob_detection": 0.99,
+        "prob_survive": 0.98,
+        "in_filter": filt,
+        "birth_terms": b_model,
+        "clutter_den": 1 ** -7,
+        "clutter_rate": 1 ** -7,
+    }
+    phd = tracker.ProbabilityHypothesisDensity(**RFS_base_args)
+    phd.gating_on = False
+    phd.save_covs = True
+    phd.enable_spawning = True
+    phd.spawn_cov = np.diag([1.0, 1.0, 5.0, 5.0])
+    phd.spawn_weight = 1
+
+    time = np.arange(t0, t1, dt)
+    true_agents = []
+    global_true = []
+    for kk, tt in enumerate(time):
+
+        true_agents = _update_true_agents_phd_spawn(true_agents, tt, dt, b_model, rng)
+        global_true.append(deepcopy(true_agents))
+
+        filt_args = {"state_mat_args": state_mat_args}
+        phd.predict(tt, filt_args=filt_args)
+
+        meas_in = _gen_meas(tt, true_agents, filt.proc_noise, filt.meas_noise, rng)
+
+        filt_args = {"meas_fun_args": meas_fun_args}
+        phd.correct(
+            tt, meas_in, meas_mat_args={}, est_meas_args={}, filt_args=filt_args
+        )
+
+        phd.cleanup()
+    true_covs = []
+    for ii, lst in enumerate(global_true):
+        true_covs.append([])
+        for jj in lst:
+            true_covs[ii].append(np.diag([7e-5, 7e-5, 0.1, 0.1]))
+    phd.calculate_ospa(global_true, 5, 1)
+    if debug_plots:
+        phd.plot_ospa_history(time=time, time_units="s")
+    phd.calculate_ospa(global_true, 5, 1, core_method=SingleObjectDistance.MANHATTAN)
+    if debug_plots:
+        phd.plot_ospa_history(time=time, time_units="s")
+    # phd.calculate_ospa(
+    #     global_true,
+    #     1,
+    #     1,
+    #     core_method=SingleObjectDistance.HELLINGER,
+    #     true_covs=true_covs,
+    # )
+    # if debug_plots:
+    #     phd.plot_ospa_history(time=time, time_units="s")
+    # phd.calculate_ospa(global_true, 5, 1, core_method=SingleObjectDistance.MAHALANOBIS)
+    # if debug_plots:
+    #     phd.plot_ospa_history(time=time, time_units="s")
+    if debug_plots:
+        phd.plot_states([0, 1])
+    assert len(true_agents) == phd.cardinality, "Wrong cardinality"
 
 
 def test_CPHD():  # noqa
@@ -840,6 +925,61 @@ def test_CPHD():  # noqa
     for kk, tt in enumerate(time):
 
         true_agents = _update_true_agents(true_agents, tt, dt, b_model, rng)
+        global_true.append(deepcopy(true_agents))
+
+        filt_args = {"state_mat_args": state_mat_args}
+        phd.predict(tt, filt_args=filt_args)
+
+        meas_in = _gen_meas(tt, true_agents, filt.proc_noise, filt.meas_noise, rng)
+
+        filt_args = {"meas_fun_args": meas_fun_args}
+        phd.correct(
+            tt, meas_in, meas_mat_args={}, est_meas_args={}, filt_args=filt_args
+        )
+
+        phd.cleanup()
+    phd.calculate_ospa(global_true, 2, 1)
+
+    if debug_plots:
+        phd.plot_card_history(time_vec=time)
+        phd.plot_states([0, 1])
+        phd.plot_ospa_history(time=time, time_units="s")
+    assert len(true_agents) == phd.cardinality, "Wrong cardinality"
+
+def test_CPHD_spawning():  # noqa
+    print("Test CPHD with Target Spawning")
+
+    rng = rnd.default_rng(global_seed)
+
+    dt = 0.01
+    t0, t1 = 0, 10 + dt
+
+    filt = _setup_double_int_kf(dt)
+    state_mat_args = (dt, "test arg")
+    meas_fun_args = ("useless arg",)
+
+    b_model = _setup_phd_double_int_birth()
+
+    RFS_base_args = {
+        "prob_detection": 0.99,
+        "prob_survive": 0.98,
+        "in_filter": filt,
+        "birth_terms": b_model,
+        "clutter_den": 1 ** -7,
+        "clutter_rate": 1 ** -7,
+    }
+    phd = tracker.CardinalizedPHD(**RFS_base_args)
+    phd.gating_on = False
+    phd.enable_spawning = True
+    phd.spawn_cov = np.diag([1.0, 1.0, 5.0, 5.0])
+    phd.spawn_weight = 1
+
+    time = np.arange(t0, t1, dt)
+    true_agents = []
+    global_true = []
+    for kk, tt in enumerate(time):
+
+        true_agents = _update_true_agents_phd_spawn(true_agents, tt, dt, b_model, rng)
         global_true.append(deepcopy(true_agents))
 
         filt_args = {"state_mat_args": state_mat_args}
@@ -2968,7 +3108,9 @@ if __name__ == "__main__":
     start = timer()
 
     # test_PHD()
+    test_PHD_spawning()
     # test_CPHD()
+    # test_CPHD_spawning()
 
     # test_GLMB()
     # test_STM_GLMB()
