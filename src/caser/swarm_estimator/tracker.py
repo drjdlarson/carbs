@@ -1042,7 +1042,7 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         return scat
 
     def plot_states(
-        self, plt_inds, state_lbl="States", ttl=None, state_color=None, **kwargs
+        self, plt_inds, state_lbl="States", ttl=None, state_color=None, x_lbl=None, y_lbl=None, **kwargs
     ):
         """Plots the best estimate for the states.
 
@@ -1072,6 +1072,10 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         ttl : string, optional
             Title for the plot, if None a default title is generated. The default
             is None.
+        x_lbl : string
+            Label for the x-axis.
+        y_lbl : string
+            Label for the y-axis.
 
         Returns
         -------
@@ -1090,6 +1094,10 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
             ttl = "State Estimates"
         if rng is None:
             rng = rnd.default_rng(1)
+        if x_lbl is None:
+            x_lbl = "x-position"
+        if y_lbl is None:
+            y_lbl = "y-position"
         plt_meas = meas_inds is not None
         show_sig = sig_bnd is not None and self.save_covs
 
@@ -1238,7 +1246,7 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
                 )
         f_hndl.axes[0].grid(True)
         pltUtil.set_title_label(
-            f_hndl, 0, opts, ttl=ttl, x_lbl="x-position", y_lbl="y-position"
+            f_hndl, 0, opts, ttl=ttl, x_lbl=x_lbl, y_lbl=y_lbl
         )
 
         if lgnd_loc is not None:
@@ -2010,6 +2018,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             self.filt_states = deepcopy(tab.filt_states)
             self.meas_assoc_hist = tab.meas_assoc_hist.copy()
 
+            self.state_hist = [None] * len(tab.state_hist)
             self.state_hist = [s.copy() for s in [s_lst for s_lst in tab.state_hist]]
             self.cov_hist = [
                 c.copy() if c else [] for c in [c_lst for c_lst in tab.cov_hist]
@@ -2608,7 +2617,8 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         new_inds = [None] * len(self._track_tab)
         for (ii, v) in zip(nnz_inds, [ii for ii in range(0, track_cnt)]):
             new_inds[ii] = v
-        new_tab = [self._TabEntry().setup(self._track_tab[ii]) for ii in nnz_inds]
+        # new_tab = [self._TabEntry().setup(self._track_tab[ii]) for ii in nnz_inds]
+        new_tab = [self._track_tab[ii] for ii in nnz_inds]
         new_hyps = []
         for (ii, hyp) in enumerate(self._hypotheses):
             if len(hyp.track_set) > 0:
@@ -3815,9 +3825,8 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
     """
 
     def __init__(self, rng=None, **kwargs):
-        self._old_track_tab = (
-            []
-        )  # used to store previous track table and initialize survival probability matrix
+        super().__init__(**kwargs)
+        self._old_track_tab_len = len(self._track_tab)
         self._update_has_been_called = (
             True  # used to denote if the update function should be called or not.
         )
@@ -3825,7 +3834,6 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
             self._rng = np.random.default_rng()
         else:
             self._rng = rng
-        super().__init__(**kwargs)
 
     def save_filter_state(self):
         """Saves filter variables so they can be restored later.
@@ -3835,7 +3843,7 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
         """
         filt_state = super().save_filter_state()
 
-        filt_state["_old_track_tab"] = deepcopy(self._old_track_tab)
+        filt_state["_old_track_tab_len"] = self._old_track_tab_len
 
         return filt_state
 
@@ -3849,7 +3857,7 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
         """
         super().load_filter_state(filt_state)
 
-        self._old_track_tab = filt_state["_old_track_tab"]
+        self._old_track_tab_len = filt_state["_old_track_tab_len"]
 
     def predict(self, timestep, filt_args={}):
         """Prediction step of the JGLMB filter.
@@ -3892,7 +3900,7 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
         return mindices
 
     def _calc_avg_prob_surv_death(self):
-        avg_surv = np.zeros(len(self.birth_terms) + len(self._old_track_tab))
+        avg_surv = np.zeros(len(self.birth_terms) + self._old_track_tab_len)
         for ii in range(0, avg_surv.shape[0]):
             if ii <= len(self.birth_terms) - 1:
                 avg_surv[ii] = self.birth_terms[ii][1]
@@ -3995,11 +4003,16 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
             comb_tind_cpred = np.append(
                 np.append(tindices, cpreds + tindices), [2 * cpreds + mindices]
             )
-            cost_m = np.zeros((len(tindices), len(comb_tind_cpred)))
-            cmi = 0
-            for ind in tindices:
-                cost_m[cmi, :] = joint_cost[ind, comb_tind_cpred]
-                cmi = cmi + 1
+            # print(joint_cost.shape)
+            # print(tindices)
+            # print(comb_tind_cpred)
+            cost_m = joint_cost[tindices][:, comb_tind_cpred]
+            # print(cost_m.shape)
+            # cost_m = np.zeros((len(tindices), len(comb_tind_cpred)))
+            # cmi = 0
+            # for ind in tindices:
+            #     cost_m[cmi, :] = joint_cost[ind, comb_tind_cpred]
+            #     cmi = cmi + 1
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", RuntimeWarning)
                 neg_log = -np.log(cost_m)
@@ -4112,13 +4125,13 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
             all_cost_m,
         )
 
-        self._track_tab = deepcopy(up_tab)
+        self._track_tab = up_tab
         self._hypotheses = up_hyp
         self._card_dist = self._calc_card_dist(self._hypotheses)
         self._clean_predictions()
         self._clean_updates()
         self._update_has_been_called = True
-        self._old_track_tab = deepcopy(self._track_tab)
+        self._old_track_tab_len = len(self._track_tab)
 
 
 class STMJointGeneralizedLabeledMultiBernoulli(
