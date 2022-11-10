@@ -71,6 +71,7 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
         inv_chi2_gate=0,
         save_covs=False,
         debug_plots=False,
+        enable_spawning=False
     ):
         if birth_terms is None:
             birth_terms = []
@@ -98,7 +99,7 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
             []
         )  # list of lists, one per timestep, inner is all meas at time
         self._covs = []  # local copy for internal modification
-        self.enable_spawning = False
+        self.enable_spawning = enable_spawning
         self.spawn_cov = None
         self.spawn_weight = None
 
