@@ -3,6 +3,7 @@
 This module contains the classes and data structures
 for RFS tracking related algorithms.
 """
+import gncpy.filters
 import numpy as np
 import numpy.linalg as la
 import numpy.random as rnd
@@ -58,20 +59,58 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
     ospa_cardinality : numpy array
         Calculated OSPA value for the given truth data. Must be manually updated
         by a function call.
+    enable_spawning : bool
+            Flag for enabling spawning.
+    spawn_cov : N x N numpy array
+        Covariance for spawned targets.
+    spawn_weight : float
+        Weight for spawned targets.
     """
 
     def __init__(
         self,
-        in_filter=None,
-        prob_detection=1,
-        prob_survive=1,
-        birth_terms=None,
-        clutter_rate=0,
-        clutter_den=0,
-        inv_chi2_gate=0,
-        save_covs=False,
-        debug_plots=False,
+        in_filter: gncpy.filters.BayesFilter = None,
+        prob_detection: float = 1,
+        prob_survive: float = 1,
+        birth_terms: list = None,
+        clutter_rate: float = 0,
+        clutter_den: float = 0,
+        inv_chi2_gate: float = 0,
+        save_covs: bool = False,
+        debug_plots: bool = False,
+        enable_spawning: bool = False,
+        spawn_cov: np.ndarray = None,
+        spawn_weight: float = None,
     ):
+        """Initialize an object.
+
+        Parameters
+        ----------
+        in_filter
+            Inner filter object.
+        prob_detection
+            Probability of detection.
+        prob_survive
+            Probability of survival.
+        birth_terms
+            Birth model.
+        clutter_rate
+            Clutter rate per scan.
+        clutter_den
+            Clutter density.
+        inv_chi2_gate
+            Inverse Chi^2 gating threshold.
+        save_covs
+            Flag for saving covariances.
+        debug_plots
+            Flag for enabling debug plots.
+        enable_spawning
+            Flag for enabling spawning.
+        spawn_cov
+            Covariance for spawned targets.
+        spawn_weight
+            Weight for spawned targets.
+        """
         if birth_terms is None:
             birth_terms = []
         self.filter = deepcopy(in_filter)
@@ -98,9 +137,9 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
             []
         )  # list of lists, one per timestep, inner is all meas at time
         self._covs = []  # local copy for internal modification
-        self.enable_spawning = False
-        self.spawn_cov = None
-        self.spawn_weight = None
+        self.enable_spawning = enable_spawning
+        self.spawn_cov = spawn_cov
+        self.spawn_weight = spawn_weight
 
         super().__init__()
 
@@ -685,10 +724,18 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
 
     def _gen_spawned_targets(self, gaussMix):
         if self.spawn_cov is not None and self.spawn_weight is not None:
-            gauss_list = [smodels.Gaussian(mean=m, covariance=self.spawn_cov.copy()) for m in gaussMix.means]
-            return smodels.GaussianMixture(distributions=gauss_list, weights=[self.spawn_weight for ii in range(len(gauss_list))])
+            gauss_list = [
+                smodels.Gaussian(mean=m.copy(), covariance=self.spawn_cov.copy())
+                for m in gaussMix.means
+            ]
+            return smodels.GaussianMixture(
+                distributions=gauss_list,
+                weights=[self.spawn_weight for ii in range(len(gauss_list))],
+            )
         else:
-            raise RuntimeError("self.spawn_cov and self.spawn_weight must be specified.")
+            raise RuntimeError(
+                "self.spawn_cov and self.spawn_weight must be specified."
+            )
 
     def predict(self, timestep, filt_args={}):
         """Prediction step of the PHD filter.
@@ -1060,7 +1107,14 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         return scat
 
     def plot_states(
-        self, plt_inds, state_lbl="States", ttl=None, state_color=None, x_lbl=None, y_lbl=None, **kwargs
+        self,
+        plt_inds,
+        state_lbl="States",
+        ttl=None,
+        state_color=None,
+        x_lbl=None,
+        y_lbl=None,
+        **kwargs
     ):
         """Plots the best estimate for the states.
 
@@ -1263,9 +1317,7 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
                     edgecolors=(0, 0, 0),
                 )
         f_hndl.axes[0].grid(True)
-        pltUtil.set_title_label(
-            f_hndl, 0, opts, ttl=ttl, x_lbl=x_lbl, y_lbl=y_lbl
-        )
+        pltUtil.set_title_label(f_hndl, 0, opts, ttl=ttl, x_lbl=x_lbl, y_lbl=y_lbl)
 
         if lgnd_loc is not None:
             plt.legend(loc=lgnd_loc)
@@ -1873,7 +1925,12 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
         else:
             x_vals = time
         f_hndl.axes[0].step(
-            x_vals, card, label="Cardinality", color="k", linestyle="-", where="post",
+            x_vals,
+            card,
+            label="Cardinality",
+            color="k",
+            linestyle="-",
+            where="post",
         )
 
         if true_card is not None:
@@ -2069,7 +2126,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         req_surv=None,
         req_upd=None,
         gating_on=False,
-        prune_threshold=10 ** -15,
+        prune_threshold=10**-15,
         max_hyps=3000,
         decimal_places=2,
         save_measurements=False,
@@ -3094,7 +3151,13 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         )
 
     def plot_states_labels(
-        self, plt_inds, ttl="Labeled State Trajectories", x_lbl=None, y_lbl=None, meas_tx_fnc=None, **kwargs
+        self,
+        plt_inds,
+        ttl="Labeled State Trajectories",
+        x_lbl=None,
+        y_lbl=None,
+        meas_tx_fnc=None,
+        **kwargs
     ):
         """Plots the best estimate for the states and labels.
 
@@ -3144,9 +3207,9 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         if rng is None:
             rng = rnd.default_rng(1)
         if x_lbl is None:
-            x_lbl="x-position"
+            x_lbl = "x-position"
         if y_lbl is None:
-            y_lbl="y-position"
+            y_lbl = "y-position"
         meas_specs_given = (
             meas_inds is not None and len(meas_inds) == 2
         ) or meas_tx_fnc is not None
