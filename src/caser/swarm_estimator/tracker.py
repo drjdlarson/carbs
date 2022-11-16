@@ -8,6 +8,7 @@ import numpy as np
 import numpy.linalg as la
 import numpy.random as rnd
 import matplotlib.pyplot as plt
+from typing import Iterable
 from matplotlib.patches import Ellipse
 import matplotlib.animation as animation
 import abc
@@ -344,7 +345,7 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
             for tt, lst in enumerate(true_covs):
                 for obj_num, c in enumerate(lst):
                     if c is not None:
-                        true_cov_mat[:, :, tt, obj_num] = c[state_inds][state_inds]
+                        true_cov_mat[:, :, tt, obj_num] = c[state_inds][:, state_inds]
         return true_mat, true_cov_mat
 
     def _ospa_setup_emat(self, state_dim, state_inds):
@@ -368,7 +369,7 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
             for tt, lst in enumerate(self._covs):
                 for obj_num, c in enumerate(lst):
                     if c is not None:
-                        est_cov_mat[:, :, tt, obj_num] = c[state_inds][state_inds]
+                        est_cov_mat[:, :, tt, obj_num] = c[state_inds][:, state_inds]
         return est_mat, est_cov_mat
 
     def _ospa_input_check(self, core_method, truth, true_covs):
@@ -404,7 +405,13 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
         return state_dim
 
     def calculate_ospa(
-        self, truth, c, p, core_method=None, true_covs=None, state_inds=None
+        self,
+        truth: Iterable[Iterable[np.ndarray]],
+        c: float,
+        p: float,
+        core_method: SingleObjectDistance = None,
+        true_covs: Iterable[Iterable[np.ndarray]] = None,
+        state_inds: Iterable[int] = None,
     ):
         """Calculates the OSPA distance between the truth at all timesteps.
 
