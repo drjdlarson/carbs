@@ -331,21 +331,25 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
 
         for lst in truth:
             num_objs = np.max(
-                [num_objs, np.sum([_x is not None for _x in lst]).astype(int)]
+                [num_objs, np.sum([_x is not None and _x.size > 0 for _x in lst]).astype(int)]
             )
         # create matrices
         true_mat = np.nan * np.ones((state_dim, num_timesteps, num_objs))
         true_cov_mat = np.nan * np.ones((state_dim, state_dim, num_timesteps, num_objs))
 
         for tt, lst in enumerate(truth):
-            for obj_num, s in enumerate(lst):
-                if s is not None:
+            obj_num = 0
+            for s in lst:
+                if s is not None and s.size > 0:
                     true_mat[:, tt, obj_num] = s.ravel()[state_inds]
+                    obj_num += 1
         if true_covs is not None:
             for tt, lst in enumerate(true_covs):
-                for obj_num, c in enumerate(lst):
-                    if c is not None:
+                obj_num = 0
+                for c in lst:
+                    if c is not None and truth[tt][obj_num].size > 0:
                         true_cov_mat[:, :, tt, obj_num] = c[state_inds][:, state_inds]
+                        obj_num += 1
         return true_mat, true_cov_mat
 
     def _ospa_setup_emat(self, state_dim, state_inds):
@@ -363,12 +367,12 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
 
         for tt, lst in enumerate(self._states):
             for obj_num, s in enumerate(lst):
-                if s is not None:
+                if s is not None and s.size > 0:
                     est_mat[:, tt, obj_num] = s.ravel()[state_inds]
         if self.save_covs:
             for tt, lst in enumerate(self._covs):
                 for obj_num, c in enumerate(lst):
-                    if c is not None:
+                    if c is not None and self._states[tt][obj_num].size > 0:
                         est_cov_mat[:, :, tt, obj_num] = c[state_inds][:, state_inds]
         return est_mat, est_cov_mat
 
@@ -3065,7 +3069,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
                     if lbl is None:
                         continue
                     est_cov_mat[:, :, tt, lbl_to_ind[str(lbl)]] = c[state_inds][
-                        state_inds
+                        :, state_inds
                     ]
         return est_mat, est_cov_mat
 
@@ -3334,7 +3338,8 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             x = np.nan * np.ones((x_dim, len(true_states), max_true))
             for tt, states in enumerate(true_states):
                 for ii, state in enumerate(states):
-                    x[:, [tt], ii] = state.copy()
+                    if state is not None and state.size > 0:
+                        x[:, [tt], ii] = state.copy()
             for ii in range(0, max_true):
                 if not added_true_lbl:
                     f_hndl.axes[0].plot(
