@@ -476,6 +476,8 @@ class ELQR:
                 elqr.feedback_gain[kk] @ state_traj[kk, :].reshape((-1, 1))
                 + elqr.feedthrough_gain[kk]
             ).ravel()
+            if elqr.control_constraints is not None:
+                ctrl_signal[kk, :] = elqr.control_constraints(tt, ctrl_signal[kk, :].reshape((-1, 1))).ravel()
             cost += elqr.cost_function(
                 tt,
                 state_traj[kk, :].reshape((-1, 1)),
@@ -607,7 +609,7 @@ class ELQR:
         params["elqr"].set_cost_model(
             non_quadratic_fun=self.non_quad_fun_factory(), skip_validity_check=True
         )
-        st, c, cs = self.gen_final_traj(
+        st, cs, c = self.gen_final_traj(
             num_timesteps,
             start,
             params["elqr"],
@@ -851,6 +853,8 @@ class ELQR:
                         params["elqr"].feedback_gain[kk] @ x
                         + params["elqr"].feedthrough_gain[kk]
                     )
+                    if params["elqr"].control_constraints is not None:
+                        u = params["elqr"].control_constraints(tt, u)
                     cost += params["elqr"].cost_function(
                         tt, x, u, cost_args, is_initial=(kk == 0), is_final=False,
                     )
