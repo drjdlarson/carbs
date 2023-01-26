@@ -477,7 +477,9 @@ class ELQR:
                 + elqr.feedthrough_gain[kk]
             ).ravel()
             if elqr.control_constraints is not None:
-                ctrl_signal[kk, :] = elqr.control_constraints(tt, ctrl_signal[kk, :].reshape((-1, 1))).ravel()
+                ctrl_signal[kk, :] = elqr.control_constraints(
+                    tt, ctrl_signal[kk, :].reshape((-1, 1))
+                ).ravel()
             cost += elqr.cost_function(
                 tt,
                 state_traj[kk, :].reshape((-1, 1)),
@@ -690,6 +692,8 @@ class ELQR:
         fig=None,
         cmap=None,
         plt_inds=None,
+        update_end=True,
+        update_end_iters=1,
     ):
         """Main planning function.
 
@@ -812,9 +816,10 @@ class ELQR:
                     non_quadratic_fun=self.non_quad_fun_factory(),
                     skip_validity_check=True,
                 )
-                params["elqr"].end_state = self.find_end_state(
-                    self._time_vec[-1], c_ind, params["traj"][-1, :].reshape((-1, 1)),
-                )
+                # if update_end and itr != 0 and itr % update_end_iters == 0:
+                #     params["elqr"].end_state = self.find_end_state(
+                #         self._time_vec[-1], c_ind, params["traj"][-1, :].reshape((-1, 1)),
+                #     )
                 params["traj"] = params["elqr"].quadratize_final_cost(
                     itr, num_timesteps, params["traj"], self._time_vec, cost_args
                 )
@@ -841,44 +846,110 @@ class ELQR:
 
             # get true cost
             cost = 0
+            x = np.nan * np.ones(
+                (len(self._elqr_lst), self._elqr_lst[0]["traj"].shape[1])
+            )
+            for kk, tt in enumerate(self._time_vec[:-1]):
+                for ind, params in enumerate(self._elqr_lst):
+                    x[ind] = params["traj"][kk].copy()
+                    u = (
+                        params["elqr"].feedback_gain[kk] @ x[ind].reshape((-1, 1))
+                        + params["elqr"].feedthrough_gain[kk]
+                    )
+                    if params["elqr"].control_constraints is not None:
+                        u = params["elqr"].control_constraints(tt, u)
+                    self._cur_ind = ind
+                    params["elqr"].set_cost_model(
+                        non_quadratic_fun=self.non_quad_fun_factory(),
+                        skip_validity_check=True,
+                    )
+                    cost += params["elqr"].cost_function(
+                        tt,
+                        x[ind].reshape((-1, 1)),
+                        u,
+                        cost_args,
+                        is_initial=(kk == 0),
+                        is_final=False,
+                    )
+                    x[ind] = (
+                        params["elqr"]
+                        .prop_state(
+                            tt,
+                            x[ind].reshape((-1, 1)),
+                            u,
+                            state_args,
+                            ctrl_args,
+                            True,
+                            inv_state_args,
+                            inv_ctrl_args,
+                        )
+                        .ravel()
+                    )
+
             for ind, params in enumerate(self._elqr_lst):
+                if update_end and itr != 0 and itr % update_end_iters == 0:
+                    params["elqr"].end_state = self.find_end_state(
+                        self._time_vec[-1], ind, x[ind].reshape((-1, 1))
+                    )
+                u = (
+                    params["elqr"].feedback_gain[-1] @ x[ind].reshape((-1, 1))
+                    + params["elqr"].feedthrough_gain[-1]
+                )
+                if params["elqr"].control_constraints is not None:
+                    u = params["elqr"].control_constraints(tt, u)
+
                 self._cur_ind = ind
                 params["elqr"].set_cost_model(
                     non_quadratic_fun=self.non_quad_fun_factory(),
                     skip_validity_check=True,
                 )
-                x = params["traj"][0, :].copy().reshape((-1, 1))
-                for kk, tt in enumerate(self._time_vec[:-1]):
-                    u = (
-                        params["elqr"].feedback_gain[kk] @ x
-                        + params["elqr"].feedthrough_gain[kk]
-                    )
-                    if params["elqr"].control_constraints is not None:
-                        u = params["elqr"].control_constraints(tt, u)
-                    cost += params["elqr"].cost_function(
-                        tt, x, u, cost_args, is_initial=(kk == 0), is_final=False,
-                    )
-                    x = params["elqr"].prop_state(
-                        tt,
-                        x,
-                        u,
-                        state_args,
-                        ctrl_args,
-                        True,
-                        inv_state_args,
-                        inv_ctrl_args,
-                    )
-                params["elqr"].end_state = self.find_end_state(
-                    self._time_vec[-1], ind, params["traj"][-1, :].reshape((-1, 1))
-                )
                 cost += params["elqr"].cost_function(
                     self._time_vec[-1],
-                    x,
+                    x[ind].reshape((-1, 1)),
                     u,
                     cost_args,
                     is_initial=False,
                     is_final=True,
                 )
+
+            # for ind, params in enumerate(self._elqr_lst):
+            #     self._cur_ind = ind
+            #     params["elqr"].set_cost_model(
+            #         non_quadratic_fun=self.non_quad_fun_factory(),
+            #         skip_validity_check=True,
+            #     )
+            #     x = params["traj"][0, :].copy().reshape((-1, 1))
+            #     for kk, tt in enumerate(self._time_vec[:-1]):
+            #         u = (
+            #             params["elqr"].feedback_gain[kk] @ x
+            #             + params["elqr"].feedthrough_gain[kk]
+            #         )
+            #         if params["elqr"].control_constraints is not None:
+            #             u = params["elqr"].control_constraints(tt, u)
+            #         cost += params["elqr"].cost_function(
+            #             tt, x, u, cost_args, is_initial=(kk == 0), is_final=False,
+            #         )
+            #         x = params["elqr"].prop_state(
+            #             tt,
+            #             x,
+            #             u,
+            #             state_args,
+            #             ctrl_args,
+            #             True,
+            #             inv_state_args,
+            #             inv_ctrl_args,
+            #         )
+            #     params["elqr"].end_state = self.find_end_state(
+            #         self._time_vec[-1], ind, params["traj"][-1, :].reshape((-1, 1))
+            #     )
+            #     cost += params["elqr"].cost_function(
+            #         self._time_vec[-1],
+            #         x,
+            #         u,
+            #         cost_args,
+            #         is_initial=False,
+            #         is_final=True,
+            #     )
 
             if disp:
                 print("\tIteration: {:3d} Cost: {:10.4f}".format(itr, cost))
