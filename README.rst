@@ -249,7 +249,7 @@ Please cite the framework as follows
     @Misc{caser,
     author       = {Jordan D. Larson and Ryan W. Thomas and Vaughn Weirens and Vincent W. Hill},
     howpublished = {Web page},
-    title        = {{CASER}: A {P}ython library for {C}ommand, control & information of {A}utonomous {S}warms {E}mploying {R}andom finite sets},
+    title        = {{CASER}: A {P}ython library for {C}ommand & control of {A}utonomous {S}warms {E}mploying {R}andom finite sets},
     year         = {2019},
     url          = {https://github.com/drjdlarson/caser},
     }
