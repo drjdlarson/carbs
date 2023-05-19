@@ -351,6 +351,49 @@ def murty_m_best(cost_mat, m):
     assigns = assigns.astype(int)
     return (assigns, costs)
 
+def murty_m_best_all_meas_assigned(cost_mat, m):
+    """ This implements Murty's m-best ranked optimal assignment.
+
+    This ports the implementation from
+    `here <https://ba-tuong.vo-au.com/codes.html>`_.
+    to python. The following are comments from the original implementation.
+
+    MURTY   Murty's Algorithm for m-best ranked optimal assignment problem
+    Port of Ba Tuong Vo's 2015 Matlab code
+    NOTE: the assignment is zero based indexing
+
+    Args:
+        cost_mat (numpy array): Cost matrix
+        m (int): Number of best ranked assignments to find
+
+    Returns:
+        tuple containing
+
+            - assigns (numpy array): Array of best paths
+            - costs (numpy array): Cost of each path
+    """
+    if len(cost_mat.shape) == 1 or len(cost_mat.shape) > 2:
+        raise RuntimeError('Cost matrix must be 2D array')
+
+    if m == 0:
+        return ([], [])
+
+    cm = cost_mat
+    x = cm.min()
+    cm = cm - x
+
+    (assigns, costs) = __murty_helper(cm, m)
+
+    for (ii, a) in enumerate(assigns):
+        costs[ii] += x * np.count_nonzero(a >= 0)
+    assigns += 1
+
+    # remove extra entries
+    assigns = assigns[:, 0:cost_mat.shape[0]]
+    # dummy assignmets are clutter
+    assigns[np.where(assigns > cost_mat.shape[1])] = 0
+    assigns = assigns.astype(int)
+    return (assigns, costs)
 
 def __murty_helper(p0, m):
     (s0, c0) = subs.assign_opt(p0)
