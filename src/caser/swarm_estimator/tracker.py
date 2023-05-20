@@ -5282,36 +5282,7 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
                 all_cost_m[emm, emm+num_pred] = cost
         return up_tab, all_cost_m
 
-    # TODO This function probably not effective.
-    def _add_birth_hyps(self, num_meas):
-        num_pred = len(self._track_tab)
-        num_birth = len(self.birth_terms)
-        new_hyps = []
-        # for hyp in self._hypotheses:
-        #     for ii in range(0, num_meas):
-        #         for jj, b_model in enumerate(self.birth_terms):
-        #             s_to_ii = num_pred + jj + ii * num_birth
-        #             hyp.track_set.append(s_to_ii)
-        #             hyp.assoc_prob = hyp.assoc_prob + np.sum(b_model.weights) * self.prob_detection + self.clutter_rate * self.clutter_den # Not correct, need to do a better job of determining associations
-        for ii in range (0, num_meas):
-            for jj, b_model in enumerate(self.birth_terms):
-                s_to_ii = num_pred + jj + ii * num_birth
-                w_sum = np.sum(b_model.weights)
-                hyp = self._HypothesisHelper()
-                hyp.assoc_prob = w_sum * self.prob_detection + self.clutter_rate * self.clutter_den
-                hyp.track_set = [s_to_ii]
-                new_hyps.append(hyp)
-        self._hypotheses = self._hypotheses + new_hyps
-        assoc_prob_sum = np.sum([x.assoc_prob for x in self._hypotheses.copy()])
-        new_assoc_probs = [x.assoc_prob / assoc_prob_sum for x in self._hypotheses.copy()]
-        for ii, hyp in enumerate(self._hypotheses):
-            hyp.assoc_prob = new_assoc_probs[ii]
 
-    # TODO: Rewrite gen_cor_hyps to fit the pmbm
-    # need to write a function to generate hypotheses, or if not, then have cost mat 
-    # pick best global hyps
-    # also maybe need to include a set of poisson components separately,
-    # i don't think this is necessary, but it may be
     def _gen_cor_hyps(
             self, num_meas, avg_prob_detect, avg_prob_miss_detect, all_cost_m, cor_tab
     ):
@@ -6225,807 +6196,563 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
             )
         return figs
 
-# class MultiBernoulliMixtureFilter(PoissonMultiBernoulliMixture):
-#     """Implements the Multi-Bernoulli Mixture filter.
-#
-#         The kwargs in the constructor are passed through to the parent constructor.
-#
-#         Notes
-#         -----
-#         The filter implementation is based on :cite:`Vo2006_TheGaussianMixtureProbabilityHypothesisDensityFilter`
-#
-#         Attributes
-#         ----------
-#         gating_on : bool
-#             flag indicating if measurement gating should be performed. The
-#             default is False.
-#         inv_chi2_gate : float
-#             threshold for the chi squared test in the measurement gating. The
-#             default is 0.
-#         birth_terms :list
-#             List of tuples where the first element is a
-#             :py:class:`gncpy.distributions.GaussianMixture` and
-#             the second is the birth probability for that term
-#         prune_threshold : float
-#             threshold for removing hypotheses. The default is 10**-5.
-#         merge_threshold : float
-#             threshold for merging hypotheses. The default is 4.
-#         max_hyps : int
-#             max number of hypotheses to use. The default is 100.
-#
-#         """
-#     class _TabEntry:
-#         def __init__(self):
-#             #current single target hypothesis weight for the object
-#             self.distrib_weight = 1
-#
-#             #current bernoulli probability density for the object
-#             self.prob_density = smodels.Bernoulli()
-#         def setup(self, tab):
-#             self.distrib_weight = tab.distrib_weight
-#             self.prob_density = tab.prob_density
-#             return self
-#     class _HypothesisHelper:
-#         def __init__(self):
-#             self.assoc_prob = 0
-#             self.track_set = []  # indices in multi bernoulli data structure
-#
-#         @property
-#         def num_tracks(self):
-#             return len(self.track_set)
-#
-#     class _ExtractHistHelper:
-#         def __init__(self):
-#             self.meas_ind_hist = []
-#             self.b_time_index = None
-#             self.states = []
-#             self.covs = []
-#
-#     def __init__(self,
-#                  req_upd=None,
-#                  gating_on=False,
-#                  prune_threshold=10**-15,
-#                  exist_threshold=10**-10,
-#                  max_hyps=1000,
-#                  save_measurements=False,
-#                  **kwargs):
-#
-#         self.req_upd=req_upd
-#         self.gating_on = gating_on
-#         self.prune_threshold = prune_threshold
-#         self.exist_threshold = exist_threshold
-#         self.max_hyps = max_hyps
-#         self.save_measurements=save_measurements
-#
-#         # Essentially the track table, but using bernoulli distributions.
-#         self._track_tab = []
-#         hyp0 = self._HypothesisHelper()
-#         hyp0.assoc_prob = 1
-#         hyp0.track_set = []
-#         self._hypotheses = [hyp0]  # list of _HypothesisHelper objects
-#
-#         super().__init__(**kwargs)
-#         self._states=[[]]
-#
-#     def save_filter_state(self):
-#         filt_state = super().save_filter_state()
-#         return filt_state
-#     def load_filter_state(self, filt_state):
-#         super().load_filter_state(filt_state)
-#
-#     @property
-#     def states(self):
-#         if len(self._states) > 0:
-#             return self._states[-1]
-#         else:
-#             return []
-#
-#     @property
-#     def covariances(self):
-#         """Read only list of extracted covariances.
-#
-#         This is a list with 1 element per timestep, and each element is a list
-#         of the best covariances extracted at that timestep. The order of each
-#         element corresponds to the state order.
-#
-#         Warns
-#         -----
-#             RuntimeWarning
-#                 If the class is not saving the covariances, and returns an
-#                 empty list
-#         """
-#         if not self.save_covs:
-#             warnings.warn("Not saving covariances")
-#             return []
-#         if len(self._covs) > 0:
-#             return self._covs[-1]
-#         else:
-#             return []
-#
-#     @property
-#     def cardinality(self):
-#         """Read only cardinality of the RFS."""
-#         if len(self._states) == 0:
-#             return 0
-#         else:
-#             return len(self._states[-1])
-#
-#     def _predict_prob_density(self, timestep, filt_args):
-#         """Predicts the probability density.
-#
-#         Loops over all elements in a probability distribution and performs
-#         the filter prediction.
-#
-#         Parameters
-#         ----------
-#         timestep: float
-#             current timestep
-#         probDensity : list of self._TabEntry objects
-#             Probability density to perform prediction on.
-#         filt_args : dict
-#             Passed directly to the inner filter.
-#
-#         Returns
-#         -------
-#         bm : list of self._TabEntry objects
-#             predicted Multi Bernoulli mixture.
-#
-#         """
-#         new_track_list = []
-#
-#         for ent in self._track_tab:
-#             new_tab = self._TabEntry().setup(ent)
-#             n_prob = new_tab.prob_density.prob * self.prob_survive
-#             self.filter.cov = new_tab.prob_density.density.covariance
-#             n_mean = self.filter.predict(timestep, new_tab.prob_density.density.mean, **filt_args)
-#             n_density = smodels.Gaussian(mean=n_mean, covariance=self.filter.cov)
-#             new_tab.prob_density = smodels.Bernoulli(prob=n_prob, density=n_density)
-#             new_track_list.append(new_tab)
-#
-#         return new_track_list
-#     def predict(self, timestep, filt_args={}):
-#         """Prediction step of the MBM filter.
-#
-#         This predicts new hypothesis, and propogates them to the next time
-#         step. It also updates the cardinality distribution. Because this calls
-#         the inner filter's predict function, the keyword arguments must contain
-#         any information needed by that function.
-#
-#
-#         Parameters
-#         ----------
-#         timestep: float
-#             current timestep
-#         filt_args : dict, optional
-#             Passed to the inner filter. The default is {}.
-#
-#         Returns
-#         -------
-#         None.
-#
-#         """
-#         self._track_tab = self._predict_prob_density(timestep, filt_args)
-#
-#         num_surv = len(self._track_tab)
-#
-#         for ii, bm in enumerate(self.birth_terms):
-#             new_tab = self._TabEntry()
-#             new_tab.prob_density = bm
-#             new_tab.distrib_weight = 1
-#             self._track_tab.append(new_tab)
-#             for hyp in self._hypotheses:
-#                 hyp.track_set.append(ii+num_surv)
-#
-#     def _calc_card_dist(self, hyp_lst):
-#         """Calucaltes the cardinality distribution."""
-#         if len(hyp_lst) == 0:
-#             return [
-#                 1,
-#             ]
-#         card_dist = []
-#         for ii in range(0, max(map(lambda x: x.num_tracks, hyp_lst)) + 1):
-#             card = 0
-#             for hyp in hyp_lst:
-#                 if hyp.num_tracks == ii:
-#                     card = card + hyp.assoc_prob
-#             card_dist.append(card)
-#         return card_dist
-#
-#     # def _correct_track_tab_entry(self, meas, tab, timestep, filt_args):
-#     #     new_tab = self._TabEntry().setup(tab)
-#     #     (new_filt_state, new_mean, new_cov, new_weight) = self._inner_correct(timestep, meas, filt_state, weight, state, filt_args)
-#     #
-#     #     return new_tab, cost
-#     #
-#     # def _gen_cor_tab(self, num_meas, meas, timestep, filt_args):
-#     #     num_pred = len(self._track_tab)
-#     #     up_tab = [None] * (num_meas + 1) * num_pred
-#     #
-#     #     for ii, track in enumerate(self._track_tab):
-#     #         up_tab[ii] = self._TabEntry().setup(track)
-#     #
-#     #     all_cost_m = np.zeros((num_pred, num_meas))
-#     #     for emm, z in enumerate(meas):
-#     #         for ii, ent in enumerate(self._track_tab):
-#     #             s_to_ii = num_pred * emm + ii + num_pred
-#     #             up_tab[s_to_ii], cost = self._correct_track_tab_entry(z, ent, timestep,filt_args)
-#     #             all_cost_m[ii, emm] = cost
-#     #     return up_tab, all_cost_m
-#     def _correct_prob_density(self, timestep, meas, filt_args):
-#         """TODO: Evaluate whether this function is working as intended, I assume it
-#         is not since we're getting weird track table updates where each hypothesis expects
-#         multiple objects for some reason. Probably need to modify the distrib weights part
-#         """
-#
-#         """Corrects the probability densities.
-#
-#         Loops over all elements in a probability distribution and preforms
-#         the filter correction.
-#
-#         Parameters
-#         ----------
-#         meas : list
-#             2d numpy arrays of each measurement.
-#         probDensity : :py:class:`serums.models.GaussianMixture`
-#             probability density to run correction on.
-#         filt_args : dict
-#             arguements to pass to the inner filter correct function.
-#
-#         Returns
-#         -------
-#         gm : :py:class:`serums.models.GaussianMixture`
-#             corrected probability density.
-#
-#         """
-#         num_meas = len(meas)
-#         num_pred = len(self._track_tab)
-#         new_tab_lst = [None] * (num_meas + 1) * num_pred
-#         # det_weights = [self.prob_detection * x * p for x, p in zip(probDensity.weights, probDensity.probs)]
-#         all_cost_m = np.zeros((num_pred, num_meas))
-#         for ii, ent in enumerate(self._track_tab):
-#             new_tab_lst[ii] = self._TabEntry().setup(ent)
-#
-#         for ii, z in enumerate(meas):
-#             for jj, ent in enumerate(self._track_tab):
-#                 s_to_ii = num_pred * ii + jj + num_pred
-#                 self.filter.cov = ent.prob_density.density.covariance
-#                 state = ent.prob_density.density.mean
-#                 (mean, qz) = self.filter.correct(timestep, z, state, **filt_args)
-#                 cov = self.filter.cov
-#                 n_weight = qz * ent.prob_density.prob * ent.distrib_weight
-#                 n_prob = 1
-#                 n_density = smodels.Gaussian(mean=mean, covariance=cov)
-#                 # all_cost_m[jj, ii] = n_weight / (self.clutter_rate * self.clutter_den * (1 - ent.prob_density.prob + ent.prob_density.prob * (self.prob_miss_detection)))
-#                 all_cost_m[jj, ii] = n_weight / ((1 - ent.prob_density.prob + ent.prob_density.prob * (self.prob_miss_detection)))
-#                 new_tab = self._TabEntry()
-#                 new_tab.distrib_weight = n_weight
-#                 new_tab.prob_density = smodels.Bernoulli(prob=n_prob, density=n_density)
-#                 new_tab_lst[s_to_ii] = new_tab
-#         return new_tab_lst, all_cost_m
-#
-#     def _calc_avg_prob_det_mdet(self):
-#         avg_prob_detect = self.prob_detection * np.ones(len(self._track_tab))
-#         avg_prob_miss_detect = 1 - avg_prob_detect
-#
-#         return avg_prob_detect, avg_prob_miss_detect
-#
-#     def _gen_cor_hyps(
-#         self, num_meas, avg_prob_detect, avg_prob_miss_detect, all_cost_m
-#     ):
-#         num_pred = len(self._track_tab)
-#         up_hyps = []
-#         if num_meas == 0:
-#             for hyp in self._hypotheses:
-#                 pmd_log = np.sum(
-#                     [np.log(avg_prob_miss_detect[ii]) for ii in hyp.track_set]
-#                 )
-#                 hyp.assoc_prob = -self.clutter_rate + pmd_log + np.log(hyp.assoc_prob)
-#                 up_hyps.append(hyp)
-#         else:
-#             clutter = self.clutter_rate * self.clutter_den
-#             ss_w = 0
-#             for p_hyp in self._hypotheses:
-#                 ss_w += np.sqrt(p_hyp.assoc_prob)
-#             for p_hyp in self._hypotheses:
-#                 if p_hyp.num_tracks == 0:  # all clutter
-#                     new_hyp = self._HypothesisHelper()
-#                     new_hyp.assoc_prob = (
-#                         -self.clutter_rate
-#                         + num_meas * np.log(clutter)
-#                         + np.log(p_hyp.assoc_prob)
-#                     )
-#                     new_hyp.track_set = p_hyp.track_set.copy()
-#                     up_hyps.append(new_hyp)
-#                 else:
-#                     pd = np.array([avg_prob_detect[ii] for ii in p_hyp.track_set])
-#                     pmd = np.array([avg_prob_miss_detect[ii] for ii in p_hyp.track_set])
-#                     ratio = pd / pmd
-#
-#                     ratio = ratio.reshape((ratio.size, 1))
-#                     ratio = np.tile(ratio, (1, num_meas))
-#
-#                     cost_m = np.zeros(all_cost_m[p_hyp.track_set, :].shape)
-#                     for ii, ts in enumerate(p_hyp.track_set):
-#                         cost_m[ii, :] = ratio[ii] * all_cost_m[ts, :] / clutter
-#                     max_row_inds, max_col_inds = np.where(cost_m >= np.inf)
-#                     if max_row_inds.size > 0:
-#                         cost_m[max_row_inds, max_col_inds] = np.finfo(float).max
-#                     min_row_inds, min_col_inds = np.where(cost_m <= 0.0)
-#                     if min_row_inds.size > 0:
-#                         cost_m[min_row_inds, min_col_inds] = np.finfo(float).eps  # 1
-#                     neg_log = -np.log(cost_m)
-#                     # if max_row_inds.size > 0:
-#                     #     neg_log[max_row_inds, max_col_inds] = -np.inf
-#                     # if min_row_inds.size > 0:
-#                     #     neg_log[min_row_inds, min_col_inds] = np.inf
-#
-#                     m = np.round(self.req_upd * np.sqrt(p_hyp.assoc_prob) / ss_w)
-#                     m = int(m.item())
-#                     [assigns, costs] = murty_m_best(neg_log, m)
-#
-#                     pmd_log = np.sum(
-#                         [np.log(avg_prob_miss_detect[ii]) for ii in p_hyp.track_set]
-#                     )
-#                     for (a, c) in zip(assigns, costs):
-#                         new_hyp = self._HypothesisHelper()
-#                         new_hyp.assoc_prob = (
-#                             -self.clutter_rate
-#                             + num_meas * np.log(clutter)
-#                             + pmd_log
-#                             + np.log(p_hyp.assoc_prob)
-#                             - c
-#                         )
-#                         new_hyp.track_set = list(
-#                             np.array(p_hyp.track_set) + num_pred * a
-#                         )
-#                         up_hyps.append(new_hyp)
-#         lse = log_sum_exp([x.assoc_prob for x in up_hyps])
-#         for ii in range(0, len(up_hyps)):
-#             up_hyps[ii].assoc_prob = np.exp(up_hyps[ii].assoc_prob - lse)
-#         return up_hyps
-#
-#     def _clean_updates(self):
-#         used = [0] * len(self._track_tab)
-#         for hyp in self._hypotheses:
-#             for ii in hyp.track_set:
-#                 if self._track_tab[ii] is not None:
-#                     used[ii] += 1
-#         nnz_inds = [idx for idx, val in enumerate(used) if val != 0]
-#         track_cnt = len(nnz_inds)
-#
-#         new_inds = [None] * len(self._track_tab)
-#         for (ii, v) in zip(nnz_inds, [ii for ii in range(0, track_cnt)]):
-#             new_inds[ii] = v
-#         # new_tab = [self._TabEntry().setup(self._track_tab[ii]) for ii in nnz_inds]
-#         new_tab = [self._track_tab[ii] for ii in nnz_inds]
-#         new_hyps = []
-#         for (ii, hyp) in enumerate(self._hypotheses):
-#             if len(hyp.track_set) > 0:
-#                 track_set = [new_inds[ii] for ii in hyp.track_set]
-#                 if None in track_set:
-#                     continue
-#                 hyp.track_set = track_set
-#             new_hyps.append(hyp)
-#         self._track_tab = new_tab
-#         self._hypotheses = new_hyps
-#     def correct(self, timestep, meas_in, meas_mat_args={}, est_meas_args={}, filt_args={}):
-#         """Correction step of the MBM filter.
-#
-#         This corrects the hypotheses based on the measurements and gates the
-#         measurements according to the class settings. It also updates the
-#         cardinality distribution.
-#
-#
-#         Parameters
-#         ----------
-#         timestep: float
-#             current timestep
-#         meas_in : list
-#             2d numpy arrays representing a measurement.
-#         meas_mat_args : dict, optional
-#             keyword arguments to pass to the inner filters get measurement
-#             matrix function. Only used if gating is on. The default is {}.
-#         est_meas_args : TYPE, optional
-#             keyword arguments to pass to the inner filters estimate
-#             measurements function. Only used if gating is on. The default is {}.
-#         filt_args : dict, optional
-#             keyword arguments to pass to the inner filters correct function.
-#             The default is {}.
-#
-#         Returns
-#         -------
-#         None.
-#         """
-#         meas = deepcopy(meas_in)
-#
-#         if self.gating_on:
-#             means = [x.prob_density.density.mean for x in self._track_tab]
-#             covs = [x.prob_density.density.covariance for x in self._track_tab]
-#             meas = self._gate_meas(meas, means, covs, meas_mat_args, est_meas_args,)
-#         if self.save_measurements:
-#             self._meas_tab.append(meas)
-#         num_meas = len(meas)
-#
-#         cor_tab, all_cost_m = self._correct_prob_density(timestep, meas, filt_args)
-#
-#         avg_prob_det, avg_prob_mdet = self._calc_avg_prob_det_mdet()
-#
-#         cor_hyps = self._gen_cor_hyps(num_meas, avg_prob_det, avg_prob_mdet, all_cost_m)
-#
-#         self._track_tab = cor_tab
-#         self._hypotheses = cor_hyps
-#         self._card_dist = self._calc_card_dist(self._hypotheses)
-#         self._clean_updates()
-#
-#     def extract_states(self):
-#         """Extracts the best state estimates.
-#
-#         This extracts the best states from the distribution. It should be
-#         called once per time step after the correction function. This calls
-#         both the inner filters predict and correct functions so the keyword
-#         arguments must contain any additional variables needed by those
-#         functions.
-#         """
-#
-#         card = np.argmax(self._card_dist)
-#         tracks_per_hyp = np.array([x.num_tracks for x in self._hypotheses])
-#         weight_per_hyp = np.array([x.assoc_prob for x in self._hypotheses])
-#         if len(tracks_per_hyp == 0):
-#             return None
-#         idx_cmp = np.argmax(weight_per_hyp * (tracks_per_hyp == card))
-#         s_lst = []
-#         c_lst = []
-#         for ind in self._hypotheses[idx_cmp].track_set:
-#             s_lst.append(self._track_tab[ind].prob_density.mean)
-#             c_lst.append(self._track_tab[ind].prob_density.cov)
-#         self._states.append(s_lst)
-#         self.covs.append(c_lst)
-#
-#     def _prune(self):
-#         """Removes hypotheses below a threshold.
-#
-#         This should be called once per time step after the correction and
-#         before the state extraction.
-#         """
-#         # Find hypotheses with low association probabilities
-#         temp_assoc_probs = np.array([])
-#         for ii in range(0, len(self._hypotheses)):
-#             temp_assoc_probs = np.append(
-#                 temp_assoc_probs, self._hypotheses[ii].assoc_prob
-#             )
-#         keep_indices = np.argwhere(temp_assoc_probs > self.prune_threshold).T
-#         keep_indices = keep_indices.flatten()
-#
-#         # For re-weighing association probabilities
-#         new_sum = np.sum(temp_assoc_probs[keep_indices])
-#         self._hypotheses = [self._hypotheses[ii] for ii in keep_indices]
-#         for ii in range(0, len(keep_indices)):
-#             self._hypotheses[ii].assoc_prob = self._hypotheses[ii].assoc_prob / new_sum
-#         # Re-calculate cardinality
-#         self._card_dist = self._calc_card_dist(self._hypotheses)
-#
-#     def _cap(self):
-#         """Removes least likely hypotheses until a maximum number is reached.
-#
-#         This should be called once per time step after pruning and
-#         before the state extraction.
-#         """
-#         # Determine if there are too many hypotheses
-#         if len(self._hypotheses) > self.max_hyps:
-#             temp_assoc_probs = np.array([])
-#             for ii in range(0, len(self._hypotheses)):
-#                 temp_assoc_probs = np.append(
-#                     temp_assoc_probs, self._hypotheses[ii].assoc_prob
-#                 )
-#             sorted_indices = np.argsort(temp_assoc_probs)
-#
-#             # Reverse order to get descending array
-#             sorted_indices = sorted_indices[::-1]
-#
-#             # Take the top n assoc_probs, where n = max_hyps
-#             keep_indices = np.array([], dtype=np.int64)
-#             for ii in range(0, self.max_hyps):
-#                 keep_indices = np.append(keep_indices, int(sorted_indices[ii]))
-#             # Assign to class
-#             self._hypotheses = [self._hypotheses[ii] for ii in keep_indices]
-#
-#             # Normalize association probabilities
-#             new_sum = 0
-#             for ii in range(0, len(self._hypotheses)):
-#                 new_sum = new_sum + self._hypotheses[ii].assoc_prob
-#             for ii in range(0, len(self._hypotheses)):
-#                 self._hypotheses[ii].assoc_prob = (
-#                     self._hypotheses[ii].assoc_prob / new_sum
-#                 )
-#             # Re-calculate cardinality
-#             self._card_dist = self._calc_card_dist(self._hypotheses)
-#
-#
-#     def _bern_prune(self):
-#         """Removes track table entries below a threshold.
-#
-#         This should be called once per time step after the correction and
-#         before the state extraction.
-#         """
-#         temp_exist_prob = np.array([])
-#         for ii in range(0, len(self._track_tab)):
-#             temp_exist_prob = np.append(temp_exist_prob, self._track_tab[ii].prob_density.prob)
-#         keep_indices = np.argwhere(temp_exist_prob > self.exist_threshold).T
-#         keep_indices = keep_indices.flatten()
-#         new_inds = np.arange(0, len(keep_indices))
-#
-#         # loop over track table and remove pruned entries
-#         self._track_tab = [self._track_tab[ii] for ii in keep_indices]
-#
-#         # loop over hypotheses and correct track table indices
-#         for hyp in self._hypotheses:
-#             new_track_set = []
-#             for ind in hyp.track_set:
-#                 indchk = np.argwhere(ind == keep_indices)
-#                 if any(indchk):
-#                     new_track_set.append(new_inds[indchk].item())
-#             hyp.track_set = new_track_set
-#
-#     def cleanup(
-#         self,
-#         enable_prune=True,
-#         enable_cap=True,
-#         enable_merge=False,
-#         enable_bern_prune=True,
-#         enable_extract=True,
-#         extract_kwargs=None,
-#     ):
-#         """Performs the cleanup step of the filter.
-#
-#         This can prune, cap, and extract states. It must be called once per
-#         timestep. If this is called with `enable_extract` set to true then
-#         the extract states method does not need to be called separately. It is
-#         recommended to call this function instead of
-#         :meth:`caser.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`
-#         directly.
-#
-#         Parameters
-#         ----------
-#         enable_prune : bool, optional
-#             Flag indicating if prunning should be performed. The default is True.
-#         enable_cap : bool, optional
-#             Flag indicating if capping should be performed. The default is True.
-#         enable_merge : bool, optional
-#             Flag indicating if merging should be performed. The default is True.
-#         enable_extract : bool, optional
-#             Flag indicating if state extraction should be performed. The default is True.
-#         extract_kwargs : dict, optional
-#             Extra arguments to pass to the extract function.
-#         """
-#         if enable_prune:
-#             self._prune()
-#         if enable_merge:
-#             warnings.warn("Merging is not enabled for the MBM filter")
-#             # self._merge()
-#         if enable_cap:
-#             self._cap()
-#         if enable_bern_prune:
-#             self._bern_prune()
-#         if enable_extract:
-#             if extract_kwargs is None:
-#                 extract_kwargs = {}
-#             self.extract_states(**extract_kwargs)
-#
-#     def plot_states(
-#         self,
-#         plt_inds,
-#         state_lbl="States",
-#         ttl=None,
-#         state_color=None,
-#         x_lbl=None,
-#         y_lbl=None,
-#         **kwargs
-#     ):
-#         """Plots the best estimate for the states.
-#
-#         This assumes that the states have been extracted. It's designed to plot
-#         two of the state variables (typically x/y position). The error ellipses
-#         are calculated according to :cite:`Hoover1984_AlgorithmsforConfidenceCirclesandEllipses`
-#
-#         Keyword arguments are processed with
-#         :meth:`gncpy.plotting.init_plotting_opts`. This function
-#         implements
-#
-#             - f_hndl
-#             - true_states
-#             - sig_bnd
-#             - rng
-#             - meas_inds
-#             - lgnd_loc
-#             - marker
-#
-#         Parameters
-#         ----------
-#         plt_inds : list
-#             List of indices in the state vector to plot
-#         state_lbl : string
-#             Value to appear in legend for the states. Only appears if the
-#             legend is shown
-#         ttl : string, optional
-#             Title for the plot, if None a default title is generated. The default
-#             is None.
-#         x_lbl : string
-#             Label for the x-axis.
-#         y_lbl : string
-#             Label for the y-axis.
-#
-#         Returns
-#         -------
-#         Matplotlib figure
-#             Instance of the matplotlib figure used
-#         """
-#         opts = pltUtil.init_plotting_opts(**kwargs)
-#         f_hndl = opts["f_hndl"]
-#         true_states = opts["true_states"]
-#         sig_bnd = opts["sig_bnd"]
-#         rng = opts["rng"]
-#         meas_inds = opts["meas_inds"]
-#         lgnd_loc = opts["lgnd_loc"]
-#         marker = opts["marker"]
-#         if ttl is None:
-#             ttl = "State Estimates"
-#         if rng is None:
-#             rng = rnd.default_rng(1)
-#         if x_lbl is None:
-#             x_lbl = "x-position"
-#         if y_lbl is None:
-#             y_lbl = "y-position"
-#         plt_meas = meas_inds is not None
-#         show_sig = sig_bnd is not None and self.save_covs
-#
-#         s_lst = deepcopy(self._states)
-#         x_dim = None
-#
-#         if f_hndl is None:
-#             f_hndl = plt.figure()
-#             f_hndl.add_subplot(1, 1, 1)
-#         # get state dimension
-#         for states in s_lst:
-#             if len(states) > 0:
-#                 x_dim = states[0].size
-#                 break
-#         # get array of all state values for each label
-#         added_sig_lbl = False
-#         added_true_lbl = False
-#         added_state_lbl = False
-#         added_meas_lbl = False
-#         r = rng.random()
-#         b = rng.random()
-#         g = rng.random()
-#         if state_color is None:
-#             color = (r, g, b)
-#         else:
-#             color = state_color
-#         for tt, states in enumerate(s_lst):
-#             if len(states) == 0:
-#                 continue
-#             x = np.concatenate(states, axis=1)
-#             if show_sig:
-#                 sigs = [None] * len(states)
-#                 for ii, cov in enumerate(self._covs[tt]):
-#                     sig = np.zeros((2, 2))
-#                     sig[0, 0] = cov[plt_inds[0], plt_inds[0]]
-#                     sig[0, 1] = cov[plt_inds[0], plt_inds[1]]
-#                     sig[1, 0] = cov[plt_inds[1], plt_inds[0]]
-#                     sig[1, 1] = cov[plt_inds[1], plt_inds[1]]
-#                     sigs[ii] = sig
-#                 # plot
-#                 for ii, sig in enumerate(sigs):
-#                     if sig is None:
-#                         continue
-#                     w, h, a = pltUtil.calc_error_ellipse(sig, sig_bnd)
-#                     if not added_sig_lbl:
-#                         s = r"${}\sigma$ Error Ellipses".format(sig_bnd)
-#                         e = Ellipse(
-#                             xy=x[plt_inds, ii],
-#                             width=w,
-#                             height=h,
-#                             angle=a,
-#                             zorder=-10000,
-#                             label=s,
-#                         )
-#                         added_sig_lbl = True
-#                     else:
-#                         e = Ellipse(
-#                             xy=x[plt_inds, ii],
-#                             width=w,
-#                             height=h,
-#                             angle=a,
-#                             zorder=-10000,
-#                         )
-#                     e.set_clip_box(f_hndl.axes[0].bbox)
-#                     e.set_alpha(0.15)
-#                     e.set_facecolor(color)
-#                     f_hndl.axes[0].add_patch(e)
-#             if not added_state_lbl:
-#                 f_hndl.axes[0].scatter(
-#                     x[plt_inds[0], :],
-#                     x[plt_inds[1], :],
-#                     color=color,
-#                     edgecolors=(0, 0, 0),
-#                     marker=marker,
-#                     label=state_lbl,
-#                 )
-#                 added_state_lbl = True
-#             else:
-#                 f_hndl.axes[0].scatter(
-#                     x[plt_inds[0], :],
-#                     x[plt_inds[1], :],
-#                     color=color,
-#                     edgecolors=(0, 0, 0),
-#                     marker=marker,
-#                 )
-#         # if true states are available then plot them
-#         if true_states is not None:
-#             if x_dim is None:
-#                 for states in true_states:
-#                     if len(states) > 0:
-#                         x_dim = states[0].size
-#                         break
-#             max_true = max([len(x) for x in true_states])
-#             x = np.nan * np.ones((x_dim, len(true_states), max_true))
-#             for tt, states in enumerate(true_states):
-#                 for ii, state in enumerate(states):
-#                     x[:, [tt], ii] = state.copy()
-#             for ii in range(0, max_true):
-#                 if not added_true_lbl:
-#                     f_hndl.axes[0].plot(
-#                         x[plt_inds[0], :, ii],
-#                         x[plt_inds[1], :, ii],
-#                         color="k",
-#                         marker=".",
-#                         label="True Trajectories",
-#                     )
-#                     added_true_lbl = True
-#                 else:
-#                     f_hndl.axes[0].plot(
-#                         x[plt_inds[0], :, ii],
-#                         x[plt_inds[1], :, ii],
-#                         color="k",
-#                         marker=".",
-#                     )
-#         if plt_meas:
-#             meas_x = []
-#             meas_y = []
-#             for meas_tt in self._meas_tab:
-#                 mx_ii = [m[meas_inds[0]].item() for m in meas_tt]
-#                 my_ii = [m[meas_inds[1]].item() for m in meas_tt]
-#                 meas_x.extend(mx_ii)
-#                 meas_y.extend(my_ii)
-#             color = (128 / 255, 128 / 255, 128 / 255)
-#             meas_x = np.asarray(meas_x)
-#             meas_y = np.asarray(meas_y)
-#             if not added_meas_lbl:
-#                 f_hndl.axes[0].scatter(
-#                     meas_x,
-#                     meas_y,
-#                     zorder=-1,
-#                     alpha=0.35,
-#                     color=color,
-#                     marker="^",
-#                     edgecolors=(0, 0, 0),
-#                     label="Measurements",
-#                 )
-#             else:
-#                 f_hndl.axes[0].scatter(
-#                     meas_x,
-#                     meas_y,
-#                     zorder=-1,
-#                     alpha=0.35,
-#                     color=color,
-#                     marker="^",
-#                     edgecolors=(0, 0, 0),
-#                 )
-#         f_hndl.axes[0].grid(True)
-#         pltUtil.set_title_label(f_hndl, 0, opts, ttl=ttl, x_lbl=x_lbl, y_lbl=y_lbl)
-#
-#         if lgnd_loc is not None:
-#             plt.legend(loc=lgnd_loc)
-#         plt.tight_layout()
-#
-#         return f_hndl
+
+class LabeledPoissonMultiBernoulliMixture(PoissonMultiBernoulliMixture):
+    def __init__ (self, **kwargs):
+        super().__init__(**kwargs)
+
+    @property
+    def labels(self):
+        """Read only list of extracted labels.
+
+        This is a list with 1 element per timestep, and each element is a list
+        of the best labels extracted at that timestep. The order of each
+        element corresponds to the state order.
+        """
+        return self._labels
+
+    def _correct_birth_tab_entry(self, meas, distrib, timestep, filt_args):
+        new_tab = self._TabEntry()
+        filt_states = [None] * len(distrib.means)
+        states = [m.copy() for m in distrib.means]
+        weights = distrib.weights.copy()
+        for ii, (m, cov) in enumerate(zip(distrib.means, distrib.covariances)):
+            self._baseFilter.cov = cov.copy()
+            if isinstance(self._baseFilter, gfilts.UnscentedKalmanFilter) or isinstance(
+                    self._baseFilter, gfilts.UKFGaussianScaleMixtureFilter
+            ):
+                self._baseFilter.init_sigma_points(m)
+            filt_states[ii] = self._baseFilter.save_filter_state()
+
+        new_f_states = [None] * len(filt_states)
+        new_s_hist = [None] * len(filt_states)
+        new_c_hist = [None] * len(filt_states)
+        new_w = [None] * len(filt_states)
+        depleted = False
+        for ii, (f_state, state, w) in enumerate(
+            zip(
+                filt_states,
+                states,
+                weights
+            )
+        ):
+            try:
+                (
+                    new_f_states[ii],
+                    new_s_hist[ii],
+                    new_c_hist[ii],
+                    new_w[ii],
+                ) = self._inner_correct(timestep, meas, f_state, w, state, filt_args)
+            except (
+                    gerr.ParticleDepletionError,
+                    gerr.ParticleEstimationDomainError,
+                    gerr.ExtremeMeasurementNoiseError,
+            ):
+                return None, 0
+        new_tab.filt_states = new_f_states
+        new_tab.state_hist = [new_s_hist]
+        new_tab.cov_hist = [new_c_hist]
+        new_tab.distrib_weights_hist = []
+        new_w = [w + np.finfo(float).eps for w in new_w]
+        if not depleted:
+            cost = np.sum(new_w).item() * self.prob_detection + self.clutter_rate * self.clutter_den
+            new_tab.distrib_weights_hist.append([w / np.sum(new_w).item() for w in new_w])
+            new_tab.exist_prob = self.prob_detection * cost / (self.clutter_rate * self.clutter_den + self.prob_detection * cost)
+        else:
+            cost = 0
+        new_tab.time_index = self._time_index_cntr
+        return new_tab, cost
+
+    def _gen_cor_tab(self, num_meas, meas, timestep, filt_args):
+        num_pred = len(self._track_tab)
+        num_birth = len(self.birth_terms)
+        up_tab = [None] * ((num_meas + 1) * num_pred + num_meas * num_birth)
+
+        #Missed Detection Updates
+        for ii, track in enumerate(self._track_tab):
+            up_tab[ii] = self._TabEntry().setup(track)
+            sum_non_exist_prob = (1 - up_tab[ii].exist_prob + up_tab[ii].exist_prob * self.prob_miss_detection)
+            up_tab[ii].distrib_weights_hist.append([w * sum_non_exist_prob for w in up_tab[ii].distrib_weights_hist[-1]])
+            up_tab[ii].exist_prob = (up_tab[ii].exist_prob * self.prob_miss_detection)/(sum_non_exist_prob)
+            up_tab[ii].meas_assoc_hist.append(None)
+        # left_cost_m = np.zeros()
+        # all_cost_m = np.zeros((num_pred + num_birth * num_meas, num_meas))
+        all_cost_m = np.zeros((num_meas, num_pred + num_birth * num_meas))
+
+        # Update for all existing tracks
+        for emm, z in enumerate(meas):
+            for ii, ent in enumerate(self._track_tab):
+                s_to_ii = num_pred * emm + ii + num_pred
+                (up_tab[s_to_ii], cost) = self._correct_track_tab_entry(z, ent, timestep, filt_args)
+                if up_tab[s_to_ii] is not None:
+                    up_tab[s_to_ii].meas_assoc_hist.append(emm)
+                all_cost_m[emm, ii] = cost
+
+        # Update for all potential new births
+        for emm, z in enumerate(meas):
+            for ii, b_model in enumerate(self.birth_terms):
+                s_to_ii = ((num_meas + 1) * num_pred) + emm * num_birth + ii
+                (up_tab[s_to_ii], cost) = self._correct_birth_tab_entry(z, b_model, timestep, filt_args)
+                if up_tab[s_to_ii] is not None:
+                    up_tab[s_to_ii].meas_assoc_hist.append(emm)
+                    up_tab[s_to_ii].label = (round(timestep, self.decimal_places), ii)
+                all_cost_m[emm, emm+num_pred] = cost
+        return up_tab, all_cost_m
+
+    def _update_extract_hist(self, idx_cmp):
+        used_meas_inds = [[] for ii in range(self._time_index_cntr)]
+        used_labels = []
+        new_extract_hists = [None] * len(self._hypotheses[idx_cmp].track_set)
+        for ii, track in enumerate(
+            [
+                self._track_tab[trk_ind]
+                for trk_ind in self._hypotheses[idx_cmp].track_set
+            ]
+        ):
+            new_extract_hists[ii] = self._ExtractHistHelper()
+            new_extract_hists[ii].label = track.label
+            new_extract_hists[ii].meas_ind_hist = track.meas_assoc_hist.copy()
+            new_extract_hists[ii].b_time_index = track.time_index
+            (
+                new_extract_hists[ii].states,
+                new_extract_hists[ii].covs,
+            ) = self._extract_helper(track)
+
+            used_labels.append(track.label)
+
+            for t_inds_after_b, meas_ind in enumerate(
+                new_extract_hists[ii].meas_ind_hist
+            ):
+                tt = new_extract_hists[ii].b_time_index + t_inds_after_b
+                if meas_ind is not None and meas_ind not in used_meas_inds[tt]:
+                    used_meas_inds[tt].append(meas_ind)
+        good_inds = []
+        for ii, existing in enumerate(self._extractable_hists):
+            used = existing.label in used_labels
+            if used:
+                continue
+            for t_inds_after_b, meas_ind in enumerate(existing.meas_ind_hist):
+                tt = existing.b_time_index + t_inds_after_b
+                used = meas_ind is not None and meas_ind in used_meas_inds[tt]
+                if used:
+                    break
+            if not used:
+                good_inds.append(ii)
+        self._extractable_hists = [self._extractable_hists[ii] for ii in good_inds]
+        self._extractable_hists.extend(new_extract_hists)
+
+    def extract_states(self, update=True, calc_states=True):
+        """Extracts the best state estimates.
+
+        This extracts the best states from the distribution. It should be
+        called once per time step after the correction function. This calls
+        both the inner filters predict and correct functions so the keyword
+        arguments must contain any additional variables needed by those
+        functions.
+
+        Parameters
+        ----------
+        update : bool, optional
+            Flag indicating if the label history should be updated. This should
+            be done once per timestep and can be disabled if calculating states
+            after the final timestep. The default is True.
+        calc_states : bool, optional
+            Flag indicating if the states should be calculated based on the
+            label history. This only needs to be done before the states are used.
+            It can simply be called once after the end of the simulation. The
+            default is true.
+
+        Returns
+        -------
+        idx_cmp : int
+            Index of the hypothesis table used when extracting states.
+        """
+        card = np.argmax(self._card_dist)
+        tracks_per_hyp = np.array([x.num_tracks for x in self._hypotheses])
+        weight_per_hyp = np.array([x.assoc_prob for x in self._hypotheses])
+
+        self._states = [[] for ii in range(self._time_index_cntr)]
+        self._labels = [[] for ii in range(self._time_index_cntr)]
+        self._covs = [[] for ii in range(self._time_index_cntr)]
+
+        if len(tracks_per_hyp) == 0:
+            return None
+        idx_cmp = np.argmax(weight_per_hyp * (tracks_per_hyp == card))
+        if update:
+            self._update_extract_hist(idx_cmp)
+        if calc_states:
+            for existing in self._extractable_hists:
+                for t_inds_after_b, (s, c) in enumerate(
+                    zip(existing.states, existing.covs)
+                ):
+                    tt = existing.b_time_index + t_inds_after_b
+                    # if len(self._labels[tt]) == 0:
+                    #     self._states[tt] = [s]
+                    #     self._labels[tt] = [existing.label]
+                    #     self._covs[tt] = [c]
+                    # else:
+                    self._states[tt].append(s)
+                    self._labels[tt].append(existing.label)
+                    self._covs[tt].append(c)
+        if not update and not calc_states:
+            warnings.warn("Extracting states performed no actions")
+        return idx_cmp
+
+    def _ospa_setup_emat(self, state_dim, state_inds):
+        # get sizes
+        num_timesteps = len(self.states)
+        num_objs = 0
+        lbl_to_ind = {}
+
+        for lst in self.labels:
+            for lbl in lst:
+                if lbl is None:
+                    continue
+                key = str(lbl)
+                if key not in lbl_to_ind:
+                    lbl_to_ind[key] = num_objs
+                    num_objs += 1
+        # create matrices
+        est_mat = np.nan * np.ones((state_dim, num_timesteps, num_objs))
+        est_cov_mat = np.nan * np.ones((state_dim, state_dim, num_timesteps, num_objs))
+
+        for tt, (lbl_lst, s_lst) in enumerate(zip(self.labels, self.states)):
+            for lbl, s in zip(lbl_lst, s_lst):
+                if lbl is None:
+                    continue
+                obj_num = lbl_to_ind[str(lbl)]
+                est_mat[:, tt, obj_num] = s.ravel()[state_inds]
+        if self.save_covs:
+            for tt, (lbl_lst, c_lst) in enumerate(zip(self.labels, self.covariances)):
+                for lbl, c in zip(lbl_lst, c_lst):
+                    if lbl is None:
+                        continue
+                    est_cov_mat[:, :, tt, lbl_to_ind[str(lbl)]] = c[state_inds][
+                        :, state_inds
+                    ]
+        return est_mat, est_cov_mat
+
+    def calculate_ospa2(
+        self,
+        truth,
+        c,
+        p,
+        win_len,
+        true_covs=None,
+        core_method=SingleObjectDistance.MANHATTAN,
+        state_inds=None,
+    ):
+        """Calculates the OSPA(2) distance between the truth at all timesteps.
+
+        Wrapper for :func:`serums.distances.calculate_ospa2`.
+
+        Parameters
+        ----------
+        truth : list
+            Each element represents a timestep and is a list of N x 1 numpy array,
+            one per true agent in the swarm.
+        c : float
+            Distance cutoff for considering a point properly assigned. This
+            influences how cardinality errors are penalized. For :math:`p = 1`
+            it is the penalty given false point estimate.
+        p : int
+            The power of the distance term. Higher values penalize outliers
+            more.
+        win_len : int
+            Number of samples to include in window.
+        core_method : :class:`serums.enums.SingleObjectDistance`, Optional
+            The main distance measure to use for the localization component.
+            The default value is :attr:`.SingleObjectDistance.MANHATTAN`.
+        true_covs : list, Optional
+            Each element represents a timestep and is a list of N x N numpy arrays
+            corresonponding to the uncertainty about the true states. Note the
+            order must be consistent with the truth data given. This is only
+            needed for core methods :attr:`SingleObjectDistance.HELLINGER`. The defautl
+            value is None.
+        state_inds : list, optional
+            Indices in the state vector to use, will be applied to the truth
+            data as well. The default is None which means the full state is
+            used.
+        """
+        # error checking on optional input arguments
+        core_method = self._ospa_input_check(core_method, truth, true_covs)
+
+        # setup data structures
+        if state_inds is None:
+            state_dim = self._ospa_find_s_dim(truth)
+            state_inds = range(state_dim)
+        else:
+            state_dim = len(state_inds)
+        if state_dim is None:
+            warnings.warn("Failed to get state dimension. SKIPPING OSPA(2) calculation")
+
+            nt = len(self._states)
+            self.ospa2 = np.zeros(nt)
+            self.ospa2_localization = np.zeros(nt)
+            self.ospa2_cardinality = np.zeros(nt)
+            self._ospa2_params["core"] = core_method
+            self._ospa2_params["cutoff"] = c
+            self._ospa2_params["power"] = p
+            self._ospa2_params["win_len"] = win_len
+            return
+        true_mat, true_cov_mat = self._ospa_setup_tmat(
+            truth, state_dim, true_covs, state_inds
+        )
+        est_mat, est_cov_mat = self._ospa_setup_emat(state_dim, state_inds)
+
+        # find OSPA
+        (
+            self.ospa2,
+            self.ospa2_localization,
+            self.ospa2_cardinality,
+            self._ospa2_params["core"],
+            self._ospa2_params["cutoff"],
+            self._ospa2_params["power"],
+            self._ospa2_params["win_len"],
+        ) = calculate_ospa2(
+            est_mat,
+            true_mat,
+            c,
+            p,
+            win_len,
+            core_method=core_method,
+            true_cov_mat=true_cov_mat,
+            est_cov_mat=est_cov_mat,
+        )
+
+    def plot_states_labels(
+        self,
+        plt_inds,
+        ttl="Labeled State Trajectories",
+        x_lbl=None,
+        y_lbl=None,
+        meas_tx_fnc=None,
+        **kwargs
+    ):
+        """Plots the best estimate for the states and labels.
+
+        This assumes that the states have been extracted. It's designed to plot
+        two of the state variables (typically x/y position). The error ellipses
+        are calculated according to :cite:`Hoover1984_AlgorithmsforConfidenceCirclesandEllipses`
+
+        Keywrod arguments are processed with
+        :meth:`gncpy.plotting.init_plotting_opts`. This function
+        implements
+
+            - f_hndl
+            - true_states
+            - sig_bnd
+            - rng
+            - meas_inds
+            - lgnd_loc
+
+        Parameters
+        ----------
+        plt_inds : list
+            List of indices in the state vector to plot
+        ttl : string, optional
+            Title of the plot.
+        x_lbl : string, optional
+            X-axis label for the plot.
+        y_lbl : string, optional
+            Y-axis label for the plot.
+        meas_tx_fnc : callable, optional
+            Takes in the measurement vector as an Nm x 1 numpy array and
+            returns a numpy array representing the states to plot (size 2). The
+            default is None.
+
+        Returns
+        -------
+        Matplotlib figure
+            Instance of the matplotlib figure used
+        """
+        opts = pltUtil.init_plotting_opts(**kwargs)
+        f_hndl = opts["f_hndl"]
+        true_states = opts["true_states"]
+        sig_bnd = opts["sig_bnd"]
+        rng = opts["rng"]
+        meas_inds = opts["meas_inds"]
+        lgnd_loc = opts["lgnd_loc"]
+
+        if rng is None:
+            rng = rnd.default_rng(1)
+        if x_lbl is None:
+            x_lbl = "x-position"
+        if y_lbl is None:
+            y_lbl = "y-position"
+        meas_specs_given = (
+            meas_inds is not None and len(meas_inds) == 2
+        ) or meas_tx_fnc is not None
+        plt_meas = meas_specs_given and self.save_measurements
+        show_sig = sig_bnd is not None and self.save_covs
+
+        s_lst = deepcopy(self.states)
+        l_lst = deepcopy(self.labels)
+        x_dim = None
+
+        if f_hndl is None:
+            f_hndl = plt.figure()
+            f_hndl.add_subplot(1, 1, 1)
+        # get state dimension
+        for states in s_lst:
+            if states is not None and len(states) > 0:
+                x_dim = states[0].size
+                break
+        # get unique labels
+        u_lbls = []
+        for lbls in l_lst:
+            if lbls is None:
+                continue
+            for lbl in lbls:
+                if lbl not in u_lbls:
+                    u_lbls.append(lbl)
+        cmap = pltUtil.get_cmap(len(u_lbls))
+
+        # get array of all state values for each label
+        added_sig_lbl = False
+        added_true_lbl = False
+        added_state_lbl = False
+        added_meas_lbl = False
+        for c_idx, lbl in enumerate(u_lbls):
+            x = np.nan * np.ones((x_dim, len(s_lst)))
+            if show_sig:
+                sigs = [None] * len(s_lst)
+            for tt, lbls in enumerate(l_lst):
+                if lbls is None:
+                    continue
+                if lbl in lbls:
+                    ii = lbls.index(lbl)
+                    if s_lst[tt][ii] is not None:
+                        x[:, [tt]] = s_lst[tt][ii].copy()
+                    if show_sig:
+                        sig = np.zeros((2, 2))
+                        if self._covs[tt][ii] is not None:
+                            sig[0, 0] = self._covs[tt][ii][plt_inds[0], plt_inds[0]]
+                            sig[0, 1] = self._covs[tt][ii][plt_inds[0], plt_inds[1]]
+                            sig[1, 0] = self._covs[tt][ii][plt_inds[1], plt_inds[0]]
+                            sig[1, 1] = self._covs[tt][ii][plt_inds[1], plt_inds[1]]
+                        else:
+                            sig = None
+                        sigs[tt] = sig
+            # plot
+            color = cmap(c_idx)
+
+            if show_sig:
+                for tt, sig in enumerate(sigs):
+                    if sig is None:
+                        continue
+                    w, h, a = pltUtil.calc_error_ellipse(sig, sig_bnd)
+                    if not added_sig_lbl:
+                        s = r"${}\sigma$ Error Ellipses".format(sig_bnd)
+                        e = Ellipse(
+                            xy=x[plt_inds, tt],
+                            width=w,
+                            height=h,
+                            angle=a,
+                            zorder=-10000,
+                            label=s,
+                        )
+                        added_sig_lbl = True
+                    else:
+                        e = Ellipse(
+                            xy=x[plt_inds, tt],
+                            width=w,
+                            height=h,
+                            angle=a,
+                            zorder=-10000,
+                        )
+                    e.set_clip_box(f_hndl.axes[0].bbox)
+                    e.set_alpha(0.2)
+                    e.set_facecolor(color)
+                    f_hndl.axes[0].add_patch(e)
+            settings = {
+                "color": color,
+                "markeredgecolor": "k",
+                "marker": ".",
+                "ls": "--",
+            }
+            if not added_state_lbl:
+                settings["label"] = "States"
+                # f_hndl.axes[0].scatter(x[plt_inds[0], :], x[plt_inds[1], :],
+                #                        color=color, edgecolors='k',
+                #                        label='States')
+                added_state_lbl = True
+            # else:
+            f_hndl.axes[0].plot(x[plt_inds[0], :], x[plt_inds[1], :], **settings)
+
+            s = "({}, {})".format(lbl[0], lbl[1])
+            tmp = x.copy()
+            tmp = tmp[:, ~np.any(np.isnan(tmp), axis=0)]
+            f_hndl.axes[0].text(
+                tmp[plt_inds[0], 0], tmp[plt_inds[1], 0], s, color=color
+            )
+        # if true states are available then plot them
+        if true_states is not None and any([len(x) > 0 for x in true_states]):
+            if x_dim is None:
+                for states in true_states:
+                    if len(states) > 0:
+                        x_dim = states[0].size
+                        break
+            max_true = max([len(x) for x in true_states])
+            x = np.nan * np.ones((x_dim, len(true_states), max_true))
+            for tt, states in enumerate(true_states):
+                for ii, state in enumerate(states):
+                    if state is not None and state.size > 0:
+                        x[:, [tt], ii] = state.copy()
+            for ii in range(0, max_true):
+                if not added_true_lbl:
+                    f_hndl.axes[0].plot(
+                        x[plt_inds[0], :, ii],
+                        x[plt_inds[1], :, ii],
+                        color="k",
+                        marker=".",
+                        label="True Trajectories",
+                    )
+                    added_true_lbl = True
+                else:
+                    f_hndl.axes[0].plot(
+                        x[plt_inds[0], :, ii],
+                        x[plt_inds[1], :, ii],
+                        color="k",
+                        marker=".",
+                    )
+        if plt_meas:
+            meas_x = []
+            meas_y = []
+            for meas_tt in self._meas_tab:
+                if meas_tx_fnc is not None:
+                    tx_meas = [meas_tx_fnc(m) for m in meas_tt]
+                    mx_ii = [tm[0].item() for tm in tx_meas]
+                    my_ii = [tm[1].item() for tm in tx_meas]
+                else:
+                    mx_ii = [m[meas_inds[0]].item() for m in meas_tt]
+                    my_ii = [m[meas_inds[1]].item() for m in meas_tt]
+                meas_x.extend(mx_ii)
+                meas_y.extend(my_ii)
+            color = (128 / 255, 128 / 255, 128 / 255)
+            meas_x = np.asarray(meas_x)
+            meas_y = np.asarray(meas_y)
+            if meas_x.size > 0:
+                if not added_meas_lbl:
+                    f_hndl.axes[0].scatter(
+                        meas_x,
+                        meas_y,
+                        zorder=-1,
+                        alpha=0.35,
+                        color=color,
+                        marker="^",
+                        label="Measurements",
+                    )
+                else:
+                    f_hndl.axes[0].scatter(
+                        meas_x, meas_y, zorder=-1, alpha=0.35, color=color, marker="^"
+                    )
+        f_hndl.axes[0].grid(True)
+        pltUtil.set_title_label(
+            f_hndl, 0, opts, ttl=ttl, x_lbl="x-position", y_lbl="y-position"
+        )
+        if lgnd_loc is not None:
+            plt.legend(loc=lgnd_loc)
+        plt.tight_layout()
+
+        return f_hndl

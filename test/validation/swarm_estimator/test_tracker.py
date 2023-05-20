@@ -3438,12 +3438,9 @@ def test_PMBM():
     global_true = []
     print("\tStarting sim")
     for kk, tt in enumerate(time):
-        print("\t\t{:.2f}".format(tt))
         if np.mod(kk, 100) == 0:
-            # print("\t\t{:.2f}".format(tt))
+            print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
-        if np.mod(kk, 150) == 0:
-            kekw=1
         true_agents = _update_true_agents_pmbm(true_agents, tt, dt, b_model, rng)
         global_true.append(deepcopy(true_agents))
 
@@ -3457,9 +3454,7 @@ def test_PMBM():
 
         extract_kwargs = {"update": True, "calc_states": False}
         pmbm.cleanup(extract_kwargs=extract_kwargs)
-        # pmbm.plot_states([0, 1], meas_inds=[0, 1])
 
-        lel=1
     extract_kwargs = {"update": False, "calc_states": True}
     pmbm.extract_states(**extract_kwargs)
 
@@ -3486,94 +3481,93 @@ def test_PMBM():
         pmbm.plot_card_history(time_units="s", time=time)
     print("\tExpecting {} agents".format(len(true_agents)))
 
-    # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
+    assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
 
-#MBM is a special case of PMBM, probably delete the below
+def test_LPMBM():
+    print("Test Labeled PMBM")
 
-# def test_MBM():
-#     print("Test MBM")
-#
-#     rng = rnd.default_rng(global_seed)
-#
-#     dt = 0.01
-#     # t0, t1 = 0, 10 + dt
-#     t0, t1 = 0, 1+dt
-#     filt = _setup_double_int_kf(dt)
-#     state_mat_args = (dt, "test arg")
-#     meas_fun_args = ("useless arg",)
-#
-#     b_model = _setup_mbm_double_int_birth() # TODO: write birth model function
-#
-#     RFS_base_args = {
-#         "prob_detection": 0.99,
-#         "prob_survive": 0.98,
-#         "in_filter": filt,
-#         "birth_terms": b_model,
-#         "clutter_den": 1e-7,
-#         "clutter_rate": 1e-7,
-#     }
-#
-#     MBM_args = {
-#         "req_upd": 800,
-#         "prune_threshold": 10 ** -3,
-#         "exist_threshold": 10 ** -3,
-#         "max_hyps": 25,
-#     }
-#     mbm = tracker.MultiBernoulliMixtureFilter(**MBM_args, **RFS_base_args)
-#     mbm.gating_on = True
-#     mbm.save_covs = True
-#
-#     time = np.arange(t0, t1, dt)
-#     true_agents = []
-#     global_true = []
-#     for kk, tt in enumerate(time):
-#         if np.mod(kk, 10) == 0:
-#             print("\t\t{:.2f}".format(tt))
-#             sys.stdout.flush()
-#         true_agents = _update_true_agents_bernoulli(true_agents, tt, dt, b_model, rng)
-#         global_true.append(deepcopy(true_agents))
-#
-#         filt_args = {"state_mat_args": state_mat_args}
-#         mbm.predict(tt, filt_args=filt_args)
-#
-#         meas_in = _gen_meas(tt, true_agents, filt.proc_noise, filt.meas_noise, rng)
-#
-#         filt_args = {"meas_fun_args": meas_fun_args}
-#         mbm.correct(
-#             tt, meas_in, meas_mat_args={}, est_meas_args={}, filt_args=filt_args
-#         )
-#
-#         mbm.cleanup(enable_merge=False)
-#     true_covs = []
-#     for ii, lst in enumerate(global_true):
-#         true_covs.append([])
-#         for jj in lst:
-#             true_covs[ii].append(np.diag([7e-5, 7e-5, 0.1, 0.1]))
-    # mbm.calculate_ospa(global_true, 5, 1)
-    # if debug_plots:
-    #     mbm.plot_ospa_history(time=time, time_units="s")
-    # mbm.calculate_ospa(global_true, 5, 1, core_method=SingleObjectDistance.MANHATTAN)
-    # if debug_plots:
-    #     mbm.plot_ospa_history(time=time, time_units="s")
-    # mbm.calculate_ospa(
-    #     global_true,
-    #     1,
-    #     1,
-    #     core_method=SingleObjectDistance.HELLINGER,
-    #     true_covs=true_covs,
-    # )
-    # if debug_plots:
-    #     mbm.plot_ospa_history(time=time, time_units="s")
-    # mbm.calculate_ospa(global_true, 5, 1, core_method=SingleObjectDistance.MAHALANOBIS)
-    # if debug_plots:
-    #     mbm.plot_ospa_history(time=time, time_units="s")
-    # if debug_plots:
-    #     mbm.plot_states([0, 1])
-    # print(len(true_agents))
-    # print(mbm.cardinality)
-    # assert len(true_agents) == mbm.cardinality, "Wrong cardinality"
+    rng = rnd.default_rng(global_seed)
 
+    dt = 0.01
+    t0, t1 = 0, 6 + dt
+    # t0, t1 = 0, 6 + dt
+
+    filt = _setup_double_int_kf(dt)
+    state_mat_args = (dt, "test arg")
+    meas_fun_args = ("useless arg",)
+
+    b_model = _setup_pmbm_double_int_birth()
+
+    RFS_base_args = {
+        "prob_detection": 0.99,
+        "prob_survive": 0.98,
+        "in_filter": filt,
+        "birth_terms": b_model,
+        "clutter_den": 1e-7,
+        "clutter_rate": 1e-7,
+    }
+    PMBM_args = {
+        "req_upd": 800,
+        "prune_threshold": 10 ** -4,
+        "exist_threshold" : 10 ** -5,
+        "max_hyps": 1000,
+    }
+    pmbm = tracker.LabeledPoissonMultiBernoulliMixture(**PMBM_args, **RFS_base_args)
+    pmbm.save_covs = True
+
+    # test save/load filter
+    filt_state = pmbm.save_filter_state()
+    pmbm = tracker.LabeledPoissonMultiBernoulliMixture()
+    pmbm.load_filter_state(filt_state)
+
+    time = np.arange(t0, t1, dt)
+    true_agents = []
+    global_true = []
+    print("\tStarting sim")
+    for kk, tt in enumerate(time):
+        if np.mod(kk, 100) == 0:
+            print("\t\t{:.2f}".format(tt))
+            sys.stdout.flush()
+
+        true_agents = _update_true_agents_pmbm(true_agents, tt, dt, b_model, rng)
+        global_true.append(deepcopy(true_agents))
+
+        pred_args = {"state_mat_args": state_mat_args}
+        pmbm.predict(tt, filt_args=pred_args)
+
+        meas_in = _gen_meas(tt, true_agents, filt.proc_noise, filt.meas_noise, rng)
+
+        cor_args = {"meas_fun_args": meas_fun_args}
+        pmbm.correct(tt, meas_in, filt_args=cor_args)
+
+        extract_kwargs = {"update": True, "calc_states": False}
+        pmbm.cleanup(extract_kwargs=extract_kwargs)
+
+    extract_kwargs = {"update": False, "calc_states": True}
+    pmbm.extract_states(**extract_kwargs)
+
+    pmbm.calculate_ospa(global_true, 2, 1)
+    if debug_plots:
+        pmbm.plot_ospa_history(time=time, time_units="s")
+    pmbm.calculate_ospa2(global_true, 5, 1, 10)
+    if debug_plots:
+        pmbm.plot_ospa2_history(time=time, time_units="s")
+    pmbm.calculate_ospa2(
+        global_true, 5, 1, 10, core_method=SingleObjectDistance.EUCLIDEAN
+    )
+    if debug_plots:
+        pmbm.plot_ospa2_history(time=time, time_units="s")
+    pmbm.calculate_ospa2(
+        global_true, 5, 1, 10, core_method=SingleObjectDistance.MAHALANOBIS
+    )
+    if debug_plots:
+        pmbm.plot_ospa2_history(time=time, time_units="s")
+    if debug_plots:
+        pmbm.plot_states_labels([0, 1], true_states=global_true, meas_inds=[0, 1])
+        pmbm.plot_card_dist()
+        pmbm.plot_card_history(time_units="s", time=time)
+    print("\tExpecting {} agents".format(len(true_agents)))
 
 # %% main
 if __name__ == "__main__":
@@ -3624,7 +3618,8 @@ if __name__ == "__main__":
     # test_MS_JGLMB()
 
     #test_GLMB()
-    test_PMBM()
+    # test_PMBM()
+    test_LPMBM()
 
     end = timer()
     print("{:.2f} s".format(end - start))
