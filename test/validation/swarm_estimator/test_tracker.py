@@ -158,6 +158,41 @@ def _setup_double_int_gci_kf(dt):
     filt.cov = 0.25 * np.eye(4)
     return filt
 
+def _setup_ct_ktr_gci_imm_kf(dt):
+    m_noise = 0.02
+    p_noise = 0.2
+    m_model1 = np.array([[1, 0, 0, 0, 0], [0, 1, 0, 0, 0]], dtype=float)
+    m_model2 = np.array([[0, 0, 1, 0, 0], [0, 0, 0, 1, 0]], dtype=float)
+    m_model_list = [m_model1, m_model2]
+
+    meas_noise_list = [m_noise ** 2 * np.eye(2),
+                       0.01 * m_noise ** 2 * np.eye(2)]
+
+    dyn_obj1 = gdyn.CoordinatedTurnKnown(turn_rate=0)
+    dyn_obj2 = gdyn.CoordinatedTurnKnown(turn_rate=60 * np.pi / 180)
+
+    in_filt1 = gfilts.KalmanFilter()
+    in_filt1.set_state_model(dyn_obj=dyn_obj1)
+    in_filt1.set_measurement_model(meas_mat=m_model1)
+    in_filt1.proc_noise = np.diag([1, 1, 1, 1, 3 * np.pi / 180]) * np.array([[p_noise ** 2]])
+    in_filt1.meas_noise = meas_noise_list[0]
+
+    in_filt2 = gfilts.KalmanFilter()
+    in_filt2.set_state_model(dyn_obj=dyn_obj2)
+    in_filt2.set_measurement_model(meas_mat=m_model1)
+    in_filt2.proc_noise = np.diag([1, 1, 1, 1, 3 * np.pi / 180]) * np.array([[p_noise ** 2]])
+    in_filt2.meas_noise = meas_noise_list[0]
+
+    filt_list = [in_filt1, in_filt2]
+
+    model_trans = np.array([[1 - 1 / 200, 1 / 200], [1 / 200, 1 - 1 / 200]])
+
+    filt = gfilts.IMMGCIFilter(meas_model_list=m_model_list, meas_noise_list=meas_noise_list)
+    filt.initialize_filters(filt_list, model_trans)
+
+
+    return filt
+
 
 def __gsm_import_dist_factory():
     def import_dist_fnc(parts, rng):
@@ -638,7 +673,14 @@ def _setup_pmbm_double_int_birth():
     mu = [np.array([10.0, 0.0, 1, 2]).reshape((4, 1))]
     cov = [np.diag(np.array([1, 1, 1, 1])) ** 2]
     #may need to tune weights
-    gm0 = smodels.GaussianMixture(means=mu, covariances=cov, weights=[0.000001])
+    gm0 = smodels.GaussianMixture(means=mu, covariances=cov, weights=[1])
+    return [gm0]
+
+def _setup_imm_pmbm_ct_ktr_birth():
+    mu = [np.array([10.0, 0.0, 1, 2, 0.0]).reshape((5, 1))]
+    cov = [np.diag(np.array([1, 1, 0.1, 0.1, 3 * np.pi / 180])) ** 2]
+    # cov = [np.diag(np.array([1, 1, 1, 1, np.pi])) ** 2]
+    gm0 = smodels.GaussianMixture(means=mu, covariances=cov, weights=[1])
     return [gm0]
 
 def _gen_meas(tt, true_agents, proc_noise, meas_noise, rng):
@@ -707,6 +749,7 @@ def _gen_meas_ms(tt, true_agents, proc_noise, meas_noise, rng, meas_model_list):
         meas_in.append(sens_list)
 
     return meas_in
+
 
 
 def _prop_true(true_agents, tt, dt):
@@ -805,7 +848,7 @@ def _update_true_agents_prob_imm(true_agents, tt, dt, b_model, rng, state_mat):
     for gm, w in b_model:
         if p <= w:
             print("birth at {:.2f}".format(tt))
-            x = gm.means[0] + np.array([1, 1, 1, 1, 3 * np.pi/180]).reshape((5, 1)) * (rng.standard_normal(5)).reshape((5, 1))
+            x = gm.means[0] + np.array([1, 1, 0.1, 0.1, 3 * np.pi/180]).reshape((5, 1)) * (rng.standard_normal(5)).reshape((5, 1))
             out.append(x.copy())
     return out
 
@@ -814,9 +857,22 @@ def _update_true_agents_pmbm(true_agents, tt, dt, b_model, rng):
     # if any(np.abs(tt - np.array([0, 1])) < 1e-8):
     if any(np.abs(tt - np.array([0, 0.05, 1, 1.5])) < 1e-8):
     # if any(np.abs(tt - np.array([0])) < 1e-8):
-        x = b_model[0].means[0] + (rng.standard_normal(4) * np.ones(4)).reshape((4, 1))
-        out.append(x.copy())
+        for gm in b_model:
+            x = gm.means[0] + (rng.standard_normal(4) * np.ones(4)).reshape((4, 1))
+            out.append(x.copy())
     return out
+
+def _update_true_agents_imm_pmbm(true_agents, tt, dt, b_model, rng, state_mat):
+    out = []
+    for x in true_agents:
+        out.append(state_mat @ x)
+    if any(np.abs(tt - np.array([0, 1.0])) < 1e-8):
+        for gm in b_model:
+            x = gm.means[0] + np.array([1, 1, 0.01, 0.01, 3 * np.pi/180]).reshape((5, 1)) * (rng.standard_normal(5)).reshape((5, 1))
+            out.append(x.copy())
+    return out
+
+
 
 def test_PHD():  # noqa
     print("Test PHD")
@@ -3210,14 +3266,14 @@ def test_IMM_GLMB():
     time = np.arange(t0, t1, dt)
     true_agents = []
     global_true = []
-    state_mat = gdyn.CoordinatedTurnKnown(turn_rate = 0 * np.pi / 180).get_state_mat(0, dt)
+    state_mat = gdyn.CoordinatedTurnKnown(turn_rate=0 * np.pi / 180).get_state_mat(0, dt)
     print("\tStarting sim")
     for kk, tt in enumerate(time):
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
         if tt > 5:
-            state_mat = gdyn.CoordinatedTurnKnown(turn_rate = 5 * np.pi / 180).get_state_mat(tt, dt)
+            state_mat = gdyn.CoordinatedTurnKnown(turn_rate=60 * np.pi / 180).get_state_mat(tt, dt)
 
         true_agents = _update_true_agents_prob_imm(true_agents, tt, dt, b_model, rng, state_mat)
         global_true.append(deepcopy(true_agents))
@@ -3300,7 +3356,7 @@ def test_IMM_JGLMB():  # noqa
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
         if tt > 5:
-            state_mat = gdyn.CoordinatedTurnKnown(turn_rate = 5 * np.pi / 180).get_state_mat(tt, dt)
+            state_mat = gdyn.CoordinatedTurnKnown(turn_rate = 60 * np.pi / 180).get_state_mat(tt, dt)
 
         true_agents = _update_true_agents_prob_imm(true_agents, tt, dt, b_model, rng, state_mat)
         global_true.append(deepcopy(true_agents))
@@ -3337,7 +3393,6 @@ def test_MS_JGLMB():  # noqa
     dt = 0.01
     t0, t1 = 0, 5.5 + dt
 
-    #TODO: CHANGE THIS TO A GCI FILTER SETUP
     filt = _setup_double_int_gci_kf(dt)
 
     state_mat_args = (dt,)
@@ -3396,6 +3451,77 @@ def test_MS_JGLMB():  # noqa
 
     # assert len(true_agents) == jglmb.cardinality, "Wrong cardinality"
 
+def test_MSIMMJGLMB(): #noqa
+    print("Test MS-IMM-GM-JGLMB")
+
+    rng = rnd.default_rng(global_seed)
+
+    dt = 0.01
+    t0, t1 = 0, 5.5 + dt
+    # t0, t1 = 0, 4 + dt
+
+    #TODO GCI IMM FILT SETUP
+    filt = _setup_ct_ktr_gci_imm_kf(dt)
+
+    state_mat_args = (dt,)
+    meas_fun_args = ("useless arg",)
+
+    b_model = _setup_imm_gm_glmb_ct_ktr_birth()
+
+    RFS_base_args = {
+        "prob_detection": 0.99,
+        "prob_survive": 0.98,
+        "in_filter": filt,
+        "birth_terms": b_model,
+        "clutter_den": 1 ** -3,
+        "clutter_rate": 1 ** -3,
+    }
+    JGLMB_args = {
+        "req_births": len(b_model) + 1,
+        "req_surv": 1000,
+        "req_upd": 800,
+        "prune_threshold": 10 ** -3,
+        "max_hyps": 1000,
+    }
+    jglmb = tracker.MSIMMJointGeneralizedLabeledMultiBernoulli(**JGLMB_args, **RFS_base_args)
+    time = np.arange(t0, t1, dt)
+    true_agents = []
+    global_true = []
+    state_mat = gdyn.CoordinatedTurnKnown(turn_rate=0 * np.pi / 180).get_state_mat(0, dt)
+    print("\tStarting sim")
+    for kk, tt in enumerate(time):
+        if np.mod(kk, 100) == 0:
+            print("\t\t{:.2f}".format(tt))
+            sys.stdout.flush()
+        if tt > 5:
+            state_mat = gdyn.CoordinatedTurnKnown(turn_rate=60 * np.pi / 180).get_state_mat(tt, dt)
+
+        true_agents = _update_true_agents_prob_imm(true_agents, tt, dt, b_model, rng, state_mat)
+        global_true.append(deepcopy(true_agents))
+
+        pred_args = {"state_mat_args": state_mat_args}
+        jglmb.predict(tt, filt_args=pred_args)
+
+        meas_in = _gen_meas_ms(tt, true_agents, filt.in_filt_list[0].proc_noise, filt.in_filt_list[0].meas_noise,
+                                rng, filt.meas_model_list)
+
+        cor_args = {"meas_fun_args": meas_fun_args}
+        jglmb.correct(tt, meas_in, filt_args=cor_args)
+
+        extract_kwargs = {"update": True, "calc_states": False}
+        jglmb.cleanup(extract_kwargs=extract_kwargs)
+    extract_kwargs = {"update": False, "calc_states": True}
+    jglmb.extract_states(**extract_kwargs)
+
+    jglmb.calculate_ospa(global_true, 2, 1)
+
+    if debug_plots:
+        jglmb.plot_states_labels([0, 1], true_states=global_true, meas_inds=[0, 1])
+        jglmb.plot_card_dist()
+        jglmb.plot_card_history(time_units="s", time=time)
+        jglmb.plot_ospa_history()
+    print("\tExpecting {} agents".format(len(true_agents)))
+
 def test_PMBM():
     print("Test PMBM")
 
@@ -3421,7 +3547,7 @@ def test_PMBM():
     }
     PMBM_args = {
         "req_upd": 800,
-        "prune_threshold": 10 ** -4,
+        "prune_threshold": 10 ** -5,
         "exist_threshold" : 10 ** -5,
         "max_hyps": 1000,
     }
@@ -3509,7 +3635,7 @@ def test_LPMBM():
     }
     PMBM_args = {
         "req_upd": 800,
-        "prune_threshold": 10 ** -4,
+        "prune_threshold": 10 ** -5,
         "exist_threshold" : 10 ** -5,
         "max_hyps": 1000,
     }
@@ -3569,6 +3695,188 @@ def test_LPMBM():
         pmbm.plot_card_history(time_units="s", time=time)
     print("\tExpecting {} agents".format(len(true_agents)))
 
+    assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
+
+def test_IMM_PMBM():
+    print("Test IMM-PMBM")
+
+    rng = rnd.default_rng(global_seed)
+
+    dt = 0.01
+    t0, t1 = 0, 6 + dt  # 6 + dt
+
+    filt = _setup_imm_ctktr_kf(dt)
+    state_mat_args = (dt,)
+    meas_fun_args = ("useless arg",)
+
+    b_model = _setup_imm_pmbm_ct_ktr_birth()
+
+    RFS_base_args = {
+        "prob_detection": 0.99,
+        "prob_survive": 0.98,
+        "in_filter": filt,
+        "birth_terms": b_model,
+        "clutter_den": 1e-7,
+        "clutter_rate": 1e-7,
+    }
+    PMBM_args = {
+        "req_upd": 800,
+        "prune_threshold": 10 ** -3,
+        "exist_threshold": 10 ** -5,
+        "max_hyps": 1000,
+    }
+    pmbm = tracker.IMMPoissonMultiBernoulliMixture(**PMBM_args, **RFS_base_args)
+    pmbm.save_covs = True
+
+    # test save/load filter
+    filt_state = pmbm.save_filter_state()
+    pmbm = tracker.IMMPoissonMultiBernoulliMixture()
+    pmbm.load_filter_state(filt_state)
+
+    time = np.arange(t0, t1, dt)
+    true_agents = []
+    global_true = []
+    state_mat = gdyn.CoordinatedTurnKnown(turn_rate=0 * np.pi / 180).get_state_mat(0, dt)
+    print("\tStarting sim")
+    for kk, tt in enumerate(time):
+        # print("\t\t{:.2f}".format(tt))
+        if np.mod(kk, 100) == 0:
+            print("\t\t{:.2f}".format(tt))
+            sys.stdout.flush()
+        if tt > 3:
+            state_mat = gdyn.CoordinatedTurnKnown(turn_rate=60 * np.pi / 180).get_state_mat(tt, dt)
+
+        true_agents = _update_true_agents_imm_pmbm(true_agents, tt, dt, b_model, rng, state_mat)
+        global_true.append(deepcopy(true_agents))
+
+        pred_args = {"state_mat_args": state_mat_args}
+        pmbm.predict(tt, filt_args=pred_args)
+
+        meas_in = _gen_meas_imm(tt, true_agents, filt.in_filt_list[0].proc_noise, filt.in_filt_list[0].meas_noise, rng)
+
+        cor_args = {"meas_fun_args": meas_fun_args}
+        pmbm.correct(tt, meas_in, filt_args=cor_args)
+
+        extract_kwargs = {"update": True, "calc_states": False}
+        pmbm.cleanup(extract_kwargs=extract_kwargs)
+        lel = 1
+    extract_kwargs = {"update": False, "calc_states": True}
+    pmbm.extract_states(**extract_kwargs)
+
+    pmbm.calculate_ospa(global_true, 2, 1)
+    if debug_plots:
+        pmbm.plot_ospa_history(time=time, time_units="s")
+    pmbm.calculate_ospa2(global_true, 5, 1, 10)
+    if debug_plots:
+        pmbm.plot_ospa2_history(time=time, time_units="s")
+    pmbm.calculate_ospa2(
+        global_true, 5, 1, 10, core_method=SingleObjectDistance.EUCLIDEAN
+    )
+    if debug_plots:
+        pmbm.plot_ospa2_history(time=time, time_units="s")
+    pmbm.calculate_ospa2(
+        global_true, 5, 1, 10, core_method=SingleObjectDistance.MAHALANOBIS
+    )
+    if debug_plots:
+        pmbm.plot_ospa2_history(time=time, time_units="s")
+    if debug_plots:
+        pmbm.plot_states([0, 1], true_states=global_true, meas_inds=[0, 1])
+        pmbm.plot_card_dist()
+        pmbm.plot_card_history(time_units="s", time=time)
+    print("\tExpecting {} agents".format(len(true_agents)))
+
+    assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
+
+def test_IMM_LPMBM():
+    print("Test IMM-LPMBM")
+
+    rng = rnd.default_rng(global_seed)
+
+    dt = 0.01
+    t0, t1 = 0, 6 + dt  # 6 + dt
+
+    filt = _setup_imm_ctktr_kf(dt)
+    state_mat_args = (dt,)
+    meas_fun_args = ("useless arg",)
+
+    b_model = _setup_imm_pmbm_ct_ktr_birth()
+
+    RFS_base_args = {
+        "prob_detection": 0.99,
+        "prob_survive": 0.98,
+        "in_filter": filt,
+        "birth_terms": b_model,
+        "clutter_den": 1e-7,
+        "clutter_rate": 1e-7,
+    }
+    PMBM_args = {
+        "req_upd": 800,
+        "prune_threshold": 10 ** -3,
+        "exist_threshold": 10 ** -5,
+        "max_hyps": 1000,
+    }
+    pmbm = tracker.IMMLabeledPoissonMultiBernoulliMixture(**PMBM_args, **RFS_base_args)
+    pmbm.save_covs = True
+
+    # test save/load filter
+    filt_state = pmbm.save_filter_state()
+    pmbm = tracker.IMMLabeledPoissonMultiBernoulliMixture()
+    pmbm.load_filter_state(filt_state)
+
+    time = np.arange(t0, t1, dt)
+    true_agents = []
+    global_true = []
+    state_mat = gdyn.CoordinatedTurnKnown(turn_rate=0 * np.pi / 180).get_state_mat(0, dt)
+    print("\tStarting sim")
+    for kk, tt in enumerate(time):
+        # print("\t\t{:.2f}".format(tt))
+        if np.mod(kk, 100) == 0:
+            print("\t\t{:.2f}".format(tt))
+            sys.stdout.flush()
+        if tt > 3:
+            state_mat = gdyn.CoordinatedTurnKnown(turn_rate=60 * np.pi / 180).get_state_mat(tt, dt)
+
+        true_agents = _update_true_agents_imm_pmbm(true_agents, tt, dt, b_model, rng, state_mat)
+        global_true.append(deepcopy(true_agents))
+
+        pred_args = {"state_mat_args": state_mat_args}
+        pmbm.predict(tt, filt_args=pred_args)
+
+        meas_in = _gen_meas_imm(tt, true_agents, filt.in_filt_list[0].proc_noise, filt.in_filt_list[0].meas_noise, rng)
+
+        cor_args = {"meas_fun_args": meas_fun_args}
+        pmbm.correct(tt, meas_in, filt_args=cor_args)
+
+        extract_kwargs = {"update": True, "calc_states": False}
+        pmbm.cleanup(extract_kwargs=extract_kwargs)
+        lel = 1
+    extract_kwargs = {"update": False, "calc_states": True}
+    pmbm.extract_states(**extract_kwargs)
+
+    pmbm.calculate_ospa(global_true, 2, 1)
+    if debug_plots:
+        pmbm.plot_ospa_history(time=time, time_units="s")
+    pmbm.calculate_ospa2(global_true, 5, 1, 10)
+    if debug_plots:
+        pmbm.plot_ospa2_history(time=time, time_units="s")
+    pmbm.calculate_ospa2(
+        global_true, 5, 1, 10, core_method=SingleObjectDistance.EUCLIDEAN
+    )
+    if debug_plots:
+        pmbm.plot_ospa2_history(time=time, time_units="s")
+    pmbm.calculate_ospa2(
+        global_true, 5, 1, 10, core_method=SingleObjectDistance.MAHALANOBIS
+    )
+    if debug_plots:
+        pmbm.plot_ospa2_history(time=time, time_units="s")
+    if debug_plots:
+        pmbm.plot_states_labels([0, 1], true_states=global_true, meas_inds=[0, 1])
+        pmbm.plot_card_dist()
+        pmbm.plot_card_history(time_units="s", time=time)
+    print("\tExpecting {} agents".format(len(true_agents)))
+
+    assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
+
 # %% main
 if __name__ == "__main__":
     from timeit import default_timer as timer
@@ -3616,10 +3924,13 @@ if __name__ == "__main__":
     # test_IMM_GLMB()
     # test_IMM_JGLMB()
     # test_MS_JGLMB()
+    test_MSIMMJGLMB()
 
-    #test_GLMB()
     # test_PMBM()
-    test_LPMBM()
+    # test_LPMBM()
+    # test_IMM_PMBM()
+    # test_IMM_LPMBM()
+
 
     end = timer()
     print("{:.2f} s".format(end - start))

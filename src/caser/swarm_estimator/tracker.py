@@ -4847,8 +4847,8 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
 
         if self.save_measurements:
             self._meas_tab.append(deepcopy(meas))
-        all_combs = list(itertools.product(*meas))
-        # num_meas = max(len(x) for x in meas)
+        # all_combs = list(itertools.product(*meas))
+
         num_meas = len(all_combs)
         num_sens = len(meas)
 
@@ -4873,6 +4873,49 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
         self._update_has_been_called = True
         self._old_track_tab_len = len(self._track_tab)
 
+
+class MSIMMJointGeneralizedLabeledMultiBernoulli(_IMMGLMBBase, MSJointGeneralizedLabeledMultiBernoulli):
+    """An implementation of the Multi-Sensor IMM-JGLMB algorithm."""
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def _correct_track_tab_entry(self, meas, tab, timestep, filt_args):
+        newTab = self._TabEntry().setup(tab)
+        new_f_states = [None] * len(newTab.filt_states)
+        new_s_hist = [None] * len(newTab.filt_states)
+        new_c_hist = [None] * len(newTab.filt_states)
+        new_w = [None] * len(newTab.filt_states)
+        depleted = False
+        for ii, (f_state, state, w) in enumerate(
+            zip(
+                newTab.filt_states,
+                newTab.state_hist[-1],
+                newTab.distrib_weights_hist[-1],
+            )
+        ):
+            try:
+                (
+                    new_f_states[ii],
+                    new_s_hist[ii],
+                    new_c_hist[ii],
+                    new_w[ii],
+                ) = self._inner_correct(timestep, meas, f_state, w, state, filt_args)
+            except (
+                gerr.ParticleDepletionError,
+                gerr.ParticleEstimationDomainError,
+                gerr.ExtremeMeasurementNoiseError,
+            ):
+                return None, 0
+        newTab.filt_states = new_f_states
+        newTab.state_hist[-1] = new_s_hist
+        newTab.cov_hist[-1] = new_c_hist
+        new_w = [w + np.finfo(float).eps for w in new_w]
+        if not depleted:
+            cost = np.sum(new_w).item()
+            newTab.distrib_weights_hist[-1] = [w / cost for w in new_w]
+        else:
+            cost = 0
+        return newTab, cost
 
 class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
 
@@ -5089,6 +5132,23 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
     def cardinality(self):
         """Cardinality estimate."""
         return np.argmax(self._card_dist)
+    
+    def _init_filt_states(self, distrib):
+        filt_states = [None] * len(distrib.means)
+        states = [m.copy() for m in distrib.means]
+        if self.save_covs:
+            covs = [c.copy() for c in distrib.covariances]
+        else:
+            covs = []
+        weights = distrib.weights.copy()
+        for ii, (m, cov) in enumerate(zip(distrib.means, distrib.covariances)):
+            self._baseFilter.cov = cov.copy()
+            if isinstance(self._baseFilter, gfilts.UnscentedKalmanFilter) or isinstance(
+                self._baseFilter, gfilts.UKFGaussianScaleMixtureFilter
+            ):
+                self._baseFilter.init_sigma_points(m)
+            filt_states[ii] = self._baseFilter.save_filter_state()
+        return filt_states, weights, states, covs
 
     def _inner_predict(self, timestep, filt_state, state, filt_args):
         self.filter.load_filter_state(filt_state)
@@ -5197,16 +5257,7 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
 
     def _correct_birth_tab_entry(self, meas, distrib, timestep, filt_args):
         new_tab = self._TabEntry()
-        filt_states = [None] * len(distrib.means)
-        states = [m.copy() for m in distrib.means]
-        weights = distrib.weights.copy()
-        for ii, (m, cov) in enumerate(zip(distrib.means, distrib.covariances)):
-            self._baseFilter.cov = cov.copy()
-            if isinstance(self._baseFilter, gfilts.UnscentedKalmanFilter) or isinstance(
-                    self._baseFilter, gfilts.UKFGaussianScaleMixtureFilter
-            ):
-                self._baseFilter.init_sigma_points(m)
-            filt_states[ii] = self._baseFilter.save_filter_state()
+        (filt_states, weights, states, covs) = self._init_filt_states(distrib)
 
         new_f_states = [None] * len(filt_states)
         new_s_hist = [None] * len(filt_states)
@@ -6213,16 +6264,7 @@ class LabeledPoissonMultiBernoulliMixture(PoissonMultiBernoulliMixture):
 
     def _correct_birth_tab_entry(self, meas, distrib, timestep, filt_args):
         new_tab = self._TabEntry()
-        filt_states = [None] * len(distrib.means)
-        states = [m.copy() for m in distrib.means]
-        weights = distrib.weights.copy()
-        for ii, (m, cov) in enumerate(zip(distrib.means, distrib.covariances)):
-            self._baseFilter.cov = cov.copy()
-            if isinstance(self._baseFilter, gfilts.UnscentedKalmanFilter) or isinstance(
-                    self._baseFilter, gfilts.UKFGaussianScaleMixtureFilter
-            ):
-                self._baseFilter.init_sigma_points(m)
-            filt_states[ii] = self._baseFilter.save_filter_state()
+        filt_states, weights, states, covs = self._init_filt_states(distrib)
 
         new_f_states = [None] * len(filt_states)
         new_s_hist = [None] * len(filt_states)
@@ -6756,3 +6798,62 @@ class LabeledPoissonMultiBernoulliMixture(PoissonMultiBernoulliMixture):
         plt.tight_layout()
 
         return f_hndl
+
+class _IMMPMBMBase:
+    def _init_filt_states(self, distrib):
+        filt_states = [None] * len(distrib.means)
+        states = [m.copy() for m in distrib.means]
+        if self.save_covs:
+            covs = [c.copy() for c in distrib.covariances]
+        else:
+            covs = []
+        weights = distrib.weights.copy()
+        for ii, (m, cov) in enumerate(zip(distrib.means, distrib.covariances)):
+            # if len(m) != 1 or len(cov) != 1:
+            #     raise ValueError("Only one mean can be passed to IMM filters for initialization")
+            m_list = []
+            c_list = []
+            for jj in range(0, len(self._baseFilter.in_filt_list)):
+                m_list.append(m)
+                c_list.append(cov)
+            self._baseFilter.initialize_states(m_list, c_list)
+            filt_states[ii] = self._baseFilter.save_filter_state()
+        return filt_states, weights, states, covs
+
+    def _inner_predict(self, timestep, filt_state, state, filt_args):
+        self.filter.load_filter_state(filt_state)
+        new_s = self.filter.predict(timestep, **filt_args)
+        new_f_state = self.filter.save_filter_state()
+        if self.save_covs:
+            new_cov = self.filter.cov.copy()
+        else:
+            new_cov = None
+        return new_f_state, new_s, new_cov
+
+    def _inner_correct(
+        self, timestep, meas, filt_state, distrib_weight, state, filt_args
+    ):
+        self.filter.load_filter_state(filt_state)
+        cor_state, likely = self.filter.correct(timestep, meas, **filt_args)
+        new_f_state = self.filter.save_filter_state()
+        new_s = cor_state
+        if self.save_covs:
+            new_c = self.filter.cov.copy()
+        else:
+            new_c = None
+        new_w = distrib_weight * likely
+
+        return new_f_state, new_s, new_c, new_w
+
+
+class IMMPoissonMultiBernoulliMixture(_IMMPMBMBase, PoissonMultiBernoulliMixture):
+    """An implementation of the IMM-PMBM algorithm."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+class IMMLabeledPoissonMultiBernoulliMixture(_IMMPMBMBase, LabeledPoissonMultiBernoulliMixture):
+    """An implementation of the IMM-LPMBM algorithm."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
