@@ -4758,7 +4758,7 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
             # Gibbs Sampler
             [assigns, costs] = gibbs(neg_log, m, rng=self._rng)
 
-            # Process unique assighnments from gibbs sampler
+            # Process unique assignments from gibbs sampler
             assigns[assigns < num_tracks] = -np.inf
             for ii in range(np.shape(assigns)[0]):
                 if len(np.shape(assigns)) < 2:
@@ -6855,5 +6855,129 @@ class IMMPoissonMultiBernoulliMixture(_IMMPMBMBase, PoissonMultiBernoulliMixture
 class IMMLabeledPoissonMultiBernoulliMixture(_IMMPMBMBase, LabeledPoissonMultiBernoulliMixture):
     """An implementation of the IMM-LPMBM algorithm."""
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+class MSPoissonMultiBernoulliMixture(PoissonMultiBernoulliMixture):
+    """An Implementation of the Multiple Sensor PMBM Filter."""
+    # TODO: NEED TO MODIFY MEASUREMENT DRIVEN BIRTHS
+    #  SO THEY BETTER ACCOUNT FOR CERTAIN COMBINATIONS
+    #
+    def __init__(selfself, **kwargs):
+        super().__init__(**kwargs)
+
+    def correct(self, timestep, meas, filt_args={}):
+        """Correction step of the PMBM filter.
+
+        Notes
+        -----
+        This corrects the hypotheses based on the measurements and gates the
+        measurements according to the class settings. It also updates the
+        cardinality distribution.
+
+        Parameters
+        ----------
+        timestep: float
+            Current timestep.
+        meas : list
+            List of Nm x 1 numpy arrays each representing a measuremnt.
+        filt_args : dict, optional
+            keyword arguments to pass to the inner filters correct function.
+            The default is {}.
+
+        Returns
+        -------
+        None
+        """
+        all_combs = list(itertools.product(*meas))
+        if self.gating_on:
+            warnings.warn("Gating not implemented yet. SKIPPING", RuntimeWarning)
+            # means = []
+            # covs = []
+            # for ent in self._track_tab:
+            #     means.extend(ent.probDensity.means)
+            #     covs.extend(ent.probDensity.covariances)
+            # meas = self._gate_meas(meas, means, covs)
+        if self.save_measurements:
+            self._meas_tab.append(deepcopy(meas))
+
+        num_meas = len(all_combs)
+        num_sens = len(meas)
+
+        cor_tab, all_cost_m = self._gen_cor_tab(num_meas, all_combs, timestep, filt_args)
+
+        # self._add_birth_hyps(num_meas)
+
+        avg_prob_det, avg_prob_mdet = self._calc_avg_prob_det_mdet(cor_tab)
+
+        cor_hyps = self._gen_cor_hyps(num_meas, avg_prob_det, avg_prob_mdet, all_cost_m, cor_tab)
+
+        self._track_tab = cor_tab
+        self._hypotheses = cor_hyps
+        self._card_dist = self._calc_card_dist(self._hypotheses)
+        self._clean_updates()
+
+class MSLabeledPoissonMultiBernoulliMixture(LabeledPoissonMultiBernoulliMixture):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def correct(self, timestep, meas, filt_args={}):
+        """Correction step of the PMBM filter.
+
+        Notes
+        -----
+        This corrects the hypotheses based on the measurements and gates the
+        measurements according to the class settings. It also updates the
+        cardinality distribution.
+
+        Parameters
+        ----------
+        timestep: float
+            Current timestep.
+        meas : list
+            List of Nm x 1 numpy arrays each representing a measuremnt.
+        filt_args : dict, optional
+            keyword arguments to pass to the inner filters correct function.
+            The default is {}.
+
+        Returns
+        -------
+        None
+        """
+        all_combs = list(itertools.product(*meas))
+        if self.gating_on:
+            warnings.warn("Gating not implemented yet. SKIPPING", RuntimeWarning)
+            # means = []
+            # covs = []
+            # for ent in self._track_tab:
+            #     means.extend(ent.probDensity.means)
+            #     covs.extend(ent.probDensity.covariances)
+            # meas = self._gate_meas(meas, means, covs)
+        if self.save_measurements:
+            self._meas_tab.append(deepcopy(meas))
+
+        num_meas = len(all_combs)
+        num_sens = len(meas)
+
+        cor_tab, all_cost_m = self._gen_cor_tab(num_meas, all_combs, timestep, filt_args)
+
+        # self._add_birth_hyps(num_meas)
+
+        avg_prob_det, avg_prob_mdet = self._calc_avg_prob_det_mdet(cor_tab)
+
+        cor_hyps = self._gen_cor_hyps(num_meas, avg_prob_det, avg_prob_mdet, all_cost_m, cor_tab)
+
+        self._track_tab = cor_tab
+        self._hypotheses = cor_hyps
+        self._card_dist = self._calc_card_dist(self._hypotheses)
+        self._clean_updates()
+
+
+class MSIMMPoissonMultiBernoulliMixture(_IMMPMBMBase, MSPoissonMultiBernoulliMixture):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+class MSIMMLabeledPoissonMultiBernoulliMixture(_IMMPMBMBase, MSLabeledPoissonMultiBernoulliMixture):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
