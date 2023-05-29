@@ -1,9 +1,10 @@
 [project]
 name = "caser"
-version = "0.0.0"
+# version = "0.0.0"
+dynamic = ["version"]
 description = "A package for Guidance, Navigation, and Control (GNC) for Autonomous Swarms Using Random finite sets (RFS)."
 readme = "README.rst"
-python_requires = ">=3.7"
+requires-python = ">=3.7"
 license = {file = "LICENSE"}
 keywords = [
     "Guidance Navigation and Control",
@@ -57,4 +58,4 @@ junit_logging = "all"
 
 # activates the extension
 [tool.setuptools_scm]
-version_scheme = "no-guess-dev"
+# version_scheme = "no-guess-dev"
