@@ -1,20 +1,34 @@
-Welcome to CASER's documentation!
-=================================
+CASER's documentation!
+======================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
    api
-   toolchain
    usage
+   toolchain
+   cicd
+   Test Coverage Report <./reports/coverage/index.html#http://>
+   Test Results Report <./reports/junit/junit.html#http://>
+   LAGER Homepage <http://lager.ua.edu/>
    References
    license
 
 
-Todos
------
-.. todolist::
+.. include:: ../../README.rst
+    :start-after: BEGIN LINKS INCLUDE
+    :end-before: END LINKS INCLUDE
+
+
+|Open in Dev Containers| |Test Status| |Test Cov|
+
+A Python package for Command, control & information (C2I) of Autonomous Swarms Employing Random finite sets (RFS) (CASER) developed by the Laboratory for Autonomy, GNC, and Estimation Research (LAGER) at the University of Alabama (UA). To get started using this package simply run :code:`pip install caser`.
+
+
+.. include:: ../../README.rst
+    :start-after: BEGIN CITE INCLUDE
+    :end-before: END CITE INCLUDE
 
 
 Indices and tables
