@@ -33,5 +33,5 @@ ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
 # install some python dependencies
-RUN pip install tox genbadge[tests,coverage] numpy matplotlib gncpy serums
+RUN pip install tox genbadge[tests,coverage] numpy matplotlib gncpy serums setuptools_scm
 
