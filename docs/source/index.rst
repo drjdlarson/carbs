@@ -1,5 +1,5 @@
-CASER's documentation!
-======================
+CASER's documentation
+=====================
 
 .. toctree::
    :maxdepth: 2
