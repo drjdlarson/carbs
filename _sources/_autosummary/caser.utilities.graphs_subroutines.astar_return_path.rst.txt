@@ -1,0 +1,6 @@
+caser.utilities.graphs\_subroutines.astar\_return\_path
+=======================================================
+
+.. currentmodule:: caser.utilities.graphs_subroutines
+
+.. autofunction:: astar_return_path

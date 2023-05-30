@@ -1,0 +1,51 @@
+caser.swarm\_estimator.tracker.IMMCardinalizedPHD
+=================================================
+
+.. currentmodule:: caser.swarm_estimator.tracker
+
+.. autoclass:: IMMCardinalizedPHD
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~IMMCardinalizedPHD.__init__
+      ~IMMCardinalizedPHD.animate_state_plot
+      ~IMMCardinalizedPHD.calculate_ospa
+      ~IMMCardinalizedPHD.cleanup
+      ~IMMCardinalizedPHD.correct
+      ~IMMCardinalizedPHD.extract_states
+      ~IMMCardinalizedPHD.load_filter_state
+      ~IMMCardinalizedPHD.plot_card_dist
+      ~IMMCardinalizedPHD.plot_card_history
+      ~IMMCardinalizedPHD.plot_number_states_per_time
+      ~IMMCardinalizedPHD.plot_ospa_history
+      ~IMMCardinalizedPHD.plot_states
+      ~IMMCardinalizedPHD.predict
+      ~IMMCardinalizedPHD.save_filter_state
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~IMMCardinalizedPHD.cardinality
+      ~IMMCardinalizedPHD.covariances
+      ~IMMCardinalizedPHD.max_expected_card
+      ~IMMCardinalizedPHD.num_birth_terms
+      ~IMMCardinalizedPHD.ospa_method
+      ~IMMCardinalizedPHD.prob_death
+      ~IMMCardinalizedPHD.prob_miss_detection
+      ~IMMCardinalizedPHD.states
+   
+   

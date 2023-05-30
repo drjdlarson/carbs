@@ -1,0 +1,40 @@
+caser.guidance.ELQR
+===================
+
+.. currentmodule:: caser.guidance
+
+.. autoclass:: ELQR
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ELQR.__init__
+      ~ELQR.create_outputs
+      ~ELQR.draw_init_states
+      ~ELQR.find_end_state
+      ~ELQR.gen_final_traj
+      ~ELQR.get_state_dist
+      ~ELQR.init_elqr_lst
+      ~ELQR.init_plot
+      ~ELQR.non_quad_fun_factory
+      ~ELQR.output_helper
+      ~ELQR.plan
+      ~ELQR.reset
+      ~ELQR.save_animation
+      ~ELQR.set_control_model
+      ~ELQR.set_cost_model
+      ~ELQR.targets_to_wayareas
+   
+   
+
+   
+   
+   

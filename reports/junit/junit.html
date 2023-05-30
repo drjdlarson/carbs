@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>junit.html</title>
+    <link href="assets/style.css" rel="stylesheet" type="text/css"/></head>
+  <body onLoad="init()">
+    <script>/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+
+function toArray(iter) {
+    if (iter === null) {
+        return null;
+    }
+    return Array.prototype.slice.call(iter);
+}
+
+function find(selector, elem) { // eslint-disable-line no-redeclare
+    if (!elem) {
+        elem = document;
+    }
+    return elem.querySelector(selector);
+}
+
+function findAll(selector, elem) {
+    if (!elem) {
+        elem = document;
+    }
+    return toArray(elem.querySelectorAll(selector));
+}
+
+function sortColumn(elem) {
+    toggleSortStates(elem);
+    const colIndex = toArray(elem.parentNode.childNodes).indexOf(elem);
+    let key;
+    if (elem.classList.contains('result')) {
+        key = keyResult;
+    } else if (elem.classList.contains('links')) {
+        key = keyLink;
+    } else {
+        key = keyAlpha;
+    }
+    sortTable(elem, key(colIndex));
+}
+
+function showAllExtras() { // eslint-disable-line no-unused-vars
+    findAll('.col-result').forEach(showExtras);
+}
+
+function hideAllExtras() { // eslint-disable-line no-unused-vars
+    findAll('.col-result').forEach(hideExtras);
+}
+
+function showExtras(colresultElem) {
+    const extras = colresultElem.parentNode.nextElementSibling;
+    const expandcollapse = colresultElem.firstElementChild;
+    extras.classList.remove('collapsed');
+    expandcollapse.classList.remove('expander');
+    expandcollapse.classList.add('collapser');
+}
+
+function hideExtras(colresultElem) {
+    const extras = colresultElem.parentNode.nextElementSibling;
+    const expandcollapse = colresultElem.firstElementChild;
+    extras.classList.add('collapsed');
+    expandcollapse.classList.remove('collapser');
+    expandcollapse.classList.add('expander');
+}
+
+function showFilters() {
+    let visibleString = getQueryParameter('visible') || 'all';
+    visibleString = visibleString.toLowerCase();
+    const checkedItems = visibleString.split(',');
+
+    const filterItems = document.getElementsByClassName('filter');
+    for (let i = 0; i < filterItems.length; i++) {
+        filterItems[i].hidden = false;
+
+        if (visibleString != 'all') {
+            filterItems[i].checked = checkedItems.includes(filterItems[i].getAttribute('data-test-result'));
+            filterTable(filterItems[i]);
+        }
+    }
+}
+
+function addCollapse() {
+    // Add links for show/hide all
+    const resulttable = find('table#results-table');
+    const showhideall = document.createElement('p');
+    showhideall.innerHTML = '<a href="javascript:showAllExtras()">Show all details</a> / ' +
+                            '<a href="javascript:hideAllExtras()">Hide all details</a>';
+    resulttable.parentElement.insertBefore(showhideall, resulttable);
+
+    // Add show/hide link to each result
+    findAll('.col-result').forEach(function(elem) {
+        const collapsed = getQueryParameter('collapsed') || 'Passed';
+        const extras = elem.parentNode.nextElementSibling;
+        const expandcollapse = document.createElement('span');
+        if (extras.classList.contains('collapsed')) {
+            expandcollapse.classList.add('expander');
+        } else if (collapsed.includes(elem.innerHTML)) {
+            extras.classList.add('collapsed');
+            expandcollapse.classList.add('expander');
+        } else {
+            expandcollapse.classList.add('collapser');
+        }
+        elem.appendChild(expandcollapse);
+
+        elem.addEventListener('click', function(event) {
+            if (event.currentTarget.parentNode.nextElementSibling.classList.contains('collapsed')) {
+                showExtras(event.currentTarget);
+            } else {
+                hideExtras(event.currentTarget);
+            }
+        });
+    });
+}
+
+function getQueryParameter(name) {
+    const match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
+function init () { // eslint-disable-line no-unused-vars
+    resetSortHeaders();
+
+    addCollapse();
+
+    showFilters();
+
+    sortColumn(find('.initial-sort'));
+
+    findAll('.sortable').forEach(function(elem) {
+        elem.addEventListener('click',
+            function() {
+                sortColumn(elem);
+            }, false);
+    });
+}
+
+function sortTable(clicked, keyFunc) {
+    const rows = findAll('.results-table-row');
+    const reversed = !clicked.classList.contains('asc');
+    const sortedRows = sort(rows, keyFunc, reversed);
+    /* Whole table is removed here because browsers acts much slower
+     * when appending existing elements.
+     */
+    const thead = document.getElementById('results-table-head');
+    document.getElementById('results-table').remove();
+    const parent = document.createElement('table');
+    parent.id = 'results-table';
+    parent.appendChild(thead);
+    sortedRows.forEach(function(elem) {
+        parent.appendChild(elem);
+    });
+    document.getElementsByTagName('BODY')[0].appendChild(parent);
+}
+
+function sort(items, keyFunc, reversed) {
+    const sortArray = items.map(function(item, i) {
+        return [keyFunc(item), i];
+    });
+
+    sortArray.sort(function(a, b) {
+        const keyA = a[0];
+        const keyB = b[0];
+
+        if (keyA == keyB) return 0;
+
+        if (reversed) {
+            return keyA < keyB ? 1 : -1;
+        } else {
+            return keyA > keyB ? 1 : -1;
+        }
+    });
+
+    return sortArray.map(function(item) {
+        const index = item[1];
+        return items[index];
+    });
+}
+
+function keyAlpha(colIndex) {
+    return function(elem) {
+        return elem.childNodes[1].childNodes[colIndex].firstChild.data.toLowerCase();
+    };
+}
+
+function keyLink(colIndex) {
+    return function(elem) {
+        const dataCell = elem.childNodes[1].childNodes[colIndex].firstChild;
+        return dataCell == null ? '' : dataCell.innerText.toLowerCase();
+    };
+}
+
+function keyResult(colIndex) {
+    return function(elem) {
+        const strings = ['Error', 'Failed', 'Rerun', 'XFailed', 'XPassed',
+            'Skipped', 'Passed'];
+        return strings.indexOf(elem.childNodes[1].childNodes[colIndex].firstChild.data);
+    };
+}
+
+function resetSortHeaders() {
+    findAll('.sort-icon').forEach(function(elem) {
+        elem.parentNode.removeChild(elem);
+    });
+    findAll('.sortable').forEach(function(elem) {
+        const icon = document.createElement('div');
+        icon.className = 'sort-icon';
+        icon.textContent = 'vvv';
+        elem.insertBefore(icon, elem.firstChild);
+        elem.classList.remove('desc', 'active');
+        elem.classList.add('asc', 'inactive');
+    });
+}
+
+function toggleSortStates(elem) {
+    //if active, toggle between asc and desc
+    if (elem.classList.contains('active')) {
+        elem.classList.toggle('asc');
+        elem.classList.toggle('desc');
+    }
+
+    //if inactive, reset all other functions and add ascending active
+    if (elem.classList.contains('inactive')) {
+        resetSortHeaders();
+        elem.classList.remove('inactive');
+        elem.classList.add('active');
+    }
+}
+
+function isAllRowsHidden(value) {
+    return value.hidden == false;
+}
+
+function filterTable(elem) { // eslint-disable-line no-unused-vars
+    const outcomeAtt = 'data-test-result';
+    const outcome = elem.getAttribute(outcomeAtt);
+    const classOutcome = outcome + ' results-table-row';
+    const outcomeRows = document.getElementsByClassName(classOutcome);
+
+    for(let i = 0; i < outcomeRows.length; i++){
+        outcomeRows[i].hidden = !elem.checked;
+    }
+
+    const rows = findAll('.results-table-row').filter(isAllRowsHidden);
+    const allRowsHidden = rows.length == 0 ? true : false;
+    const notFoundMessage = document.getElementById('not-found-message');
+    notFoundMessage.hidden = !allRowsHidden;
+}
+</script>
+    <h1>junit.html</h1>
+    <p>Report generated on 30-May-2023 at 18:12:33 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a> v3.2.0</p>
+    <h2>Summary</h2>
+    <p>47 tests ran in 2956.98 seconds. </p>
+    <p class="filter" hidden="true">(Un)check the boxes to filter the results.</p><input checked="true" class="filter" data-test-result="passed" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="passed">47 passed</span>, <input checked="true" class="filter" data-test-result="skipped" disabled="true" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="skipped">0 skipped</span>, <input checked="true" class="filter" data-test-result="failed" disabled="true" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="failed">0 failed</span>, <input checked="true" class="filter" data-test-result="error" disabled="true" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="error">0 errors</span>, <input checked="true" class="filter" data-test-result="xfailed" disabled="true" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="xfailed">0 expected failures</span>, <input checked="true" class="filter" data-test-result="xpassed" disabled="true" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="xpassed">0 unexpected passes</span>
+    <h2>Results</h2>
+    <table id="results-table">
+      <thead id="results-table-head">
+        <tr>
+          <th class="sortable result initial-sort" col="result">Result</th>
+          <th class="sortable" col="name">Test</th>
+          <th class="sortable" col="duration">Duration</th>
+          <th class="sortable links" col="links">Links</th></tr>
+        <tr hidden="true" id="not-found-message">
+          <th colspan="4">No results found. Try to check the filters</th></tr></thead>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/unit/utilities/test_graphs.py::TestKShortesst::test_bfm_shortest_path1</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/unit/utilities/test_graphs.py::TestKShortesst::test_bfm_shortest_path2</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/unit/utilities/test_graphs.py::TestKShortesst::test_k_shortest1</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/unit/utilities/test_graphs.py::TestKShortesst::test_k_shortest2</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/unit/utilities/test_graphs.py::test_murty_m_best1</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/unit/utilities/test_graphs.py::test_murty_m_best2</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/unit/utilities/test_graphs.py::test_murty_m_best3</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/unit/utilities/test_graphs.py::test_a_star1</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/unit/utilities/test_graphs_subroutines.py::test_assign_opt1</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/unit/utilities/test_graphs_subroutines.py::test_assign_opt2</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/unit/utilities/test_graphs_subroutines.py::test_assign_opt3</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/unit/utilities/test_graphs_subroutines.py::test_assign_opt4</td>
+          <td class="col-duration">0.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="empty log">No log output captured.</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_PHD</td>
+          <td class="col-duration">9.74</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test PHD
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_PHD_spawning</td>
+          <td class="col-duration">39.33</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test PHD with Target Spawning
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_CPHD</td>
+          <td class="col-duration">19.13</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test CPHD
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_CPHD_spawning</td>
+          <td class="col-duration">57.84</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test CPHD with Target Spawning
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_IMM_PHD</td>
+          <td class="col-duration">18.53</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test IMM-PHD
+		0.00
+		1.00
+		2.00
+		3.00
+		4.00
+		5.00
+		6.00
+		7.00
+		8.00
+		9.00
+		10.00
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_IMM_CPHD</td>
+          <td class="col-duration">27.34</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test IMM-CPHD
+		0.00
+		1.00
+		2.00
+		3.00
+		4.00
+		5.00
+		6.00
+		7.00
+		8.00
+		9.00
+		10.00
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_GLMB</td>
+          <td class="col-duration">3.22</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test GM-GLMB
+	Starting sim
+		0.00
+		1.00
+		2.00
+		3.00
+birth at 3.21
+		4.00
+	Expecting 1 agents
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_STM_GLMB</td>
+          <td class="col-duration">11.31</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test STM-GLMB
+	Starting sim
+		0.00
+		1.00
+		2.00
+		3.00
+birth at 3.21
+		4.00
+birth at 4.71
+		5.00
+		6.00
+	Expecting 2 agents
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_SMC_GLMB</td>
+          <td class="col-duration">433.13</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test SMC-GLMB
+	Starting sim
+		0.00
+birth at 0.50
+		1.00
+	Expecting 1 agents
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_USMC_GLMB</td>
+          <td class="col-duration">73.85</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test USMC-GLMB
+	Starting sim
+		0.00
+birth at 0.50
+		1.00
+	Expecting 1 agents
+	max cardinality 1
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_MCMC_USMC_GLMB</td>
+          <td class="col-duration">56.45</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test MCMC USMC-GLMB
+	Starting sim
+		0.00
+birth at 0.50
+		1.00
+	Expecting 1 agents
+max cardinality 1
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_JGLMB</td>
+          <td class="col-duration">67.11</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test GM-JGLMB
+	Starting sim
+		0.00
+		1.00
+		2.00
+		3.00
+birth at 3.21
+		4.00
+		5.00
+		6.00
+	Expecting 1 agents
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_JGLMB_high_birth</td>
+          <td class="col-duration">134.78</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test GM-JGLMB high birth
+	Starting sim
+		0.00
+		1.00
+birth at 1.41
+		2.00
+		3.00
+		4.00
+birth at 4.02
+birth at 4.52
+		5.00
+		6.00
+	Expecting 3 agents
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_STM_JGLMB</td>
+          <td class="col-duration">81.60</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test STM-JGLMB
+	Starting sim
+		0.00
+		1.00
+		2.00
+		3.00
+birth at 3.21
+		4.00
+birth at 4.71
+		5.00
+		6.00
+	Expecting 2 agents
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_SMC_JGLMB</td>
+          <td class="col-duration">293.90</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test SMC-JGLMB
+	Starting sim
+		0.00
+birth at 0.50
+		1.00
+	Expecting 1 agents
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_USMC_JGLMB</td>
+          <td class="col-duration">71.38</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test USMC-JGLMB
+	Starting sim
+		0.00
+birth at 0.50
+		1.00
+	Expecting 1 agents
+	max cardinality 1
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_MCMC_USMC_JGLMB</td>
+          <td class="col-duration">57.57</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test MCMC USMC-JGLMB
+	Starting sim
+		0.00
+birth at 0.50
+		1.00
+	Expecting 1 agents
+max cardinality 1
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_QKF_JGLMB</td>
+          <td class="col-duration">6.03</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test QKF-JGLMB
+	Starting sim
+		0.00
+birth at 5.00
+		10.00
+		20.00
+	Expecting 1 agents
+	max cardinality 1
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_SQKF_JGLMB</td>
+          <td class="col-duration">7.15</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test SQKF-JGLMB
+	Starting sim
+		0.00
+birth at 5.00
+		10.00
+		20.00
+	Expecting 1 agents
+max cardinality 1
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_UKF_JGLMB</td>
+          <td class="col-duration">2.95</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test UKF-JGLMB
+	Starting sim
+		0.00
+birth at 5.00
+		10.00
+		20.00
+	Expecting 1 agents
+	max cardinality 1
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_QKF_GSM_JGLMB</td>
+          <td class="col-duration">29.30</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test QKF GSM-JGLMB
+	Starting sim
+		0.00
+birth at 5.00
+		10.00
+		20.00
+	Expecting 1 agents
+	max cardinality 1
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_SQKF_GSM_JGLMB</td>
+          <td class="col-duration">29.94</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test SQKF GSM-JGLMB
+	Starting sim
+		0.00
+birth at 5.00
+		10.00
+		20.00
+	Expecting 1 agents
+	max cardinality 1
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_UKF_GSM_JGLMB</td>
+          <td class="col-duration">26.24</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test UKF GSM-JGLMB
+	Starting sim
+		0.00
+birth at 5.00
+		10.00
+		20.00
+	Expecting 1 agents
+	max cardinality 1
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_QKF_GLMB</td>
+          <td class="col-duration">5.15</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test QKF-GLMB
+	Starting sim
+		0.00
+birth at 5.00
+		10.00
+		20.00
+	Expecting 1 agents
+	max cardinality 1
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_SQKF_GLMB</td>
+          <td class="col-duration">7.55</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test SQKF-GLMB
+	Starting sim
+		0.00
+birth at 5.00
+		10.00
+		20.00
+	Expecting 1 agents
+max cardinality 1
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_UKF_GLMB</td>
+          <td class="col-duration">0.84</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test UKF-GLMB
+	Starting sim
+		0.00
+birth at 5.00
+		10.00
+		20.00
+	Expecting 1 agents
+	max cardinality 1
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_QKF_GSM_GLMB</td>
+          <td class="col-duration">31.17</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test QKF GSM-GLMB
+	Starting sim
+		0.00
+birth at 5.00
+		10.00
+		20.00
+	Expecting 1 agents
+	max cardinality 1
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_SQKF_GSM_GLMB</td>
+          <td class="col-duration">35.45</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test SQKF GSM-GLMB
+	Starting sim
+		0.00
+birth at 5.00
+		10.00
+		20.00
+	Expecting 1 agents
+	max cardinality 1
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_UKF_GSM_GLMB</td>
+          <td class="col-duration">27.80</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test UKF GSM-GLMB
+	Starting sim
+		0.00
+birth at 5.00
+		10.00
+		20.00
+	Expecting 1 agents
+	max cardinality 1
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_EKF_GSM_GLMB</td>
+          <td class="col-duration">21.37</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test EKF GSM-GLMB
+	Starting sim
+		0.00
+birth at 5.00
+		10.00
+		20.00
+	Expecting 1 agents
+	max cardinality 1
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_GLMB_ct_ktr</td>
+          <td class="col-duration">1.44</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test GLMB with CT-KTR dynamics
+	Starting sim
+		0.00
+		1.00
+		2.00
+		3.00
+birth at 3.21
+	Expecting 1 agents
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_IMM_GLMB</td>
+          <td class="col-duration">10.68</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test IMM-GLMB
+	Starting sim
+		0.00
+		1.00
+		2.00
+		3.00
+birth at 3.21
+		4.00
+		5.00
+		6.00
+	Expecting 1 agents
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_IMM_JGLMB</td>
+          <td class="col-duration">107.23</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test IMM-JGLMB
+	Starting sim
+		0.00
+		1.00
+		2.00
+		3.00
+birth at 3.21
+		4.00
+		5.00
+		6.00
+	Expecting 1 agents
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_MS_JGLMB</td>
+          <td class="col-duration">1011.00</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test MS-GM-JGLMB
+	Starting sim
+		0.00
+		1.00
+		2.00
+		3.00
+birth at 3.21
+		4.00
+birth at 4.29
+		5.00
+	Expecting 2 agents
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test/validation/swarm_estimator/test_tracker.py::test_PMBM</td>
+          <td class="col-duration">135.35</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Test PMBM
+	Starting sim
+		0.00
+		0.00
+		0.01
+		0.02
+		0.03
+		0.04
+		0.05
+		0.06
+		0.07
+		0.08
+		0.09
+		0.10
+		0.11
+		0.12
+		0.13
+		0.14
+		0.15
+		0.16
+		0.17
+		0.18
+		0.19
+		0.20
+		0.21
+		0.22
+		0.23
+		0.24
+		0.25
+		0.26
+		0.27
+		0.28
+		0.29
+		0.30
+		0.31
+		0.32
+		0.33
+		0.34
+		0.35
+		0.36
+		0.37
+		0.38
+		0.39
+		0.40
+		0.41
+		0.42
+		0.43
+		0.44
+		0.45
+		0.46
+		0.47
+		0.48
+		0.49
+		0.50
+		0.51
+		0.52
+		0.53
+		0.54
+		0.55
+		0.56
+		0.57
+		0.58
+		0.59
+		0.60
+		0.61
+		0.62
+		0.63
+		0.64
+		0.65
+		0.66
+		0.67
+		0.68
+		0.69
+		0.70
+		0.71
+		0.72
+		0.73
+		0.74
+		0.75
+		0.76
+		0.77
+		0.78
+		0.79
+		0.80
+		0.81
+		0.82
+		0.83
+		0.84
+		0.85
+		0.86
+		0.87
+		0.88
+		0.89
+		0.90
+		0.91
+		0.92
+		0.93
+		0.94
+		0.95
+		0.96
+		0.97
+		0.98
+		0.99
+		1.00
+		1.00
+		1.01
+		1.02
+		1.03
+		1.04
+		1.05
+		1.06
+		1.07
+		1.08
+		1.09
+		1.10
+		1.11
+		1.12
+		1.13
+		1.14
+		1.15
+		1.16
+		1.17
+		1.18
+		1.19
+		1.20
+		1.21
+		1.22
+		1.23
+		1.24
+		1.25
+		1.26
+		1.27
+		1.28
+		1.29
+		1.30
+		1.31
+		1.32
+		1.33
+		1.34
+		1.35
+		1.36
+		1.37
+		1.38
+		1.39
+		1.40
+		1.41
+		1.42
+		1.43
+		1.44
+		1.45
+		1.46
+		1.47
+		1.48
+		1.49
+		1.50
+		1.51
+		1.52
+		1.53
+		1.54
+		1.55
+		1.56
+		1.57
+		1.58
+		1.59
+		1.60
+		1.61
+		1.62
+		1.63
+		1.64
+		1.65
+		1.66
+		1.67
+		1.68
+		1.69
+		1.70
+		1.71
+		1.72
+		1.73
+		1.74
+		1.75
+		1.76
+		1.77
+		1.78
+		1.79
+		1.80
+		1.81
+		1.82
+		1.83
+		1.84
+		1.85
+		1.86
+		1.87
+		1.88
+		1.89
+		1.90
+		1.91
+		1.92
+		1.93
+		1.94
+		1.95
+		1.96
+		1.97
+		1.98
+		1.99
+		2.00
+		2.00
+		2.01
+		2.02
+		2.03
+		2.04
+		2.05
+		2.06
+		2.07
+		2.08
+		2.09
+		2.10
+		2.11
+		2.12
+		2.13
+		2.14
+		2.15
+		2.16
+		2.17
+		2.18
+		2.19
+		2.20
+		2.21
+		2.22
+		2.23
+		2.24
+		2.25
+		2.26
+		2.27
+		2.28
+		2.29
+		2.30
+		2.31
+		2.32
+		2.33
+		2.34
+		2.35
+		2.36
+		2.37
+		2.38
+		2.39
+		2.40
+		2.41
+		2.42
+		2.43
+		2.44
+		2.45
+		2.46
+		2.47
+		2.48
+		2.49
+		2.50
+		2.51
+		2.52
+		2.53
+		2.54
+		2.55
+		2.56
+		2.57
+		2.58
+		2.59
+		2.60
+		2.61
+		2.62
+		2.63
+		2.64
+		2.65
+		2.66
+		2.67
+		2.68
+		2.69
+		2.70
+		2.71
+		2.72
+		2.73
+		2.74
+		2.75
+		2.76
+		2.77
+		2.78
+		2.79
+		2.80
+		2.81
+		2.82
+		2.83
+		2.84
+		2.85
+		2.86
+		2.87
+		2.88
+		2.89
+		2.90
+		2.91
+		2.92
+		2.93
+		2.94
+		2.95
+		2.96
+		2.97
+		2.98
+		2.99
+		3.00
+		3.00
+		3.01
+		3.02
+		3.03
+		3.04
+		3.05
+		3.06
+		3.07
+		3.08
+		3.09
+		3.10
+		3.11
+		3.12
+		3.13
+		3.14
+		3.15
+		3.16
+		3.17
+		3.18
+		3.19
+		3.20
+		3.21
+		3.22
+		3.23
+		3.24
+		3.25
+		3.26
+		3.27
+		3.28
+		3.29
+		3.30
+		3.31
+		3.32
+		3.33
+		3.34
+		3.35
+		3.36
+		3.37
+		3.38
+		3.39
+		3.40
+		3.41
+		3.42
+		3.43
+		3.44
+		3.45
+		3.46
+		3.47
+		3.48
+		3.49
+		3.50
+		3.51
+		3.52
+		3.53
+		3.54
+		3.55
+		3.56
+		3.57
+		3.58
+		3.59
+		3.60
+		3.61
+		3.62
+		3.63
+		3.64
+		3.65
+		3.66
+		3.67
+		3.68
+		3.69
+		3.70
+		3.71
+		3.72
+		3.73
+		3.74
+		3.75
+		3.76
+		3.77
+		3.78
+		3.79
+		3.80
+		3.81
+		3.82
+		3.83
+		3.84
+		3.85
+		3.86
+		3.87
+		3.88
+		3.89
+		3.90
+		3.91
+		3.92
+		3.93
+		3.94
+		3.95
+		3.96
+		3.97
+		3.98
+		3.99
+		4.00
+		4.00
+		4.01
+		4.02
+		4.03
+		4.04
+		4.05
+		4.06
+		4.07
+		4.08
+		4.09
+		4.10
+		4.11
+		4.12
+		4.13
+		4.14
+		4.15
+		4.16
+		4.17
+		4.18
+		4.19
+		4.20
+		4.21
+		4.22
+		4.23
+		4.24
+		4.25
+		4.26
+		4.27
+		4.28
+		4.29
+		4.30
+		4.31
+		4.32
+		4.33
+		4.34
+		4.35
+		4.36
+		4.37
+		4.38
+		4.39
+		4.40
+		4.41
+		4.42
+		4.43
+		4.44
+		4.45
+		4.46
+		4.47
+		4.48
+		4.49
+		4.50
+		4.51
+		4.52
+		4.53
+		4.54
+		4.55
+		4.56
+		4.57
+		4.58
+		4.59
+		4.60
+		4.61
+		4.62
+		4.63
+		4.64
+		4.65
+		4.66
+		4.67
+		4.68
+		4.69
+		4.70
+		4.71
+		4.72
+		4.73
+		4.74
+		4.75
+		4.76
+		4.77
+		4.78
+		4.79
+		4.80
+		4.81
+		4.82
+		4.83
+		4.84
+		4.85
+		4.86
+		4.87
+		4.88
+		4.89
+		4.90
+		4.91
+		4.92
+		4.93
+		4.94
+		4.95
+		4.96
+		4.97
+		4.98
+		4.99
+		5.00
+		5.00
+		5.01
+		5.02
+		5.03
+		5.04
+		5.05
+		5.06
+		5.07
+		5.08
+		5.09
+		5.10
+		5.11
+		5.12
+		5.13
+		5.14
+		5.15
+		5.16
+		5.17
+		5.18
+		5.19
+		5.20
+		5.21
+		5.22
+		5.23
+		5.24
+		5.25
+		5.26
+		5.27
+		5.28
+		5.29
+		5.30
+		5.31
+		5.32
+		5.33
+		5.34
+		5.35
+		5.36
+		5.37
+		5.38
+		5.39
+		5.40
+		5.41
+		5.42
+		5.43
+		5.44
+		5.45
+		5.46
+		5.47
+		5.48
+		5.49
+		5.50
+		5.51
+		5.52
+		5.53
+		5.54
+		5.55
+		5.56
+		5.57
+		5.58
+		5.59
+		5.60
+		5.61
+		5.62
+		5.63
+		5.64
+		5.65
+		5.66
+		5.67
+		5.68
+		5.69
+		5.70
+		5.71
+		5.72
+		5.73
+		5.74
+		5.75
+		5.76
+		5.77
+		5.78
+		5.79
+		5.80
+		5.81
+		5.82
+		5.83
+		5.84
+		5.85
+		5.86
+		5.87
+		5.88
+		5.89
+		5.90
+		5.91
+		5.92
+		5.93
+		5.94
+		5.95
+		5.96
+		5.97
+		5.98
+		5.99
+		6.00
+		6.00
+	Expecting 4 agents
+<br/></div></td></tr></tbody></table></body></html>

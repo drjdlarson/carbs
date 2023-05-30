@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>caser.utilities.sampling &mdash; CASER 1.0.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+    <link rel="canonical" href="https://drjdlarson.github.io/caser/_modules/caser/utilities/sampling.html" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/clipboard.min.js"></script>
+        <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #9E1B32" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            CASER
+              <img src="../../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                1.0.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../_autosummary/caser.html">caser</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/caser.guidance.html">caser.guidance</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/caser.guidance.gaussian_density_cost.html">caser.guidance.gaussian_density_cost</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/caser.guidance.ELQR.html">caser.guidance.ELQR</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/caser.guidance.ELQROSPA.html">caser.guidance.ELQROSPA</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/caser.swarm_estimator.html">caser.swarm_estimator</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/caser.swarm_estimator.slam.html">caser.swarm_estimator.slam</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/caser.swarm_estimator.tracker.html">caser.swarm_estimator.tracker</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/caser.utilities.html">caser.utilities</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/caser.utilities.graphs.html">caser.utilities.graphs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/caser.utilities.graphs_subroutines.html">caser.utilities.graphs_subroutines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/caser.utilities.sampling.html">caser.utilities.sampling</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/elqr.html">ELQR Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../usage/elqr.html#gaussian-mixture-based">Gaussian Mixture Based</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../usage/elqr.html#optimal-sub-pattern-assignment-based">Optimal Sub-Pattern Assignment Based</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../usage/elqr.html#ospa-based-with-obstacles">OSPA Based with Obstacles</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolchain.html">Toolchain Setup</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../toolchain.html#development-environment-setup">Development Environment Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../toolchain.html#example-workflow">Example Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../toolchain.html#notes-on-tox">Notes on tox</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cicd.html">CI/CD Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../cicd.html#github-actions-quick-guide">Github Actions Quick Guide</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="./reports/coverage/index.html#http://">Test Coverage Report</a></li>
+<li class="toctree-l1"><a class="reference external" href="./reports/junit/junit.html#http://">Test Results Report</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://lager.ua.edu/">LAGER Homepage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../References.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #9E1B32" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">CASER</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">caser.utilities.sampling</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for caser.utilities.sampling</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Implements general sampling methods.&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<div class="viewcode-block" id="gibbs"><a class="viewcode-back" href="../../../_autosummary/caser.utilities.sampling.gibbs.html#caser.utilities.sampling.gibbs">[docs]</a><span class="k">def</span> <span class="nf">gibbs</span><span class="p">(</span><span class="n">in_costs</span><span class="p">,</span> <span class="n">num_iters</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements a Gibbs sampler.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Computationally efficient form of the Metropolis Hastings Markov Chain</span>
+<span class="sd">    Monte Carlo algorithm, useful when direct sampling of the target</span>
+<span class="sd">    multivariate distribution is difficult. Generates samples by selecting</span>
+<span class="sd">    from a histogram constructed from the distribution and randomly sampling</span>
+<span class="sd">    from the most likely bins in the histogram. This is based on the sampler in</span>
+<span class="sd">    :cite:`Vo2017_AnEfficientImplementationoftheGeneralizedLabeledMultiBernoulliFilter`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    in_costs : N x M numpy array</span>
+<span class="sd">        Cost matrix.</span>
+<span class="sd">    num_iters : int</span>
+<span class="sd">        Number of iterations to run.</span>
+<span class="sd">    rng : numpy random generator, optional</span>
+<span class="sd">        Random number generator to be used when sampling. The default is None</span>
+<span class="sd">        which implies :code:`default_rng()`</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    assignments : M (max size) x N numpy array</span>
+<span class="sd">        The unique entries from the sampling.</span>
+<span class="sd">    costs : M x 1 numpy array</span>
+<span class="sd">        Cost of each assignment.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">rng</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()</span>
+
+    <span class="c1"># Determine size of cost matrix</span>
+    <span class="n">cost_size</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">in_costs</span><span class="p">)</span>
+
+    <span class="c1"># Initialize assignment and cost matrices</span>
+    <span class="n">assignments</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_iters</span><span class="p">,</span> <span class="n">cost_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="n">costs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_iters</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="c1"># Initialize current solution</span>
+    <span class="n">cur_soln</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">cost_size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">cost_size</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">assignments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">cur_soln</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cost_size</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">costs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">in_costs</span><span class="p">[</span><span class="n">rows</span><span class="p">,</span> <span class="n">cur_soln</span><span class="p">])</span>
+
+    <span class="c1"># Loop over all possible assignments and determine costs</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cur_soln</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">sol</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_iters</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cost_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="n">var</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">mask</span><span class="p">[</span><span class="n">var</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">mask</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">temp_samp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">in_costs</span><span class="p">[</span><span class="n">var</span><span class="p">])</span>
+            <span class="n">temp_samp</span><span class="p">[</span><span class="n">cur_soln</span><span class="p">[</span><span class="n">mask</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="n">hist_in_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">temp_samp</span><span class="p">[</span><span class="n">temp_samp</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">csum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">temp_samp</span><span class="p">[</span><span class="n">temp_samp</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span>
+            <span class="n">hist_in_array</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">=</span> <span class="n">csum</span> <span class="o">/</span> <span class="n">csum</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="n">cur_soln</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)),</span> <span class="n">hist_in_array</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">temp_samp</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="n">cur_soln</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">temp_samp</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="n">cur_soln</span><span class="p">[</span><span class="n">var</span><span class="p">]]</span>
+
+        <span class="n">mask</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">assignments</span><span class="p">[</span><span class="n">sol</span><span class="p">]</span> <span class="o">=</span> <span class="n">cur_soln</span>
+        <span class="n">costs</span><span class="p">[</span><span class="n">sol</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">in_costs</span><span class="p">[</span><span class="n">rows</span><span class="p">,</span> <span class="n">cur_soln</span><span class="p">])</span>
+
+    <span class="p">[</span><span class="n">assignments</span><span class="p">,</span> <span class="n">I</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">assignments</span><span class="p">,</span> <span class="n">return_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">assignments</span><span class="p">,</span> <span class="n">costs</span><span class="p">[</span><span class="n">I</span><span class="p">]</span></div>
+
+<span class="c1"># TODO: Multisensor Gibbs potentially</span>
+<div class="viewcode-block" id="mm_gibbs"><a class="viewcode-back" href="../../../_autosummary/caser.utilities.sampling.mm_gibbs.html#caser.utilities.sampling.mm_gibbs">[docs]</a><span class="k">def</span> <span class="nf">mm_gibbs</span><span class="p">(</span><span class="n">in_costs</span><span class="p">,</span> <span class="n">num_iters</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements a minimally-Markovian Gibbs sampler.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        Computationally efficient form of the Metropolis Hastings Markov Chain</span>
+<span class="sd">        Monte Carlo algorithm, useful when direct sampling of the target</span>
+<span class="sd">        multivariate distribution is difficult. Generates samples by selecting</span>
+<span class="sd">        from a histogram constructed from the distribution and randomly sampling</span>
+<span class="sd">        from the most likely bins in the histogram. This is based on the sampler in</span>
+<span class="sd">        :cite:`Vo2017_AnEfficientImplementationoftheGeneralizedLabeledMultiBernoulliFilter`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        in_costs : S x N x M numpy array</span>
+<span class="sd">            Cost matrix.</span>
+<span class="sd">        num_iters : int</span>
+<span class="sd">            Number of iterations to run.</span>
+<span class="sd">        rng : numpy random generator, optional</span>
+<span class="sd">            Random number generator to be used when sampling. The default is None</span>
+<span class="sd">            which implies :code:`default_rng()`</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        assignments : M (max size) x N x S numpy array</span>
+<span class="sd">            The unique entries from the sampling.</span>
+<span class="sd">        costs : M x S numpy array</span>
+<span class="sd">            Cost of each assignment for each sensor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">rng</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()</span>
+
+    <span class="c1"># Determine size of cost matrix</span>
+    <span class="n">cost_size</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">in_costs</span><span class="p">)</span>
+
+    <span class="c1"># Initialize assignment and cost matrices</span>
+    <span class="c1">#assignments is iterations x sensors x solution</span>
+    <span class="n">assignments</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_iters</span><span class="p">,</span> <span class="n">cost_size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">cost_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="n">costs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_iters</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">P_n</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">Q_n</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1">#TODO: calculation for P_n and Q_n</span>
+    <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cost_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">prod_gamma_n</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">prod_v_n</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cost_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">gamma_n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">in_costs</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="n">var</span><span class="p">][</span><span class="n">in_costs</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="n">var</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="c1">#third index needs to represent -1 vs non neg</span>
+            <span class="n">prod_gamma_n</span> <span class="o">=</span> <span class="n">prod_gamma_n</span><span class="o">*</span><span class="n">gamma_n</span>
+            <span class="n">prod_v_n</span> <span class="o">=</span> <span class="n">prod_v_n</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">in_costs</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="n">var</span><span class="p">][</span><span class="n">in_costs</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="n">var</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="c1"># index where in_costs are -1</span>
+        <span class="n">P_n</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">prod_gamma_n</span><span class="o">/</span><span class="p">(</span><span class="n">prod_v_n</span> <span class="o">+</span> <span class="n">prod_gamma_n</span><span class="p">))</span>
+        <span class="n">Q_n</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">P_n</span><span class="p">[</span><span class="n">var</span><span class="p">])</span>
+
+    <span class="c1"># Initialize current solution</span>
+    <span class="n">costsum</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cost_size</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">cur_soln</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">cost_size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">cost_size</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">2</span><span class="o">*</span><span class="n">cost_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]))),</span><span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cost_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">cur_soln</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">cost_size</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">cost_size</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">costsum</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">in_costs</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">cost_size</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">cost_size</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)])</span>
+
+    <span class="n">assignments</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">cur_soln</span>
+    <span class="n">costs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">costsum</span>
+
+    <span class="c1"># Loop over all possible assignments and determine costs</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">cur_soln</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">sol</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_iters</span><span class="p">):</span>
+        <span class="n">costsum</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cost_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="c1">#TODO: write first categorical</span>
+            <span class="c1"># sample markovian stationary distribution,</span>
+            <span class="c1"># if greater than some probability as calculated above by pn,</span>
+            <span class="c1"># then perform mm-gibbs, otherwise all values are set to -1.</span>
+            <span class="c1">#</span>
+            <span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">Q_n</span><span class="p">[</span><span class="n">var</span><span class="p">],</span> <span class="mf">1.0</span><span class="p">])</span>
+            <span class="n">i_n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">bins</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="s2">&quot;i_n = Categorical (&#39;+&#39;, &#39;-&#39;, ), [Pn(Lambda(1:num_sensors)), Qn(Lambda(1:num_sensors)]&quot;</span>
+            <span class="k">if</span> <span class="n">i_n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span> <span class="c1"># i_n = &quot;+&quot;</span>
+
+                <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cost_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                    <span class="k">if</span> <span class="n">var</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">mask</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="n">var</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="n">mask</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="n">temp_samp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">in_costs</span><span class="p">[:,</span> <span class="n">var</span><span class="p">,</span> <span class="p">:])</span>
+                <span class="n">temp_samp</span><span class="p">[</span><span class="n">cur_soln</span><span class="p">[</span><span class="n">mask</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cost_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                    <span class="n">hist_in_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">temp_samp</span><span class="p">[</span><span class="n">s</span><span class="p">][</span><span class="n">temp_samp</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="n">csum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">temp_samp</span><span class="p">[</span><span class="n">s</span><span class="p">][</span><span class="n">temp_samp</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span>
+                    <span class="n">hist_in_array</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">=</span> <span class="n">csum</span> <span class="o">/</span> <span class="n">csum</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="n">cur_soln</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">hist_in_array</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+                    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">temp_samp</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                        <span class="n">cur_soln</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">temp_samp</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="n">cur_soln</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="n">var</span><span class="p">]]</span>
+
+            <span class="k">else</span><span class="p">:</span> <span class="c1"># i_n = &quot;-&quot;</span>
+                <span class="n">cur_soln</span><span class="p">[:,</span> <span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">cost_size</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">assignments</span><span class="p">[</span><span class="n">sol</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">cur_soln</span>
+        <span class="n">costs</span><span class="p">[</span><span class="n">sol</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">in_costs</span><span class="p">[:,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">cur_soln</span><span class="p">])</span> <span class="c1">#some variant of this</span>
+
+
+    <span class="p">[</span><span class="n">assignments</span><span class="p">,</span> <span class="n">I</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">assignments</span><span class="p">,</span> <span class="n">return_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">assignments</span><span class="p">,</span> <span class="n">costs</span><span class="p">[</span><span class="n">I</span><span class="p">]</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019, Jordan D Larson.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

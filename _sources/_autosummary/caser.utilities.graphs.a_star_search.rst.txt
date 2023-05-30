@@ -1,0 +1,6 @@
+caser.utilities.graphs.a\_star\_search
+======================================
+
+.. currentmodule:: caser.utilities.graphs
+
+.. autofunction:: a_star_search

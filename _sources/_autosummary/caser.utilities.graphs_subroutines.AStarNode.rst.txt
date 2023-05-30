@@ -1,0 +1,25 @@
+caser.utilities.graphs\_subroutines.AStarNode
+=============================================
+
+.. currentmodule:: caser.utilities.graphs_subroutines
+
+.. autoclass:: AStarNode
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~AStarNode.__init__
+   
+   
+
+   
+   
+   

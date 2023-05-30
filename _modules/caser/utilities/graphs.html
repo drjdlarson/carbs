@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>caser.utilities.graphs &mdash; CASER 1.0.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+    <link rel="canonical" href="https://drjdlarson.github.io/caser/_modules/caser/utilities/graphs.html" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/clipboard.min.js"></script>
+        <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #9E1B32" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            CASER
+              <img src="../../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                1.0.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../_autosummary/caser.html">caser</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/caser.guidance.html">caser.guidance</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/caser.guidance.gaussian_density_cost.html">caser.guidance.gaussian_density_cost</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/caser.guidance.ELQR.html">caser.guidance.ELQR</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/caser.guidance.ELQROSPA.html">caser.guidance.ELQROSPA</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/caser.swarm_estimator.html">caser.swarm_estimator</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/caser.swarm_estimator.slam.html">caser.swarm_estimator.slam</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/caser.swarm_estimator.tracker.html">caser.swarm_estimator.tracker</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/caser.utilities.html">caser.utilities</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/caser.utilities.graphs.html">caser.utilities.graphs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/caser.utilities.graphs_subroutines.html">caser.utilities.graphs_subroutines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/caser.utilities.sampling.html">caser.utilities.sampling</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/elqr.html">ELQR Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../usage/elqr.html#gaussian-mixture-based">Gaussian Mixture Based</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../usage/elqr.html#optimal-sub-pattern-assignment-based">Optimal Sub-Pattern Assignment Based</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../usage/elqr.html#ospa-based-with-obstacles">OSPA Based with Obstacles</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolchain.html">Toolchain Setup</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../toolchain.html#development-environment-setup">Development Environment Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../toolchain.html#example-workflow">Example Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../toolchain.html#notes-on-tox">Notes on tox</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cicd.html">CI/CD Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../cicd.html#github-actions-quick-guide">Github Actions Quick Guide</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="./reports/coverage/index.html#http://">Test Coverage Report</a></li>
+<li class="toctree-l1"><a class="reference external" href="./reports/junit/junit.html#http://">Test Results Report</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://lager.ua.edu/">LAGER Homepage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../References.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #9E1B32" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">CASER</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">caser.utilities.graphs</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for caser.utilities.graphs</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot; Implements graph search algorithms.</span>
+
+<span class="sd">This module contains the functions for graph search algorithms.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
+
+<span class="kn">import</span> <span class="nn">caser.utilities.graphs_subroutines</span> <span class="k">as</span> <span class="nn">subs</span>
+
+
+<div class="viewcode-block" id="k_shortest"><a class="viewcode-back" href="../../../_autosummary/caser.utilities.graphs.k_shortest.html#caser.utilities.graphs.k_shortest">[docs]</a><span class="k">def</span> <span class="nf">k_shortest</span><span class="p">(</span><span class="n">log_cost_in</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; This implents k-shortest path algorithm.</span>
+
+<span class="sd">    This ports the implementation from</span>
+<span class="sd">    `here &lt;https://ba-tuong.vo-au.com/codes.html&gt;`_.</span>
+<span class="sd">    to python. The following are comments from the original implementation.</span>
+
+<span class="sd">    Meral Shirazipour</span>
+<span class="sd">    This function is based on Yen&#39;s k-Shortest Path algorithm (1971)</span>
+<span class="sd">    This function calls a slightly modified function dijkstra()</span>
+<span class="sd">    by Xiaodong Wang 2004.</span>
+<span class="sd">    * log_cost_in must have positive weights/costs</span>
+<span class="sd">    Modified by BT VO</span>
+<span class="sd">    Replaces dijkstra&#39;s algorithm with Derek O&#39;Connor&#39;s</span>
+<span class="sd">    Bellman-Ford-Moore implementation which allows negative entries in cost</span>
+<span class="sd">    matrices provided there are no negative cycles and used in GLMB filter</span>
+<span class="sd">    codes for prediction * netCostMatrix can have negative weights/costs</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        log_cost_in (Numpy array): Input cost matrix, inf represents absence</span>
+<span class="sd">            of a link</span>
+<span class="sd">        k (int): Maximum number of paths to find</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple containing:</span>
+
+<span class="sd">            - paths (list): List with each element being a list of</span>
+<span class="sd">              indices into the cost matrix for the shortest path</span>
+<span class="sd">            - costs (list): List of costs associated with each path</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">costs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="n">costs</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">log_cost_in</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">log_cost</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">log_cost_in</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">log_cost</span> <span class="o">=</span> <span class="n">log_cost_in</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="n">num_states</span> <span class="o">=</span> <span class="n">log_cost</span><span class="o">.</span><span class="n">size</span>
+    <span class="n">cost_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_states</span><span class="p">,</span> <span class="n">num_states</span><span class="p">))</span>
+
+    <span class="c1"># sort in descending order and save index</span>
+    <span class="n">sort_inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">log_cost</span><span class="p">)</span>
+    <span class="n">sort_inds</span> <span class="o">=</span> <span class="n">sort_inds</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">log_cost</span> <span class="o">=</span> <span class="p">[</span><span class="n">log_cost</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">sort_inds</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_states</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ii</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">cost_mat</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">ii</span><span class="p">,</span> <span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">log_cost</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
+
+    <span class="n">cost_pad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_states</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="n">num_states</span> <span class="o">+</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">cost_pad</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">log_cost</span>
+    <span class="n">cost_pad</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span>
+    <span class="n">cost_pad</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span>
+    <span class="n">cost_pad</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">cost_mat</span>
+
+    <span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="n">costs</span><span class="p">)</span> <span class="o">=</span> <span class="n">__k_short_helper</span><span class="p">(</span><span class="n">cost_pad</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">num_states</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">paths</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">paths</span><span class="p">[</span><span class="n">p</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_states</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])):</span>
+            <span class="n">paths</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sub</span> <span class="o">=</span> <span class="n">paths</span><span class="p">[</span><span class="n">p</span><span class="p">][</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sub</span><span class="p">)):</span>
+                <span class="n">sub</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">paths</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">sort_inds</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">sub</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="n">costs</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">__k_short_helper</span><span class="p">(</span><span class="n">net_cost_mat</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">k_paths</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">src</span> <span class="o">&gt;</span> <span class="n">net_cost_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">or</span> <span class="n">dst</span> <span class="o">&gt;</span> <span class="n">net_cost_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Source or destination nodes not part of cost matrix&#39;</span>
+        <span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">([],</span> <span class="p">[])</span>
+
+    <span class="p">(</span><span class="n">cost</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">=</span> <span class="n">bfm_shortest_path</span><span class="p">(</span><span class="n">net_cost_mat</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">([],</span> <span class="p">[])</span>
+
+    <span class="n">P</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">P</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">path</span><span class="p">,</span> <span class="n">cost</span><span class="p">))</span>
+    <span class="n">cur_p</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">X</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">X</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">cost</span><span class="p">))</span>
+
+    <span class="n">S</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">S</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">shortest_paths</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">shortest_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">tot_costs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">tot_costs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cost</span><span class="p">)</span>
+
+    <span class="k">while</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">shortest_paths</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">k_paths</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">X</span><span class="p">[</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">cur_p</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">X</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
+                <span class="k">break</span>
+        <span class="n">P_</span> <span class="o">=</span> <span class="n">P</span><span class="p">[</span><span class="n">cur_p</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="n">w</span> <span class="o">=</span> <span class="n">S</span><span class="p">[</span><span class="n">cur_p</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">P_</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">w</span> <span class="o">==</span> <span class="n">P_</span><span class="p">[</span><span class="n">ii</span><span class="p">]:</span>
+                <span class="n">w_ind_in_path</span> <span class="o">=</span> <span class="n">ii</span>
+
+        <span class="k">for</span> <span class="n">ind_dev_vert</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">w_ind_in_path</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">P_</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">temp_cost_mat</span> <span class="o">=</span> <span class="n">net_cost_mat</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ind_dev_vert</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="n">P_</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
+                <span class="n">temp_cost_mat</span><span class="p">[</span><span class="n">v</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+                <span class="n">temp_cost_mat</span><span class="p">[:,</span> <span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+
+            <span class="n">sp_same_sub_p</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">sp_same_sub_p</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">P_</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">sp</span> <span class="ow">in</span> <span class="n">shortest_paths</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sp</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">ind_dev_vert</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">P_</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">ind_dev_vert</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]),</span>
+                                      <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sp</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">ind_dev_vert</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])):</span>
+                        <span class="n">sp_same_sub_p</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sp</span><span class="p">)</span>
+            <span class="n">v_</span> <span class="o">=</span> <span class="n">P_</span><span class="p">[</span><span class="n">ind_dev_vert</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">sp</span> <span class="ow">in</span> <span class="n">sp_same_sub_p</span><span class="p">:</span>
+                <span class="n">nxt</span> <span class="o">=</span> <span class="n">sp</span><span class="p">[</span><span class="n">ind_dev_vert</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="n">temp_cost_mat</span><span class="p">[</span><span class="n">v_</span><span class="p">,</span> <span class="n">nxt</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+
+            <span class="n">sub_P</span> <span class="o">=</span> <span class="n">P_</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">ind_dev_vert</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">cost_sub_P</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sub_P</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">cost_sub_P</span> <span class="o">+=</span> <span class="n">net_cost_mat</span><span class="p">[</span><span class="n">sub_P</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="n">sub_P</span><span class="p">[</span><span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]]</span>
+
+            <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">dev_p</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">=</span> <span class="n">bfm_shortest_path</span><span class="p">(</span><span class="n">temp_cost_mat</span><span class="p">,</span> <span class="n">P_</span><span class="p">[</span><span class="n">ind_dev_vert</span><span class="p">],</span>
+                                              <span class="n">dst</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dev_p</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">tmp_path</span> <span class="o">=</span> <span class="n">sub_P</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">dev_p</span>
+                <span class="n">P</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">tmp_path</span><span class="p">,</span> <span class="n">cost_sub_P</span> <span class="o">+</span> <span class="n">c</span><span class="p">))</span>
+                <span class="n">S</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">P_</span><span class="p">[</span><span class="n">ind_dev_vert</span><span class="p">])</span>
+                <span class="n">X</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">P</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">P</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">shortest_x_cost</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">shortest_x</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">X</span><span class="p">[</span><span class="n">ii</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">shortest_x_cost</span><span class="p">:</span>
+                    <span class="n">shortest_x</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">shortest_x_cost</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">ii</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span>
+
+            <span class="n">cur_p</span> <span class="o">=</span> <span class="n">shortest_x</span>
+            <span class="n">shortest_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="n">cur_p</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">tot_costs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="n">cur_p</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">shortest_paths</span><span class="p">,</span> <span class="n">tot_costs</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="bfm_shortest_path"><a class="viewcode-back" href="../../../_autosummary/caser.utilities.graphs.bfm_shortest_path.html#caser.utilities.graphs.bfm_shortest_path">[docs]</a><span class="k">def</span> <span class="nf">bfm_shortest_path</span><span class="p">(</span><span class="n">ncm</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; This implements the Bellman-Ford-Moore shortest path algorithm.</span>
+
+<span class="sd">    This ports the implementation from</span>
+<span class="sd">    `here &lt;https://ba-tuong.vo-au.com/codes.html&gt;`_.</span>
+<span class="sd">    to python. The following are comments from the original implementation.</span>
+
+<span class="sd">    Copyright (c) 2012, Derek O&#39;Connor</span>
+<span class="sd">    All rights reserved.</span>
+
+<span class="sd">    Redistribution and use in source and binary forms, with or without</span>
+<span class="sd">    modification, are permitted provided that the following conditions are</span>
+<span class="sd">    met:</span>
+
+<span class="sd">    * Redistributions of source code must retain the above copyright</span>
+<span class="sd">      notice, this list of conditions and the following disclaimer.</span>
+<span class="sd">    * Redistributions in binary form must reproduce the above copyright</span>
+<span class="sd">      notice, this list of conditions and the following disclaimer in</span>
+<span class="sd">      the documentation and/or other materials provided with the distribution</span>
+
+<span class="sd">    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;</span>
+<span class="sd">    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE</span>
+<span class="sd">    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE</span>
+<span class="sd">    ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE</span>
+<span class="sd">    LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR</span>
+<span class="sd">    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF</span>
+<span class="sd">    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS</span>
+<span class="sd">    INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN</span>
+<span class="sd">    CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)</span>
+<span class="sd">    ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE</span>
+<span class="sd">    POSSIBILITY OF SUCH DAMAGE.</span>
+
+<span class="sd">    Basic form of the Bellman-Ford-Moore Shortest Path algorithm</span>
+<span class="sd">    Assumes G(N,A) is in sparse adjacency matrix form, with abs(N) = n,</span>
+<span class="sd">    abs(A) = m = nnz(G). It constructs a shortest path tree with root r whichs</span>
+<span class="sd">    is represented by an vector of parent &#39;pointers&#39; p, along with a vector</span>
+<span class="sd">    of shortest path lengths D.</span>
+<span class="sd">    Complexity: O(mn)</span>
+<span class="sd">    Derek O&#39;Connor, 19 Jan, 11 Sep 2012.  derekroconnor@eircom.net</span>
+
+<span class="sd">    Unlike the original BFM algorithm, this does an optimality test on the</span>
+<span class="sd">    SP Tree p which may greatly reduce the number of iters to convergence.</span>
+<span class="sd">    USE:</span>
+<span class="sd">    n=10^6; G=sprand(n,n,5/n); r=1; format long g;</span>
+<span class="sd">    tic; [p,D,iter] = BFMSpathOT(G,r);toc, disp([(1:10)&#39; p(1:10) D(1:10)]);</span>
+<span class="sd">    WARNING:</span>
+<span class="sd">    This algorithm performs well on random graphs but may perform</span>
+<span class="sd">    badly on real problems.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ncm (numpy array): cost matrix</span>
+<span class="sd">        src (int): source index</span>
+<span class="sd">        dst (int): destination index</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple containing</span>
+
+<span class="sd">            - dist (float): Path distance</span>
+<span class="sd">            - path (list): Indices of the path</span>
+<span class="sd">            - pred (int): number of iterations</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">=</span> <span class="n">__bfm_helper</span><span class="p">(</span><span class="n">ncm</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+    <span class="n">dist</span> <span class="o">=</span> <span class="n">D</span><span class="p">[</span><span class="n">dst</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">dist</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="p">[</span><span class="n">dst</span><span class="p">]</span>
+        <span class="k">while</span> <span class="ow">not</span><span class="p">(</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">src</span><span class="p">):</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="p">[</span><span class="n">pred</span><span class="p">[</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span> <span class="o">+</span> <span class="n">path</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">dist</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">pred</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">__bfm_helper</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Copyright (c) 2012, Derek O&#39;Connor</span>
+<span class="sd">    All rights reserved.</span>
+
+<span class="sd">    Redistribution and use in source and binary forms, with or without</span>
+<span class="sd">    modification, are permitted provided that the following conditions are</span>
+<span class="sd">    met:</span>
+
+<span class="sd">        * Redistributions of source code must retain the above copyright</span>
+<span class="sd">          notice, this list of conditions and the following disclaimer.</span>
+<span class="sd">        * Redistributions in binary form must reproduce the above copyright</span>
+<span class="sd">          notice, this list of conditions and the following disclaimer in</span>
+<span class="sd">          the documentation and/or other materials provided with the distribution</span>
+
+<span class="sd">    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;</span>
+<span class="sd">    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE</span>
+<span class="sd">    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE</span>
+<span class="sd">    ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE</span>
+<span class="sd">    LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR</span>
+<span class="sd">    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF</span>
+<span class="sd">    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS</span>
+<span class="sd">    INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN</span>
+<span class="sd">    CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)</span>
+<span class="sd">    ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE</span>
+<span class="sd">    POSSIBILITY OF SUCH DAMAGE.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">G</span><span class="p">):</span>
+        <span class="c1"># Transforms the sparse matrix G into the list-of-arcs form</span>
+        <span class="c1"># and intializes the shortest path parent-pointer and distance</span>
+        <span class="c1"># arrays, p and D.</span>
+        <span class="c1"># Derek O&#39;Connor, 21 Jan 2012</span>
+        <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span>
+        <span class="n">tail</span> <span class="o">=</span> <span class="n">inds</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">head</span> <span class="o">=</span> <span class="n">inds</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">W</span> <span class="o">=</span> <span class="n">G</span><span class="p">[</span><span class="n">tail</span><span class="p">,</span> <span class="n">head</span><span class="p">]</span>
+        <span class="n">sort_inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">lexsort</span><span class="p">((</span><span class="n">tail</span><span class="p">,</span> <span class="n">head</span><span class="p">))</span>
+        <span class="n">tail</span> <span class="o">=</span> <span class="p">[</span><span class="n">tail</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">sort_inds</span><span class="p">]</span>
+        <span class="n">head</span> <span class="o">=</span> <span class="p">[</span><span class="n">head</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">sort_inds</span><span class="p">]</span>
+        <span class="n">W</span> <span class="o">=</span> <span class="p">[</span><span class="n">W</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">sort_inds</span><span class="p">]</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">G</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span>
+        <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">tail</span><span class="p">,</span> <span class="n">head</span><span class="p">,</span> <span class="n">W</span><span class="p">)</span>
+
+    <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">tail</span><span class="p">,</span> <span class="n">head</span><span class="p">,</span> <span class="n">W</span><span class="p">)</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span><span class="n">G</span><span class="p">)</span>
+    <span class="n">p</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">D</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">optimal</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">for</span> <span class="n">arc</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">m</span><span class="p">):</span>
+            <span class="n">u</span> <span class="o">=</span> <span class="n">tail</span><span class="p">[</span><span class="n">arc</span><span class="p">]</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">head</span><span class="p">[</span><span class="n">arc</span><span class="p">]</span>
+            <span class="n">duv</span> <span class="o">=</span> <span class="n">W</span><span class="p">[</span><span class="n">arc</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">D</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">D</span><span class="p">[</span><span class="n">u</span><span class="p">]</span> <span class="o">+</span> <span class="n">duv</span><span class="p">:</span>
+                <span class="n">D</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">D</span><span class="p">[</span><span class="n">u</span><span class="p">]</span> <span class="o">+</span> <span class="n">duv</span>
+                <span class="n">p</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span>
+                <span class="n">optimal</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="n">n_iters</span> <span class="o">=</span> <span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">optimal</span><span class="p">:</span>
+            <span class="k">break</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">n_iters</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="murty_m_best"><a class="viewcode-back" href="../../../_autosummary/caser.utilities.graphs.murty_m_best.html#caser.utilities.graphs.murty_m_best">[docs]</a><span class="k">def</span> <span class="nf">murty_m_best</span><span class="p">(</span><span class="n">cost_mat</span><span class="p">,</span> <span class="n">m</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; This implements Murty&#39;s m-best ranked optimal assignment.</span>
+
+<span class="sd">    This ports the implementation from</span>
+<span class="sd">    `here &lt;https://ba-tuong.vo-au.com/codes.html&gt;`_.</span>
+<span class="sd">    to python. The following are comments from the original implementation.</span>
+
+<span class="sd">    MURTY   Murty&#39;s Algorithm for m-best ranked optimal assignment problem</span>
+<span class="sd">    Port of Ba Tuong Vo&#39;s 2015 Matlab code</span>
+<span class="sd">    NOTE: the assignment is zero based indexing</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cost_mat (numpy array): Cost matrix</span>
+<span class="sd">        m (int): Number of best ranked assignments to find</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple containing</span>
+
+<span class="sd">            - assigns (numpy array): Array of best paths</span>
+<span class="sd">            - costs (numpy array): Cost of each path</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cost_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">cost_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Cost matrix must be 2D array&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">m</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">([],</span> <span class="p">[])</span>
+    <span class="n">blk</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">cost_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">cost_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+
+    <span class="n">cm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">cost_mat</span><span class="p">,</span> <span class="n">blk</span><span class="p">))</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+    <span class="n">cm</span> <span class="o">=</span> <span class="n">cm</span> <span class="o">-</span> <span class="n">x</span>
+
+    <span class="p">(</span><span class="n">assigns</span><span class="p">,</span> <span class="n">costs</span><span class="p">)</span> <span class="o">=</span> <span class="n">__murty_helper</span><span class="p">(</span><span class="n">cm</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="n">ii</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">assigns</span><span class="p">):</span>
+        <span class="n">costs</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">+=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">a</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">assigns</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="c1"># remove extra entries</span>
+    <span class="n">assigns</span> <span class="o">=</span> <span class="n">assigns</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="n">cost_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+    <span class="c1"># dummy assignmets are clutter</span>
+    <span class="n">assigns</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">assigns</span> <span class="o">&gt;</span> <span class="n">cost_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">assigns</span> <span class="o">=</span> <span class="n">assigns</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">assigns</span><span class="p">,</span> <span class="n">costs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="murty_m_best_all_meas_assigned"><a class="viewcode-back" href="../../../_autosummary/caser.utilities.graphs.murty_m_best_all_meas_assigned.html#caser.utilities.graphs.murty_m_best_all_meas_assigned">[docs]</a><span class="k">def</span> <span class="nf">murty_m_best_all_meas_assigned</span><span class="p">(</span><span class="n">cost_mat</span><span class="p">,</span> <span class="n">m</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; This implements Murty&#39;s m-best ranked optimal assignment.</span>
+
+<span class="sd">    This ports the implementation from</span>
+<span class="sd">    `here &lt;https://ba-tuong.vo-au.com/codes.html&gt;`_.</span>
+<span class="sd">    to python. The following are comments from the original implementation.</span>
+
+<span class="sd">    MURTY   Murty&#39;s Algorithm for m-best ranked optimal assignment problem</span>
+<span class="sd">    Port of Ba Tuong Vo&#39;s 2015 Matlab code</span>
+<span class="sd">    NOTE: the assignment is zero based indexing</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cost_mat (numpy array): Cost matrix</span>
+<span class="sd">        m (int): Number of best ranked assignments to find</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple containing</span>
+
+<span class="sd">            - assigns (numpy array): Array of best paths</span>
+<span class="sd">            - costs (numpy array): Cost of each path</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cost_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">cost_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Cost matrix must be 2D array&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">m</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">([],</span> <span class="p">[])</span>
+
+    <span class="n">cm</span> <span class="o">=</span> <span class="n">cost_mat</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+    <span class="n">cm</span> <span class="o">=</span> <span class="n">cm</span> <span class="o">-</span> <span class="n">x</span>
+
+    <span class="p">(</span><span class="n">assigns</span><span class="p">,</span> <span class="n">costs</span><span class="p">)</span> <span class="o">=</span> <span class="n">__murty_helper</span><span class="p">(</span><span class="n">cm</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="n">ii</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">assigns</span><span class="p">):</span>
+        <span class="n">costs</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">+=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">a</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">assigns</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="c1"># remove extra entries</span>
+    <span class="n">assigns</span> <span class="o">=</span> <span class="n">assigns</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="n">cost_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+    <span class="c1"># dummy assignmets are clutter</span>
+    <span class="n">assigns</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">assigns</span> <span class="o">&gt;</span> <span class="n">cost_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">assigns</span> <span class="o">=</span> <span class="n">assigns</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">assigns</span><span class="p">,</span> <span class="n">costs</span><span class="p">)</span></div>
+
+<span class="k">def</span> <span class="nf">__murty_helper</span><span class="p">(</span><span class="n">p0</span><span class="p">,</span> <span class="n">m</span><span class="p">):</span>
+    <span class="p">(</span><span class="n">s0</span><span class="p">,</span> <span class="n">c0</span><span class="p">)</span> <span class="o">=</span> <span class="n">subs</span><span class="o">.</span><span class="n">assign_opt</span><span class="p">(</span><span class="n">p0</span><span class="p">)</span>
+    <span class="n">s0</span> <span class="o">=</span> <span class="n">s0</span><span class="o">.</span><span class="n">T</span>
+
+    <span class="k">if</span> <span class="n">m</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">s0</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">s0</span><span class="o">.</span><span class="n">size</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">c0</span><span class="p">]))</span>
+
+    <span class="p">(</span><span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">)</span> <span class="o">=</span> <span class="n">p0</span><span class="o">.</span><span class="n">shape</span>
+    <span class="c1"># preallocate arrays</span>
+    <span class="n">blk_sz</span> <span class="o">=</span> <span class="mi">1000</span>
+    <span class="n">ans_lst_P</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">,</span> <span class="n">blk_sz</span><span class="p">))</span>
+    <span class="n">ans_lst_S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_rows</span><span class="p">,</span> <span class="n">blk_sz</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">ans_lst_C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">blk_sz</span><span class="p">)</span>
+
+    <span class="n">ans_lst_P</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">p0</span>
+    <span class="n">ans_lst_S</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">s0</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">ans_lst_C</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">c0</span>
+    <span class="n">ans_nxt_ind</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="n">assigns</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">n_rows</span><span class="p">,</span> <span class="n">m</span><span class="p">))</span>
+    <span class="n">costs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">m</span><span class="p">):</span>
+        <span class="c1"># if cleared break</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">ans_lst_C</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="n">assigns</span> <span class="o">=</span> <span class="n">assigns</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="n">ans_nxt_ind</span><span class="p">]</span>
+            <span class="n">costs</span> <span class="o">=</span> <span class="n">costs</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">ans_nxt_ind</span><span class="p">]</span>
+            <span class="k">break</span>
+
+        <span class="c1"># find lowest cost solution</span>
+        <span class="n">idx_top</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanargmin</span><span class="p">(</span><span class="n">ans_lst_C</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">ans_nxt_ind</span><span class="p">])</span>
+        <span class="n">assigns</span><span class="p">[:,</span> <span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">ans_lst_S</span><span class="p">[:,</span> <span class="n">idx_top</span><span class="p">]</span>
+        <span class="n">costs</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">ans_lst_C</span><span class="p">[</span><span class="n">idx_top</span><span class="p">]</span>
+
+        <span class="n">P_now</span> <span class="o">=</span> <span class="n">ans_lst_P</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">idx_top</span><span class="p">]</span>
+        <span class="n">S_now</span> <span class="o">=</span> <span class="n">ans_lst_S</span><span class="p">[:,</span> <span class="n">idx_top</span><span class="p">]</span>
+
+        <span class="n">ans_lst_C</span><span class="p">[</span><span class="n">idx_top</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="k">for</span> <span class="p">(</span><span class="n">aw</span><span class="p">,</span> <span class="n">aj</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">S_now</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">aj</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">P_tmp</span> <span class="o">=</span> <span class="n">P_now</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">aj</span> <span class="o">&lt;=</span> <span class="n">n_cols</span> <span class="o">-</span> <span class="n">n_rows</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">P_tmp</span><span class="p">[</span><span class="n">aw</span><span class="p">,</span> <span class="n">aj</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">P_tmp</span><span class="p">[</span><span class="n">aw</span><span class="p">,</span> <span class="p">(</span><span class="n">n_cols</span> <span class="o">-</span> <span class="n">n_rows</span><span class="p">):]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+
+                <span class="p">(</span><span class="n">S_tmp</span><span class="p">,</span> <span class="n">C_tmp</span><span class="p">)</span> <span class="o">=</span> <span class="n">subs</span><span class="o">.</span><span class="n">assign_opt</span><span class="p">(</span><span class="n">P_tmp</span><span class="p">)</span>
+
+                <span class="n">S_tmp</span> <span class="o">=</span> <span class="n">S_tmp</span><span class="o">.</span><span class="n">T</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">S_tmp</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+                    <span class="c1"># allocate more space as needed</span>
+                    <span class="k">if</span> <span class="n">ans_nxt_ind</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ans_lst_C</span><span class="p">):</span>
+                        <span class="n">ans_lst_P</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">ans_lst_P</span><span class="p">,</span>
+                                                    <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">,</span>
+                                                              <span class="n">blk_sz</span><span class="p">))),</span>
+                                                   <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+                        <span class="n">ans_lst_S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">ans_lst_S</span><span class="p">,</span>
+                                                    <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_rows</span><span class="p">,</span> <span class="n">blk_sz</span><span class="p">),</span>
+                                                             <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)),</span>
+                                                   <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                        <span class="n">ans_lst_C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">ans_lst_C</span><span class="p">,</span>
+                                               <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">blk_sz</span><span class="p">)))</span>
+
+                    <span class="n">ans_lst_P</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">ans_nxt_ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">P_tmp</span>
+                    <span class="n">ans_lst_S</span><span class="p">[:,</span> <span class="n">ans_nxt_ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">S_tmp</span>
+                    <span class="n">ans_lst_C</span><span class="p">[</span><span class="n">ans_nxt_ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">C_tmp</span>
+                    <span class="n">ans_nxt_ind</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                    <span class="n">v_tmp</span> <span class="o">=</span> <span class="n">P_now</span><span class="p">[</span><span class="n">aw</span><span class="p">,</span> <span class="n">aj</span><span class="p">]</span>
+                    <span class="n">P_now</span><span class="p">[</span><span class="n">aw</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+                    <span class="n">P_now</span><span class="p">[:,</span> <span class="n">aj</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+                    <span class="n">P_now</span><span class="p">[</span><span class="n">aw</span><span class="p">,</span> <span class="n">aj</span><span class="p">]</span> <span class="o">=</span> <span class="n">v_tmp</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">assigns</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">costs</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="a_star_search"><a class="viewcode-back" href="../../../_autosummary/caser.utilities.graphs.a_star_search.html#caser.utilities.graphs.a_star_search">[docs]</a><span class="k">def</span> <span class="nf">a_star_search</span><span class="p">(</span><span class="n">maze</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">cost</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a list of tuples as a path from the given start to the given end in the given maze</span>
+<span class="sd">        :param maze:</span>
+<span class="sd">        :param cost</span>
+<span class="sd">        :param start:</span>
+<span class="sd">        :param end:</span>
+<span class="sd">        :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Create start and end node with initized values for g, h and f</span>
+    <span class="n">start_node</span> <span class="o">=</span> <span class="n">subs</span><span class="o">.</span><span class="n">AStarNode</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">start</span><span class="p">))</span>
+    <span class="n">start_node</span><span class="o">.</span><span class="n">g</span> <span class="o">=</span> <span class="n">start_node</span><span class="o">.</span><span class="n">h</span> <span class="o">=</span> <span class="n">start_node</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">end_node</span> <span class="o">=</span> <span class="n">subs</span><span class="o">.</span><span class="n">AStarNode</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">end</span><span class="p">))</span>
+    <span class="n">end_node</span><span class="o">.</span><span class="n">g</span> <span class="o">=</span> <span class="n">end_node</span><span class="o">.</span><span class="n">h</span> <span class="o">=</span> <span class="n">end_node</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1"># Initialize both yet_to_visit and visited list</span>
+    <span class="c1"># in this list we will put all node that are yet_to_visit for exploration.</span>
+    <span class="c1"># From here we will find the lowest cost node to expand next</span>
+    <span class="n">yet_to_visit_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># in this list we will put all node those already explored so that we don&#39;t explore it again</span>
+    <span class="n">visited_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Add the start node</span>
+    <span class="n">yet_to_visit_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">start_node</span><span class="p">)</span>
+
+    <span class="c1"># Adding a stop condition. This is to avoid any infinite loop and stop</span>
+    <span class="c1"># execution after some reasonable number of steps</span>
+    <span class="n">outer_iterations</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">max_iterations</span> <span class="o">=</span> <span class="mi">100000</span>
+
+    <span class="c1"># what squares do we search . search movement is left-right-top-bottom</span>
+    <span class="c1"># (4 movements) from every positon</span>
+    <span class="n">move</span> <span class="o">=</span> <span class="p">[[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>  <span class="c1"># go up</span>
+            <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>  <span class="c1"># go left</span>
+            <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>  <span class="c1"># go down</span>
+            <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>  <span class="c1"># go right</span>
+            <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>  <span class="c1"># diagonals</span>
+            <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+            <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        1) We first get the current node by comparing all f cost and selecting the lowest cost node for further expansion</span>
+<span class="sd">        2) Check max iteration reached or not . Set a message and stop execution</span>
+<span class="sd">        3) Remove the selected node from yet_to_visit list and add this node to visited list</span>
+<span class="sd">        4) Perofmr Goal test and return the path else perform below steps</span>
+<span class="sd">        5) For selected node find out all children (use move to find children)</span>
+<span class="sd">            a) get the current postion for the selected node (this becomes parent node for the children)</span>
+<span class="sd">            b) check if a valid position exist (boundary will make few nodes invalid)</span>
+<span class="sd">            c) if any node is a wall then ignore that</span>
+<span class="sd">            d) add to valid children node list for the selected parent</span>
+
+<span class="sd">            For all the children node</span>
+<span class="sd">                a) if child in visited list then ignore it and try next node</span>
+<span class="sd">                b) calculate child node g, h and f values</span>
+<span class="sd">                c) if child in yet_to_visit list then ignore it</span>
+<span class="sd">                d) else move the child to yet_to_visit list</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#find maze has got how many rows and columns</span>
+    <span class="n">no_rows</span><span class="p">,</span> <span class="n">no_columns</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">maze</span><span class="p">)</span>
+
+    <span class="c1"># Loop until you find the end</span>
+
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">yet_to_visit_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+
+        <span class="c1"># Every time any node is referred from yet_to_visit list, counter of limit operation incremented</span>
+        <span class="n">outer_iterations</span> <span class="o">+=</span> <span class="mi">1</span>
+
+
+        <span class="c1"># Get the current node</span>
+        <span class="n">current_node</span> <span class="o">=</span> <span class="n">yet_to_visit_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">current_index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">yet_to_visit_list</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">f</span> <span class="o">&lt;</span> <span class="n">current_node</span><span class="o">.</span><span class="n">f</span><span class="p">:</span>
+                <span class="n">current_node</span> <span class="o">=</span> <span class="n">item</span>
+                <span class="n">current_index</span> <span class="o">=</span> <span class="n">index</span>
+
+        <span class="c1"># if we hit this point return the path such as it may be no solution or</span>
+        <span class="c1"># computation cost is too high</span>
+        <span class="k">if</span> <span class="n">outer_iterations</span> <span class="o">&gt;</span> <span class="n">max_iterations</span><span class="p">:</span>
+            <span class="nb">print</span> <span class="p">(</span><span class="s2">&quot;giving up on pathfinding too many iterations&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">subs</span><span class="o">.</span><span class="n">astar_return_path</span><span class="p">(</span><span class="n">current_node</span><span class="p">,</span><span class="n">maze</span><span class="p">)</span>
+
+        <span class="c1"># Pop current node out off yet_to_visit list, add to visited list</span>
+        <span class="n">yet_to_visit_list</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">current_index</span><span class="p">)</span>
+        <span class="n">visited_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_node</span><span class="p">)</span>
+
+        <span class="c1"># test if goal is reached or not, if yes then return the path</span>
+        <span class="k">if</span> <span class="n">current_node</span> <span class="o">==</span> <span class="n">end_node</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">subs</span><span class="o">.</span><span class="n">astar_return_path</span><span class="p">(</span><span class="n">current_node</span><span class="p">,</span> <span class="n">maze</span><span class="p">)</span>
+
+        <span class="c1"># Generate children from all adjacent squares</span>
+        <span class="n">children</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">new_position</span> <span class="ow">in</span> <span class="n">move</span><span class="p">:</span>
+
+            <span class="c1"># Get node position</span>
+            <span class="n">node_position</span> <span class="o">=</span> <span class="p">(</span><span class="n">current_node</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">new_position</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                             <span class="n">current_node</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">new_position</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+            <span class="c1"># Make sure within range (check if within maze boundary)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">node_position</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">no_rows</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">or</span>
+                <span class="n">node_position</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span>
+                <span class="n">node_position</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">no_columns</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="ow">or</span>
+                <span class="n">node_position</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span>
+                <span class="n">node_position</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">node_position</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span>
+                <span class="n">node_position</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">no_rows</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="n">node_position</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span>
+                <span class="n">node_position</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">node_position</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">no_columns</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="ow">or</span>
+                <span class="n">node_position</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">no_rows</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="n">node_position</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">no_columns</span><span class="o">-</span><span class="mi">1</span><span class="p">)):</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Make sure walkable terrain</span>
+            <span class="k">if</span> <span class="n">maze</span><span class="p">[</span><span class="n">node_position</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="n">node_position</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Create new node</span>
+            <span class="n">new_node</span> <span class="o">=</span> <span class="n">subs</span><span class="o">.</span><span class="n">AStarNode</span><span class="p">(</span><span class="n">current_node</span><span class="p">,</span> <span class="n">node_position</span><span class="p">)</span>
+
+            <span class="c1"># Append</span>
+            <span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_node</span><span class="p">)</span>
+
+        <span class="c1"># Loop through children</span>
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
+            <span class="c1"># Child is on the visited list (search entire visited list)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">([</span><span class="n">visited_child</span> <span class="k">for</span> <span class="n">visited_child</span> <span class="ow">in</span> <span class="n">visited_list</span>
+                    <span class="k">if</span> <span class="n">visited_child</span> <span class="o">==</span> <span class="n">child</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Create the f, g, and h values</span>
+            <span class="n">child</span><span class="o">.</span><span class="n">g</span> <span class="o">=</span> <span class="n">current_node</span><span class="o">.</span><span class="n">g</span> <span class="o">+</span> <span class="n">cost</span>
+
+            <span class="c1"># Heuristic costs calculated here, this is using euclidian distance</span>
+            <span class="n">child</span><span class="o">.</span><span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((((</span><span class="n">child</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">end_node</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span>
+                        <span class="p">((</span><span class="n">child</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">end_node</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)))</span>
+            
+            <span class="c1"># dx = abs(child.position[0] - end_node.position[0])  # diagonal heuristic</span>
+            <span class="c1"># dy = abs(child.position[1] - end_node.position[1])</span>
+            <span class="c1"># child.h = dx + dy - 1 + min(dx, dy)</span>
+
+            <span class="n">child</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">g</span> <span class="o">+</span> <span class="n">child</span><span class="o">.</span><span class="n">h</span>
+
+            <span class="c1"># Child is already in the yet_to_visit list and g cost is already lower</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">yet_to_visit_list</span>
+                    <span class="k">if</span> <span class="n">child</span> <span class="o">==</span> <span class="n">i</span> <span class="ow">and</span> <span class="n">child</span><span class="o">.</span><span class="n">g</span> <span class="o">&gt;</span> <span class="n">i</span><span class="o">.</span><span class="n">g</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Add the child to the yet_to_visit list</span>
+            <span class="n">yet_to_visit_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019, Jordan D Larson.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

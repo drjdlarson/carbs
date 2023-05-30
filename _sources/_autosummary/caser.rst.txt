@@ -1,0 +1,34 @@
+﻿caser
+=====
+
+.. automodule:: caser
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: module.rst_t
+   :recursive:
+
+   caser.guidance
+   caser.swarm_estimator
+   caser.utilities
+

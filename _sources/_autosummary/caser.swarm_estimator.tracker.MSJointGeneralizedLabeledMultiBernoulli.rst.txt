@@ -1,0 +1,53 @@
+caser.swarm\_estimator.tracker.MSJointGeneralizedLabeledMultiBernoulli
+======================================================================
+
+.. currentmodule:: caser.swarm_estimator.tracker
+
+.. autoclass:: MSJointGeneralizedLabeledMultiBernoulli
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~MSJointGeneralizedLabeledMultiBernoulli.__init__
+      ~MSJointGeneralizedLabeledMultiBernoulli.calculate_ospa
+      ~MSJointGeneralizedLabeledMultiBernoulli.calculate_ospa2
+      ~MSJointGeneralizedLabeledMultiBernoulli.cleanup
+      ~MSJointGeneralizedLabeledMultiBernoulli.correct
+      ~MSJointGeneralizedLabeledMultiBernoulli.extract_most_prob_states
+      ~MSJointGeneralizedLabeledMultiBernoulli.extract_states
+      ~MSJointGeneralizedLabeledMultiBernoulli.load_filter_state
+      ~MSJointGeneralizedLabeledMultiBernoulli.plot_card_dist
+      ~MSJointGeneralizedLabeledMultiBernoulli.plot_card_history
+      ~MSJointGeneralizedLabeledMultiBernoulli.plot_ospa2_history
+      ~MSJointGeneralizedLabeledMultiBernoulli.plot_ospa_history
+      ~MSJointGeneralizedLabeledMultiBernoulli.plot_states_labels
+      ~MSJointGeneralizedLabeledMultiBernoulli.predict
+      ~MSJointGeneralizedLabeledMultiBernoulli.save_filter_state
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~MSJointGeneralizedLabeledMultiBernoulli.cardinality
+      ~MSJointGeneralizedLabeledMultiBernoulli.covariances
+      ~MSJointGeneralizedLabeledMultiBernoulli.filter
+      ~MSJointGeneralizedLabeledMultiBernoulli.labels
+      ~MSJointGeneralizedLabeledMultiBernoulli.num_birth_terms
+      ~MSJointGeneralizedLabeledMultiBernoulli.ospa_method
+      ~MSJointGeneralizedLabeledMultiBernoulli.prob_death
+      ~MSJointGeneralizedLabeledMultiBernoulli.prob_miss_detection
+      ~MSJointGeneralizedLabeledMultiBernoulli.states
+   
+   

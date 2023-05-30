@@ -1,0 +1,31 @@
+caser.utilities.sampling
+========================
+
+.. automodule:: caser.utilities.sampling
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      gibbs
+      mm_gibbs
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

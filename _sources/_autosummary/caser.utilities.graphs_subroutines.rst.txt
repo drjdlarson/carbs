@@ -1,0 +1,39 @@
+caser.utilities.graphs\_subroutines
+===================================
+
+.. automodule:: caser.utilities.graphs_subroutines
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      assign_opt
+      astar_return_path
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: class.rst_t
+   
+      AStarNode
+   
+   
+
+   
+   
+   
+
+
+

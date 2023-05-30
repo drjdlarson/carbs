@@ -1,0 +1,39 @@
+caser.guidance
+==============
+
+.. automodule:: caser.guidance
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      gaussian_density_cost
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: class.rst_t
+   
+      ELQR
+      ELQROSPA
+   
+   
+
+   
+   
+   
+
+
+

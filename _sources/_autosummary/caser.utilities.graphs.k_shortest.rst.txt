@@ -1,0 +1,6 @@
+caser.utilities.graphs.k\_shortest
+==================================
+
+.. currentmodule:: caser.utilities.graphs
+
+.. autofunction:: k_shortest

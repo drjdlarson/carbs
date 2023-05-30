@@ -1,0 +1,6 @@
+caser.utilities.graphs.bfm\_shortest\_path
+==========================================
+
+.. currentmodule:: caser.utilities.graphs
+
+.. autofunction:: bfm_shortest_path

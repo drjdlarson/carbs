@@ -1,0 +1,6 @@
+caser.guidance.gaussian\_density\_cost
+======================================
+
+.. currentmodule:: caser.guidance
+
+.. autofunction:: gaussian_density_cost

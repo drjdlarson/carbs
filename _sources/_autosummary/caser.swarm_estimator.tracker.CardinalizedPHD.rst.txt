@@ -1,0 +1,51 @@
+caser.swarm\_estimator.tracker.CardinalizedPHD
+==============================================
+
+.. currentmodule:: caser.swarm_estimator.tracker
+
+.. autoclass:: CardinalizedPHD
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CardinalizedPHD.__init__
+      ~CardinalizedPHD.animate_state_plot
+      ~CardinalizedPHD.calculate_ospa
+      ~CardinalizedPHD.cleanup
+      ~CardinalizedPHD.correct
+      ~CardinalizedPHD.extract_states
+      ~CardinalizedPHD.load_filter_state
+      ~CardinalizedPHD.plot_card_dist
+      ~CardinalizedPHD.plot_card_history
+      ~CardinalizedPHD.plot_number_states_per_time
+      ~CardinalizedPHD.plot_ospa_history
+      ~CardinalizedPHD.plot_states
+      ~CardinalizedPHD.predict
+      ~CardinalizedPHD.save_filter_state
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CardinalizedPHD.cardinality
+      ~CardinalizedPHD.covariances
+      ~CardinalizedPHD.max_expected_card
+      ~CardinalizedPHD.num_birth_terms
+      ~CardinalizedPHD.ospa_method
+      ~CardinalizedPHD.prob_death
+      ~CardinalizedPHD.prob_miss_detection
+      ~CardinalizedPHD.states
+   
+   

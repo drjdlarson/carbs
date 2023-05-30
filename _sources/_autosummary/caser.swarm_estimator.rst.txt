@@ -1,0 +1,33 @@
+caser.swarm\_estimator
+======================
+
+.. automodule:: caser.swarm_estimator
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: module.rst_t
+   :recursive:
+
+   caser.swarm_estimator.slam
+   caser.swarm_estimator.tracker
+

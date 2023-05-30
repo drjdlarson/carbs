@@ -1,0 +1,47 @@
+caser.swarm\_estimator.tracker.IMMProbabilityHypothesisDensity
+==============================================================
+
+.. currentmodule:: caser.swarm_estimator.tracker
+
+.. autoclass:: IMMProbabilityHypothesisDensity
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~IMMProbabilityHypothesisDensity.__init__
+      ~IMMProbabilityHypothesisDensity.animate_state_plot
+      ~IMMProbabilityHypothesisDensity.calculate_ospa
+      ~IMMProbabilityHypothesisDensity.cleanup
+      ~IMMProbabilityHypothesisDensity.correct
+      ~IMMProbabilityHypothesisDensity.extract_states
+      ~IMMProbabilityHypothesisDensity.load_filter_state
+      ~IMMProbabilityHypothesisDensity.plot_ospa_history
+      ~IMMProbabilityHypothesisDensity.plot_states
+      ~IMMProbabilityHypothesisDensity.predict
+      ~IMMProbabilityHypothesisDensity.save_filter_state
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~IMMProbabilityHypothesisDensity.cardinality
+      ~IMMProbabilityHypothesisDensity.covariances
+      ~IMMProbabilityHypothesisDensity.num_birth_terms
+      ~IMMProbabilityHypothesisDensity.ospa_method
+      ~IMMProbabilityHypothesisDensity.prob_death
+      ~IMMProbabilityHypothesisDensity.prob_miss_detection
+      ~IMMProbabilityHypothesisDensity.states
+   
+   

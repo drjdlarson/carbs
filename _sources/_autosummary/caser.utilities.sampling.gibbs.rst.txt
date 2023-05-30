@@ -1,0 +1,6 @@
+caser.utilities.sampling.gibbs
+==============================
+
+.. currentmodule:: caser.utilities.sampling
+
+.. autofunction:: gibbs

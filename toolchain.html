@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Toolchain Setup &mdash; CASER 1.0.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/copybutton.css" type="text/css" />
+    <link rel="canonical" href="https://drjdlarson.github.io/caser/toolchain.html" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/clipboard.min.js"></script>
+        <script src="_static/copybutton.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="CI/CD Pipeline" href="cicd.html" />
+    <link rel="prev" title="ELQR Examples" href="usage/elqr.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #9E1B32" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            CASER
+              <img src="_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                1.0.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/caser.html">caser</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/caser.guidance.html">caser.guidance</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/caser.guidance.gaussian_density_cost.html">caser.guidance.gaussian_density_cost</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/caser.guidance.ELQR.html">caser.guidance.ELQR</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/caser.guidance.ELQROSPA.html">caser.guidance.ELQROSPA</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/caser.swarm_estimator.html">caser.swarm_estimator</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/caser.swarm_estimator.slam.html">caser.swarm_estimator.slam</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/caser.swarm_estimator.tracker.html">caser.swarm_estimator.tracker</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/caser.utilities.html">caser.utilities</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/caser.utilities.graphs.html">caser.utilities.graphs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/caser.utilities.graphs_subroutines.html">caser.utilities.graphs_subroutines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/caser.utilities.sampling.html">caser.utilities.sampling</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="usage/elqr.html">ELQR Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="usage/elqr.html#gaussian-mixture-based">Gaussian Mixture Based</a></li>
+<li class="toctree-l3"><a class="reference internal" href="usage/elqr.html#optimal-sub-pattern-assignment-based">Optimal Sub-Pattern Assignment Based</a></li>
+<li class="toctree-l3"><a class="reference internal" href="usage/elqr.html#ospa-based-with-obstacles">OSPA Based with Obstacles</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Toolchain Setup</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#development-environment-setup">Development Environment Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-workflow">Example Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#notes-on-tox">Notes on tox</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cicd.html">CI/CD Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cicd.html#github-actions-quick-guide">Github Actions Quick Guide</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="./reports/coverage/index.html#http://">Test Coverage Report</a></li>
+<li class="toctree-l1"><a class="reference external" href="./reports/junit/junit.html#http://">Test Results Report</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://lager.ua.edu/">LAGER Homepage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="References.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #9E1B32" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">CASER</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Toolchain Setup</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="toolchain-setup">
+<h1>Toolchain Setup<a class="headerlink" href="#toolchain-setup" title="Permalink to this heading"></a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<p>This provides information on initial setup of the toolchain when developing for caser, information on how to use <strong>tox</strong> for running unit and validation tests, and for using <strong>tox</strong> to build documentation.</p>
+<nav class="contents local" id="table-of-contents">
+<p class="topic-title">Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#development-environment-setup" id="id1">Development Environment Setup</a></p></li>
+<li><p><a class="reference internal" href="#example-workflow" id="id2">Example Workflow</a></p></li>
+<li><p><a class="reference internal" href="#notes-on-tox" id="id3">Notes on tox</a></p></li>
+</ul>
+</nav>
+<p>This project uses the pytest for developing and running the tests (with extensions for generating summary and coverage reports), tox automates setting up and running the test environment (as well as the documentation), Sphinx is used for documenting the code, and the Black formatter is used to auto format the python code. This project also follows <a class="reference external" href="https://semver.org/">semantic versioning</a> where any api breaking changes will increment the major version number. Additionally, a prebuilt docker container image is provided to get started with developing for this library. It contains all of the needed tools to compile the code, run the tests, and build the documentation. The docker container can be used within VS Code through their dev container extension to allow editing local files but compiling using the toolchain provided within the container.</p>
+<section id="development-environment-setup">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Development Environment Setup</a><a class="headerlink" href="#development-environment-setup" title="Permalink to this heading"></a></h2>
+<p>It is recommended to use VS Code with the dev containers extension for developing. Development containers allow the full toolchain to be automatically setup on most any machine capable of running Docker. For information on dev-containers see <a class="reference external" href="https://code.visualstudio.com/docs/devcontainers/containers">here</a> for an overview, <a class="reference external" href="https://stackoverflow.com/questions/71402603/vs-code-in-docker-container-is-there-a-way-to-automatically-install-extensions">here</a> for auto installing extensions in the container
+and <a class="reference external" href="https://pspdfkit.com/blog/2020/visual-studio-code-cpp-docker/">here</a> for an example setup. The provided dev container also has useful extensions installed to ease development.</p>
+<p>To being, make sure VS Code and git are installed. Additionally, make sure docker is installed for your system (<a class="reference external" href="https://docs.docker.com/desktop/install/windows-install/">Windows</a>, <a class="reference external" href="https://docs.docker.com/desktop/install/mac-install/">Mac</a>, <a class="reference external" href="https://docs.docker.com/engine/install/">Linux</a>). Next, install the dev containers extension within VS Code. Clone the repository locally on your computer, for windows it is recommended to clone it within your linux subsystem directory (e.g. a sub-directory of your linux home folder) to improve performance within the container (the linux directories on Windows can be accessed through the file browser by typing <code class="code docutils literal notranslate"><span class="pre">\wsl$</span></code> in the address bar and clicking on your distro). Now open the repo folder within VS Code (for windows you may need to connect to the linux subsystem first). Then you should be prompted to open the folder in the container, click yes. If you are not prompted, you can go to the command palette and start typing “Open folder in container”. Now your terminal within VS Code will be running commands within the container but the files your are editing/creating will be accessible from your local machine’s file browser.</p>
+<p>Note if you click the open in container button on the repo’s page it will automatically open VS Code, open the container, and clone the repo for you. However, it will do this within a docker volume so the files are only accessible within the container (ie you can’t view them through your local file browser).</p>
+</section>
+<section id="example-workflow">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Example Workflow</a><a class="headerlink" href="#example-workflow" title="Permalink to this heading"></a></h2>
+<p>Once the repository is open in the container, you can edit files, run tests, and make commits just like normal. For example, after editing some files and adding some validation tests to run these tests you would simply call the following from the root of the repository.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tox</span>
+</pre></div>
+</div>
+<p>This will attempt to run the all the validation tests, except those marked as slow, on multiple versions of python. If the python version can not be found, it will be skipped.</p>
+<p>After running tests, it may be helpful to check the documentation build locally to ensure code comments are being pulled correctly. This can be done with</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tox</span> <span class="o">-</span><span class="n">e</span> <span class="n">clean_docs</span>
+<span class="n">tox</span> <span class="o">-</span><span class="n">e</span> <span class="n">docs_html</span>
+</pre></div>
+</div>
+<p>to remove any existing documenation builds and generate the html version. The output is placed in <strong>docs/build/html</strong> and can be viewed by opening the <strong>docs/build/html/index.html</strong> file in your web browser.</p>
+</section>
+<section id="notes-on-tox">
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">Notes on tox</a><a class="headerlink" href="#notes-on-tox" title="Permalink to this heading"></a></h2>
+<p>Tox will automatically create virtual environements, install dependencies, install the package, and run some commands in the virtual environment. These are defined in the <strong>tox.ini</strong> file in the repository. If tox is called without specifying an envrionment, it will run all of the default environments. The available environments can be listed with</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tox</span> <span class="o">-</span><span class="n">av</span>
+</pre></div>
+</div>
+<p>and a specific environment run by calling</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tox</span> <span class="o">-</span><span class="n">e</span> <span class="n">ENV</span>
+</pre></div>
+</div>
+<p>where <code class="code docutils literal notranslate"><span class="pre">ENV</span></code> is replaced with the environment name. To pass positional arguments into the commands run within the tox environment you must use <code class="code docutils literal notranslate"><span class="pre">--</span></code> after the environment name but before the positional arguments. For example to run validation tests using Python 3.9 and pass the <code class="code docutils literal notranslate"><span class="pre">--runslow</span></code> option to pytest you would call <code class="code docutils literal notranslate"><span class="pre">tox</span> <span class="pre">-e</span> <span class="pre">py39-validation_test</span> <span class="pre">--</span> <span class="pre">--runslow</span></code>.</p>
+<p>Note, all tox commands must be run from the root of the repository because this is where the <strong>tox.ini</strong> file lives.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="usage/elqr.html" class="btn btn-neutral float-left" title="ELQR Examples" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="cicd.html" class="btn btn-neutral float-right" title="CI/CD Pipeline" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019, Jordan D Larson.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
