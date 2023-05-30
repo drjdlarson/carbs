@@ -4,7 +4,7 @@ name = "caser"
 dynamic = ["version"]
 description = "A package for Guidance, Navigation, and Control (GNC) for Autonomous Swarms Using Random finite sets (RFS)."
 readme = "README.rst"
-requires-python = ">=3.7"
+requires-python = ">=3.7, <3.10"
 license = {file = "LICENSE"}
 keywords = [
     "Guidance Navigation and Control",

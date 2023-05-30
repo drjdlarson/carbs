@@ -2,10 +2,7 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/cpp
 {
 	"name": "caser-dev",
-	// "image": "ghcr.io/drjdlarson/caser-dev:latest",
-    "build": {
-        "dockerfile": "Dockerfile"
-    },
+	"image": "ghcr.io/drjdlarson/caser-dev:latest",
 	"customizations": {
 		"vscode": {
 			"extensions": [
