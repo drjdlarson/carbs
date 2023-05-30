@@ -43,7 +43,6 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
     "sphinxcontrib.bibtex",
-    "sphinxcontrib.rsvgconverter",
     "sphinx_sitemap",
     "sphinx_copybutton",
     "sphinx_rtd_theme",
