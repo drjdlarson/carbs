@@ -1,10 +1,6 @@
 import argparse
 import subprocess
-import re
-import os
-import sys
 
-from typing import Tuple
 from pathlib import Path
 from setuptools_scm import get_version
 

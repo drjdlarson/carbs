@@ -48,14 +48,14 @@ requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 
+# activates the extension
+[tool.setuptools_scm]
+local_scheme = "no-local-version"
+
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 junit_suite_name = "caser"
 junit_log_passing_tests = true
 junit_duration_report = "call"
 junit_logging = "all"
-
-
-# activates the extension
-[tool.setuptools_scm]
-# version_scheme = "no-guess-dev"

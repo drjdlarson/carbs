@@ -16,6 +16,7 @@ RUN apt-get update \
         python-is-python3 \
         python3-dev \
         python3-tk \
+        make \
         git \
         texlive-base \
         latexmk \
@@ -33,5 +34,5 @@ ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
 # install some python dependencies
-RUN pip install tox genbadge[tests,coverage] numpy matplotlib gncpy serums setuptools_scm
+RUN pip install tox genbadge[tests,coverage] numpy matplotlib serums gncpy pytest "setuptools_scm[toml]>=6.2"
 

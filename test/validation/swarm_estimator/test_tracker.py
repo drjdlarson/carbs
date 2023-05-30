@@ -84,23 +84,12 @@ def _setup_double_int_pf(dt, rng):
             meas.flatten(), mean=est.flatten(), cov=m_noise ** 2 * np.eye(2)
         )
 
-    # def proposal_sampling_fnc(x, rng):
-    #     noise = p_noise * np.array([0, 0, 1, 1]) * rng.standard_normal(4)
-    #     return x + noise.reshape((4, 1))
-
     def proposal_sampling_fnc(x, rng):  # noqa
         val = rng.multivariate_normal(x.flatten(), proc_noise).reshape(x.shape)
         return val
 
-    def transition_prob_fnc(x_hat, mean, *args):
-        return stats.multivariate_normal.pdf(
-            x_hat.flatten(), mean.flatten(), proc_noise, True
-        )
-
     def proposal_fnc(x_hat, mean, y, *args):
         return 1
-        # return stats.multivariate_normal.pdf(x_hat.flatten(), mean.flatten(),
-        #                                      proc_noise, True)
 
     filt = gfilts.ParticleFilter(rng=rng)
     filt.set_state_model(dyn_obj=doubleInt)
@@ -112,7 +101,6 @@ def _setup_double_int_pf(dt, rng):
     filt.meas_likelihood_fnc = meas_likelihood
     filt.proposal_sampling_fnc = proposal_sampling_fnc
     filt.proposal_fnc = proposal_fnc
-    # filt.transition_prob_fnc = transition_prob_fnc
 
     return filt
 
@@ -3082,9 +3070,8 @@ def test_GLMB_ct_ktr():
     rng = rnd.default_rng(global_seed)
 
     dt = 0.01
-    t0, t1 = 0, 3.5 + dt  # 6 + dt
+    t0, t1 = 0, 3.5 + dt
 
-    # filt = _setup_imm_ctktr_kf(dt)
     filt = _setup_ctktr_kf(dt)
     state_mat_args = (dt,)
     meas_fun_args = ("useless arg",)
@@ -3176,7 +3163,7 @@ def test_IMM_GLMB():
     rng = rnd.default_rng(global_seed)
 
     dt = 0.01
-    t0, t1 = 0, 6 + dt  # 6 + dt
+    t0, t1 = 0, 6 + dt
 
     filt = _setup_imm_ctktr_kf(dt)
     state_mat_args = (dt,)
@@ -3394,7 +3381,7 @@ def test_MS_JGLMB():  # noqa
         jglmb.plot_ospa_history()
     print("\tExpecting {} agents".format(len(true_agents)))
 
-    # assert len(true_agents) == jglmb.cardinality, "Wrong cardinality"
+    assert len(true_agents) == jglmb.cardinality, "Wrong cardinality"
 
 def test_PMBM():
     print("Test PMBM")
@@ -3403,7 +3390,6 @@ def test_PMBM():
 
     dt = 0.01
     t0, t1 = 0, 6 + dt
-    # t0, t1 = 0, 6 + dt
 
     filt = _setup_double_int_kf(dt)
     state_mat_args = (dt, "test arg")
@@ -3440,8 +3426,7 @@ def test_PMBM():
     for kk, tt in enumerate(time):
         print("\t\t{:.2f}".format(tt))
         if np.mod(kk, 100) == 0:
-            # print("\t\t{:.2f}".format(tt))
-            sys.stdout.flush()
+            print("\t\t{:.2f}".format(tt))
         if np.mod(kk, 150) == 0:
             kekw=1
         true_agents = _update_true_agents_pmbm(true_agents, tt, dt, b_model, rng)
