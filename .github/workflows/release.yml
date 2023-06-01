@@ -100,8 +100,36 @@ jobs:
           # Change this to point to your image name
           imageName: ${{ env.REGISTRY }}/${{ env.IMAGE_BASE_NAME }}-devcontainer
 
-  build-documentation:
-    name: Build documentation
+  build-testcov-report:
+    name: Build test coverage report
+    runs-on: ubuntu-latest
+    needs: build-dev-image
+    container:
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+      image: ghcr.io/${{ github.repository }}-dev:latest
+      volumes:
+        - ${{ github.workspace }}:/workspace
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Generage Test Coverage Report
+        run: |
+          tox -e coverage_report
+          genbadge coverage -i docs/build/html/reports/coverage/coverage.xml -o docs/build/html/reports/coverage/coverage-badge.svg
+          rm docs/build/html/reports/coverage/.gitignore
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: documentation-artifact
+          path: docs/build
+          if-no-files-found: error
+
+  build-testsummary-report:
+    name: Build test summary report
     runs-on: ubuntu-latest
     needs: build-dev-image
     container:
@@ -121,11 +149,27 @@ jobs:
           tox -e test_report
           genbadge tests -i docs/build/html/reports/junit/junit.xml -o docs/build/html/reports/junit/tests-badge.svg
       
-      - name: Generage Test Coverage Report
-        run: |
-          tox -e coverage_report
-          genbadge coverage -i docs/build/html/reports/coverage/coverage.xml -o docs/build/html/reports/coverage/coverage-badge.svg
-          rm docs/build/html/reports/coverage/.gitignore
+      - uses: actions/upload-artifact@v3
+        with:
+          name: documentation-artifact
+          path: docs/build
+          if-no-files-found: error
+
+  build-documentation:
+    name: Build documentation
+    runs-on: ubuntu-latest
+    needs: build-dev-image
+    container:
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+      image: ghcr.io/${{ github.repository }}-dev:latest
+      volumes:
+        - ${{ github.workspace }}:/workspace
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
         
       - name: Build Documentation
         run: |
@@ -140,7 +184,7 @@ jobs:
   publish:
     name: Publish release and documentation
     runs-on: ubuntu-latest
-    needs: build-documentation
+    needs: [build-documentation, build-testsummary-report, build-testcov-report]
     permissions: write-all
     steps:
       - uses: actions/download-artifact@v3
@@ -182,3 +226,4 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@v1.5.0
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
+          verbose: true
