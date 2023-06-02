@@ -1,7 +1,7 @@
-CASER
+CARBS
 =====
 
-A Python package for Command, control & information (C2I) of Autonomous Swarms Employing Random finite sets (RFS) (CASER) developed by the Laboratory for Autonomy, GNC, and Estimation Research (LAGER) at the University of Alabama (UA).
+A python package for Command & control (C2) of Autonomous Random finite set- (RFS-) Based Swarms (CARBS) developed by the Laboratory for Autonomy, GNC, and Estimation Research (LAGER) at the University of Alabama (UA). This package was previously named CASER (Command control & information of Autonomous Swarms Employing Random finite sets), and before that GASUR (Guidance navigation and control of Autonomous Swarms Using Random finite sets) but neither had releases on PyPI. Some references may exist to those packages but they have been migrated to CARBS.
 
 .. contents:: Table of Contents
     :depth: 2
@@ -11,13 +11,13 @@ A Python package for Command, control & information (C2I) of Autonomous Swarms E
     BEGIN LINKS INCLUDE
 
 .. |Open in Dev Containers| image:: https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode
-   :target: https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/drjdlarson/caser.git
+   :target: https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/drjdlarson/carbs.git
 
-.. |Test Status| image:: https://drjdlarson.github.io/caser/reports/junit/tests-badge.svg?dummy=8484744
-    :target: https://drjdlarson.github.io/caser/reports/junit/junit.html
+.. |Test Status| image:: https://drjdlarson.github.io/carbs/reports/junit/tests-badge.svg?dummy=8484744
+    :target: https://drjdlarson.github.io/carbs/reports/junit/junit.html
 
-.. |Test Cov| image:: https://drjdlarson.github.io/caser/reports/coverage/coverage-badge.svg?dummy=8484744
-    :target: https://drjdlarson.github.io/caser/reports/coverage/index.html
+.. |Test Cov| image:: https://drjdlarson.github.io/carbs/reports/coverage/coverage-badge.svg?dummy=8484744
+    :target: https://drjdlarson.github.io/carbs/reports/coverage/index.html
 
 ..
     END LINKS INCLUDE
@@ -86,7 +86,19 @@ Note, all tox commands must be run from the root of the repository because this 
 
 Cite
 ====
-Please cite the framework as follows
+Please cite the CARBS using the following bibtex data,
+
+.. code-block:: bibtex
+
+    @Misc{carbs,
+        author       = {Jordan D. Larson and Ryan W. Thomas and Vaughn Weirens and Vincent W. Hill},
+        howpublished = {Web page},
+        title        = {{CARBS}: A {P}ython library for {C}ommand & control of {A}utonomous {R}andom finite set-{B}ased {S}warms},
+        year         = {2023},
+        url          = {https://github.com/drjdlarson/carbs},
+    }
+
+For reference, the prior iteration of this package, named CASER was cited as follows,
 
 .. code-block:: bibtex
 
@@ -97,6 +109,5 @@ Please cite the framework as follows
         year         = {2019},
         url          = {https://github.com/drjdlarson/caser},
     }
-
 ..
     END CITE INCLUDE

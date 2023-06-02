@@ -10,7 +10,7 @@ import scipy.stats as stats
 import gncpy.filters as gfilts
 import gncpy.dynamics.basic as gdyn
 import gncpy.distributions as gdistrib
-import caser.swarm_estimator.tracker as tracker
+import carbs.swarm_estimator.tracker as tracker
 import serums.models as smodels
 from serums.enums import GSMTypes, SingleObjectDistance
 
@@ -38,7 +38,6 @@ def _meas_mat_fun_nonlin(t, x, *args):
 
 
 def _setup_double_int_kf(dt):
-
     m_noise = 0.02
     p_noise = 0.2
 
@@ -46,9 +45,9 @@ def _setup_double_int_kf(dt):
     filt.set_state_model(state_mat_fun=_state_mat_fun)
     filt.set_measurement_model(meas_fun=_meas_mat_fun)
     filt.proc_noise = gdyn.DoubleIntegrator().get_dis_process_noise_mat(
-        dt, np.array([[p_noise ** 2]])
+        dt, np.array([[p_noise**2]])
     )
-    filt.meas_noise = m_noise ** 2 * np.eye(2)
+    filt.meas_noise = m_noise**2 * np.eye(2)
 
     return filt
 
@@ -61,9 +60,9 @@ def _setup_double_int_stf(dt):
     filt.set_state_model(state_mat_fun=_state_mat_fun)
     filt.set_measurement_model(meas_fun=_meas_mat_fun)
     filt.proc_noise = gdyn.DoubleIntegrator().get_dis_process_noise_mat(
-        dt, np.array([[p_noise ** 2]])
+        dt, np.array([[p_noise**2]])
     )
-    filt.meas_noise = m_noise ** 2 * np.eye(2)
+    filt.meas_noise = m_noise**2 * np.eye(2)
 
     filt.meas_noise_dof = 3
     filt.proc_noise_dof = 3
@@ -77,11 +76,11 @@ def _setup_double_int_pf(dt, rng):
     p_noise = 0.2
 
     doubleInt = gdyn.DoubleIntegrator()
-    proc_noise = doubleInt.get_dis_process_noise_mat(dt, np.array([[p_noise ** 2]]))
+    proc_noise = doubleInt.get_dis_process_noise_mat(dt, np.array([[p_noise**2]]))
 
     def meas_likelihood(meas, est, *args):
         return stats.multivariate_normal.pdf(
-            meas.flatten(), mean=est.flatten(), cov=m_noise ** 2 * np.eye(2)
+            meas.flatten(), mean=est.flatten(), cov=m_noise**2 * np.eye(2)
         )
 
     def proposal_sampling_fnc(x, rng):  # noqa
@@ -96,7 +95,7 @@ def _setup_double_int_pf(dt, rng):
     filt.set_measurement_model(meas_fun=_meas_mat_fun_nonlin)
 
     filt.proc_noise = proc_noise.copy()
-    filt.meas_noise = m_noise ** 2 * np.eye(2)
+    filt.meas_noise = m_noise**2 * np.eye(2)
 
     filt.meas_likelihood_fnc = meas_likelihood
     filt.proposal_sampling_fnc = proposal_sampling_fnc
@@ -117,12 +116,13 @@ def _setup_double_int_upf(dt, rng, use_MCMC):
     filt.set_state_model(dyn_obj=doubleInt)
     filt.set_measurement_model(meas_mat=_meas_mat.copy())
 
-    proc_noise = doubleInt.get_dis_process_noise_mat(dt, np.array([[p_noise ** 2]]))
-    meas_noise = m_noise ** 2 * np.eye(2)
+    proc_noise = doubleInt.get_dis_process_noise_mat(dt, np.array([[p_noise**2]]))
+    meas_noise = m_noise**2 * np.eye(2)
     filt.proc_noise = proc_noise.copy()
     filt.meas_noise = meas_noise.copy()
 
     return filt
+
 
 def _setup_double_int_gci_kf(dt):
     m_noise = 0.02
@@ -131,18 +131,20 @@ def _setup_double_int_gci_kf(dt):
     m_model2 = np.array([[0, 0, 1, 0], [0, 0, 0, 1]], dtype=float)
     m_model_list = [m_model1, m_model2]
 
-    meas_noise_list = [m_noise ** 2 * np.eye(2),
-                       0.01 * m_noise ** 2 * np.eye(2)]
-
+    meas_noise_list = [m_noise**2 * np.eye(2), 0.01 * m_noise**2 * np.eye(2)]
 
     doubleInt = gdyn.DoubleIntegrator()
     in_filt = gfilts.KalmanFilter()
     in_filt.set_state_model(dyn_obj=gdyn.DoubleIntegrator())
     in_filt.proc_noise = gdyn.DoubleIntegrator().get_dis_process_noise_mat(
-        dt, np.array([[p_noise ** 2]])
+        dt, np.array([[p_noise**2]])
     )
     in_filt.meas_noise = meas_noise_list[0]
-    filt = gfilts.GCIFilter(base_filter=in_filt, meas_model_list=m_model_list, meas_noise_list=meas_noise_list)
+    filt = gfilts.GCIFilter(
+        base_filter=in_filt,
+        meas_model_list=m_model_list,
+        meas_noise_list=meas_noise_list,
+    )
     filt.cov = 0.25 * np.eye(4)
     return filt
 
@@ -153,13 +155,13 @@ def __gsm_import_dist_factory():
 
         disc = 0.99
         a = (3 * disc - 1) / (2 * disc)
-        h = np.sqrt(1 - a ** 2)
+        h = np.sqrt(1 - a**2)
         last_means = np.mean(parts.particles, axis=0)
         means = a * parts.particles[:, 0:2] + (1 - a) * last_means[0:2]
 
         # df, sig
         for ind in range(means.shape[1]):
-            std = np.sqrt(h ** 2 * np.cov(parts.particles[:, ind]))
+            std = np.sqrt(h**2 * np.cov(parts.particles[:, ind]))
 
             for ii, m in enumerate(means):
                 new_parts[ii, ind] = stats.norm.rvs(
@@ -179,7 +181,7 @@ def __gsm_import_dist_factory():
 def _setup_qkf(dt, use_sqkf, m_vars):
     state_mat = np.vstack(
         (
-            np.hstack((np.eye(2), dt * np.eye(2), dt ** 2 / 2 * np.eye(2))),
+            np.hstack((np.eye(2), dt * np.eye(2), dt**2 / 2 * np.eye(2))),
             np.hstack((np.zeros((2, 2)), np.eye(2), dt * np.eye(2))),
             np.hstack((np.zeros((2, 2)), np.zeros((2, 2)), np.eye(2))),
         )
@@ -209,7 +211,7 @@ def _setup_qkf(dt, use_sqkf, m_vars):
 def _setup_ukf(dt, m_vars):
     state_mat = np.vstack(
         (
-            np.hstack((np.eye(2), dt * np.eye(2), dt ** 2 / 2 * np.eye(2))),
+            np.hstack((np.eye(2), dt * np.eye(2), dt**2 / 2 * np.eye(2))),
             np.hstack((np.zeros((2, 2)), np.eye(2), dt * np.eye(2))),
             np.hstack((np.zeros((2, 2)), np.zeros((2, 2)), np.eye(2))),
         )
@@ -252,7 +254,7 @@ def __gsm_import_w_factory(inov_cov):
 def _setup_qkf_gsm(dt, rng, use_sqkf, m_dfs, m_vars):
     state_mat = np.vstack(
         (
-            np.hstack((np.eye(2), dt * np.eye(2), dt ** 2 / 2 * np.eye(2))),
+            np.hstack((np.eye(2), dt * np.eye(2), dt**2 / 2 * np.eye(2))),
             np.hstack((np.zeros((2, 2)), np.eye(2), dt * np.eye(2))),
             np.hstack((np.zeros((2, 2)), np.zeros((2, 2)), np.eye(2))),
         )
@@ -316,7 +318,7 @@ def _setup_qkf_gsm(dt, rng, use_sqkf, m_dfs, m_vars):
 def _setup_ukf_gsm(dt, rng, m_dfs, m_vars):
     state_mat = np.vstack(
         (
-            np.hstack((np.eye(2), dt * np.eye(2), dt ** 2 / 2 * np.eye(2))),
+            np.hstack((np.eye(2), dt * np.eye(2), dt**2 / 2 * np.eye(2))),
             np.hstack((np.zeros((2, 2)), np.eye(2), dt * np.eye(2))),
             np.hstack((np.zeros((2, 2)), np.zeros((2, 2)), np.eye(2))),
         )
@@ -384,7 +386,7 @@ def _setup_ukf_gsm(dt, rng, m_dfs, m_vars):
 def _setup_ekf_gsm(dt, rng, m_dfs, m_vars):
     state_mat = np.vstack(
         (
-            np.hstack((np.eye(2), dt * np.eye(2), dt ** 2 / 2 * np.eye(2))),
+            np.hstack((np.eye(2), dt * np.eye(2), dt**2 / 2 * np.eye(2))),
             np.hstack((np.zeros((2, 2)), np.eye(2), dt * np.eye(2))),
             np.hstack((np.zeros((2, 2)), np.zeros((2, 2)), np.eye(2))),
         )
@@ -426,7 +428,7 @@ def _setup_ekf_gsm(dt, rng, m_dfs, m_vars):
     filt.set_state_model(ode_lst=ode_lst)
     filt.proc_noise = proc_cov
     filt.set_measurement_model(meas_fun_lst=[meas_fun_range, meas_fun_bearing])
-    filt.cov = np.diag((5 * 10 ** 4, 5 * 10 ** 4, 8, 8, 0.02, 0.02))
+    filt.cov = np.diag((5 * 10**4, 5 * 10**4, 8, 8, 0.02, 0.02))
 
     # define measurement noise filters
     num_parts = 500
@@ -456,15 +458,24 @@ def _setup_ekf_gsm(dt, rng, m_dfs, m_vars):
 
     return filt, state_mat, meas_fun
 
+
 def _setup_ctktr_kf(dt):
     m_noise = 0.02
     p_noise = 0.2
 
     filt = gfilts.KalmanFilter()
     filt.set_state_model(dyn_obj=gdyn.CoordinatedTurnKnown(turn_rate=0))
-    filt.set_measurement_model(meas_mat=np.array([[1.0, 0.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 1.0]]))
-    filt.proc_noise = np.eye(5) * np.array([[p_noise ** 2]])
-    filt.meas_noise = m_noise ** 2 * np.diag([1.0, 1.0, 1.0 * np.pi/180])
+    filt.set_measurement_model(
+        meas_mat=np.array(
+            [
+                [1.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 1.0],
+            ]
+        )
+    )
+    filt.proc_noise = np.eye(5) * np.array([[p_noise**2]])
+    filt.meas_noise = m_noise**2 * np.diag([1.0, 1.0, 1.0 * np.pi / 180])
 
     return filt
 
@@ -481,18 +492,22 @@ def _setup_imm_ctktr_kf(dt):
     m_mat = np.array([[1, 0, 0, 0, 0], [0, 1, 0, 0, 0], [0, 0, 0, 0, 1]])
     # m_mat = np.array([[1, 0, 0, 0, 0], [0, 1, 0, 0, 0]])
     in_filt1.set_measurement_model(meas_mat=m_mat)
-    in_filt1.proc_noise = np.diag([1, 1, 1, 1, 3 * np.pi / 180]) * np.array([[p_noise ** 2]])
+    in_filt1.proc_noise = np.diag([1, 1, 1, 1, 3 * np.pi / 180]) * np.array(
+        [[p_noise**2]]
+    )
     # in_filt1.meas_noise = m_noise ** 2 * np.diag([1.0, 1.0])
-    in_filt1.meas_noise = m_noise ** 2 * np.diag([1.0, 1.0, 3 * np.pi / 180])
+    in_filt1.meas_noise = m_noise**2 * np.diag([1.0, 1.0, 3 * np.pi / 180])
 
     in_filt2 = gfilts.KalmanFilter()
     in_filt2.set_state_model(dyn_obj=dyn_obj2)
     in_filt2.set_measurement_model(meas_mat=m_mat)
-    in_filt2.proc_noise = np.diag([1, 1, 1, 1, 3 * np.pi / 180]) * np.array([[p_noise ** 2]])
+    in_filt2.proc_noise = np.diag([1, 1, 1, 1, 3 * np.pi / 180]) * np.array(
+        [[p_noise**2]]
+    )
     # in_filt2.meas_noise = m_noise ** 2 * np.diag([1.0, 1.0])
-    in_filt2.meas_noise = m_noise ** 2 * np.diag([1.0, 1.0, 3 * np.pi / 180])
+    in_filt2.meas_noise = m_noise**2 * np.diag([1.0, 1.0, 3 * np.pi / 180])
 
-    v = np.sqrt(2 ** 2 + 1 ** 2)
+    v = np.sqrt(2**2 + 1**2)
     angle = 60 * np.pi / 180
     vx0 = v * np.cos(angle)
     vy0 = v * np.sin(angle)
@@ -501,9 +516,14 @@ def _setup_imm_ctktr_kf(dt):
 
     model_trans = np.array([[1 - 1 / 200, 1 / 200], [1 / 200, 1 - 1 / 200]])
 
-    init_means = [np.array([10.0, 0.0, 0.0, 1.0, 0.0]).reshape(-1, 1), np.array([10.0, 0.0, 0.0, 1.0, 0.0]).reshape(-1, 1)]
-    init_covs = [np.diag(np.array([1.0, 1.0, 1.0, 1.0, 3.0 * np.pi/180])) ** 2,
-                          np.diag(np.array([1.0, 1.0, 1.0, 1.0, 3.0 * np.pi/180])) ** 2]
+    init_means = [
+        np.array([10.0, 0.0, 0.0, 1.0, 0.0]).reshape(-1, 1),
+        np.array([10.0, 0.0, 0.0, 1.0, 0.0]).reshape(-1, 1),
+    ]
+    init_covs = [
+        np.diag(np.array([1.0, 1.0, 1.0, 1.0, 3.0 * np.pi / 180])) ** 2,
+        np.diag(np.array([1.0, 1.0, 1.0, 1.0, 3.0 * np.pi / 180])) ** 2,
+    ]
 
     filt = gfilts.InteractingMultipleModel()
     filt.initialize_filters(filt_list, model_trans)
@@ -551,7 +571,7 @@ def _setup_smc_glmb_double_int_birth(num_parts, rng):
     ]
 
     birth_terms = []
-    for (m, p) in zip(means, b_probs):
+    for m, p in zip(means, b_probs):
         distrib = gdistrib.ParticleDistribution()
         spread = 2 * np.sqrt(np.diag(cov)).reshape(m.shape)
         l_bnd = m - spread / 2
@@ -568,15 +588,15 @@ def _setup_usmc_glmb_double_int_birth(num_parts, rng):
     # means = [np.array([10., 0., 0., 2.]).reshape((4, 1))]
     means = [np.array([20, 80, 3, -3]).reshape((4, 1))]
     # cov = np.diag(np.array([1, 1, 1, 1]))**2
-    cov = np.diag([3 ** 2, 5 ** 2, 2 ** 2, 1])
+    cov = np.diag([3**2, 5**2, 2**2, 1])
     b_probs = [
         0.005,
     ]
-    alpha = 10 ** -3
+    alpha = 10**-3
     kappa = 0
 
     birth_terms = []
-    for (m, p) in zip(means, b_probs):
+    for m, p in zip(means, b_probs):
         distrib = gdistrib.ParticleDistribution()
         spread = 2 * np.sqrt(np.diag(cov)).reshape(m.shape)
         l_bnd = m - spread / 2
@@ -595,22 +615,24 @@ def _setup_usmc_glmb_double_int_birth(num_parts, rng):
 def _setup_gsm_birth():
     # note: GSM filter assumes noise is conditionally Gaussian so use GM with 1 term for birth
     means = [np.array([2000, 2000, 20, 20, 0, 0]).reshape((6, 1))]
-    cov = [np.diag((5 * 10 ** 4, 5 * 10 ** 4, 8, 8, 0.02, 0.02))]
+    cov = [np.diag((5 * 10**4, 5 * 10**4, 8, 8, 0.02, 0.02))]
     gm0 = smodels.GaussianMixture(means=means, covariances=cov, weights=[1])
 
     return [
         (gm0, 0.05),
     ]
 
+
 def _setup_imm_phd_ct_ktr_birth():
     mu = [np.array([10.0, 0.0, 1.0, 2.0, 0.0]).reshape((5, 1))]
-    cov = [np.diag(np.array([1, 1, 0.1, 0.1, 3 * np.pi/180])) ** 2]
+    cov = [np.diag(np.array([1, 1, 0.1, 0.1, 3 * np.pi / 180])) ** 2]
     # cov = [np.diag(np.array([1, 1, 1, 1, np.pi])) ** 2]
     gm0 = smodels.GaussianMixture(means=mu, covariances=cov, weights=[1])
 
     return [
         gm0,
     ]
+
 
 def _setup_imm_gm_glmb_ct_ktr_birth():
     mu = [np.array([10.0, 0.0, 1, 2, 0.0]).reshape((5, 1))]
@@ -622,12 +644,14 @@ def _setup_imm_gm_glmb_ct_ktr_birth():
         (gm0, 0.003),
     ]
 
+
 def _setup_pmbm_double_int_birth():
     mu = [np.array([10.0, 0.0, 1, 2]).reshape((4, 1))]
     cov = [np.diag(np.array([1, 1, 1, 1])) ** 2]
-    #may need to tune weights
+    # may need to tune weights
     gm0 = smodels.GaussianMixture(means=mu, covariances=cov, weights=[0.000001])
     return [gm0]
+
 
 def _gen_meas(tt, true_agents, proc_noise, meas_noise, rng):
     meas_in = []
@@ -674,6 +698,7 @@ def _gen_meas_gsm(tt, true_agents, proc_noise, meas_fun, m_dfs, m_vars, rng):
         meas_out.append(meas.copy())
     return meas_out
 
+
 def _gen_meas_imm(tt, true_agents, proc_noise, meas_noise, rng):
     meas_in = []
     m_mat = np.array([[1, 0, 0, 0, 0], [0, 1, 0, 0, 0], [0, 0, 0, 0, 1]])
@@ -685,6 +710,7 @@ def _gen_meas_imm(tt, true_agents, proc_noise, meas_noise, rng):
         m = rng.multivariate_normal(meas.flatten(), meas_noise).reshape(meas.shape)
         meas_in.append(m.copy())
     return meas_in
+
 
 def _gen_meas_ms(tt, true_agents, proc_noise, meas_noise, rng, meas_model_list):
     meas_in = []
@@ -712,17 +738,19 @@ def _update_true_agents(true_agents, tt, dt, b_model, rng):
         out.append(x.copy())
     return out
 
+
 def _update_true_agents_phd_spawn(true_agents, tt, dt, b_model, rng):
     out = _prop_true(true_agents, tt, dt)
 
     if any(np.abs(tt - np.array([0, 1, 1.5])) < 1e-8):
         x = b_model[0].means[0] + (rng.standard_normal(4) * np.ones(4)).reshape((4, 1))
         out.append(x.copy())
-    
+
     if any(np.abs(tt - np.array([2.5, 3.5])) < 1e-8):
         y = true_agents[0] + (rng.standard_normal(4) * np.ones(4)).reshape((4, 1))
         out.append(y.copy())
     return out
+
 
 def _update_true_agents_prob(true_agents, tt, dt, b_model, rng):
     out = _prop_true(true_agents, tt, dt)
@@ -772,6 +800,7 @@ def _update_true_agents_gsm(true_agents, tt, b_model, rng, state_mat):
         out.append(gm.means[0].copy().reshape(gm.means[0].shape))
     return out
 
+
 def _update_true_agents_imm(true_agents, tt, dt, b_model, rng, state_mat):
     # out = _prop_true(true_agents, tt, dt)
     out = []
@@ -779,10 +808,14 @@ def _update_true_agents_imm(true_agents, tt, dt, b_model, rng, state_mat):
         out.append(state_mat @ x)
 
     if any(np.abs(tt - np.array([0, 1, 1.5])) < 1e-8):
-    # if any(np.abs(tt - np.array([0])) < 1e-8):
-        x = b_model[0].means[0] + (rng.standard_normal(5) * np.array([1, 1, 1, 1, 3 * np.pi/180])).reshape((5, 1))
+        # if any(np.abs(tt - np.array([0])) < 1e-8):
+        x = b_model[0].means[0] + (
+            rng.standard_normal(5) * np.array([1, 1, 1, 1, 3 * np.pi / 180])
+        ).reshape((5, 1))
         out.append(x.copy())
     return out
+
+
 def _update_true_agents_prob_imm(true_agents, tt, dt, b_model, rng, state_mat):
     # out = _prop_true(true_agents, tt, dt)
     out = []
@@ -793,18 +826,22 @@ def _update_true_agents_prob_imm(true_agents, tt, dt, b_model, rng, state_mat):
     for gm, w in b_model:
         if p <= w:
             print("birth at {:.2f}".format(tt))
-            x = gm.means[0] + np.array([1, 1, 1, 1, 3 * np.pi/180]).reshape((5, 1)) * (rng.standard_normal(5)).reshape((5, 1))
+            x = gm.means[0] + np.array([1, 1, 1, 1, 3 * np.pi / 180]).reshape(
+                (5, 1)
+            ) * (rng.standard_normal(5)).reshape((5, 1))
             out.append(x.copy())
     return out
+
 
 def _update_true_agents_pmbm(true_agents, tt, dt, b_model, rng):
     out = _prop_true(true_agents, tt, dt)
     # if any(np.abs(tt - np.array([0, 1])) < 1e-8):
     if any(np.abs(tt - np.array([0, 0.05, 1, 1.5])) < 1e-8):
-    # if any(np.abs(tt - np.array([0])) < 1e-8):
+        # if any(np.abs(tt - np.array([0])) < 1e-8):
         x = b_model[0].means[0] + (rng.standard_normal(4) * np.ones(4)).reshape((4, 1))
         out.append(x.copy())
     return out
+
 
 def test_PHD():  # noqa
     print("Test PHD")
@@ -836,7 +873,6 @@ def test_PHD():  # noqa
     true_agents = []
     global_true = []
     for kk, tt in enumerate(time):
-
         true_agents = _update_true_agents(true_agents, tt, dt, b_model, rng)
         global_true.append(deepcopy(true_agents))
 
@@ -877,7 +913,8 @@ def test_PHD():  # noqa
     if debug_plots:
         phd.plot_states([0, 1])
     assert len(true_agents) == phd.cardinality, "Wrong cardinality"
-    
+
+
 def test_PHD_spawning():
     print("Test PHD with Target Spawning")
     rng = rnd.default_rng(global_seed)
@@ -910,7 +947,6 @@ def test_PHD_spawning():
     true_agents = []
     global_true = []
     for kk, tt in enumerate(time):
-
         true_agents = _update_true_agents_phd_spawn(true_agents, tt, dt, b_model, rng)
         global_true.append(deepcopy(true_agents))
 
@@ -982,7 +1018,6 @@ def test_CPHD():  # noqa
     true_agents = []
     global_true = []
     for kk, tt in enumerate(time):
-
         true_agents = _update_true_agents(true_agents, tt, dt, b_model, rng)
         global_true.append(deepcopy(true_agents))
 
@@ -1004,6 +1039,7 @@ def test_CPHD():  # noqa
         phd.plot_states([0, 1])
         phd.plot_ospa_history(time=time, time_units="s")
     assert len(true_agents) == phd.cardinality, "Wrong cardinality"
+
 
 def test_CPHD_spawning():  # noqa
     print("Test CPHD with Target Spawning")
@@ -1037,7 +1073,6 @@ def test_CPHD_spawning():  # noqa
     true_agents = []
     global_true = []
     for kk, tt in enumerate(time):
-
         true_agents = _update_true_agents_phd_spawn(true_agents, tt, dt, b_model, rng)
         global_true.append(deepcopy(true_agents))
 
@@ -1060,6 +1095,7 @@ def test_CPHD_spawning():  # noqa
         phd.plot_ospa_history(time=time, time_units="s")
     assert len(true_agents) == phd.cardinality, "Wrong cardinality"
 
+
 def test_IMM_PHD():
     print("Test IMM-PHD")
 
@@ -1068,12 +1104,11 @@ def test_IMM_PHD():
     dt = 0.01
     t0, t1 = 0, 10 + dt
 
-
     filt = _setup_imm_ctktr_kf(dt)
     state_mat_args = (dt,)
     meas_fun_args = ("useless arg",)
 
-    #change for imm???
+    # change for imm???
     b_model = _setup_imm_phd_ct_ktr_birth()
 
     RFS_base_args = {
@@ -1092,7 +1127,9 @@ def test_IMM_PHD():
     time = np.arange(t0, t1, dt)
     true_agents = []
     global_true = []
-    state_mat = gdyn.CoordinatedTurnKnown(turn_rate=0 * np.pi / 180).get_state_mat(0, dt)
+    state_mat = gdyn.CoordinatedTurnKnown(turn_rate=0 * np.pi / 180).get_state_mat(
+        0, dt
+    )
     saved_times = []
     # fig = plt.figure()
     # fig.add_subplot(111)
@@ -1101,15 +1138,25 @@ def test_IMM_PHD():
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
         if tt > 5:
-            state_mat = gdyn.CoordinatedTurnKnown(turn_rate = 60 * np.pi / 180).get_state_mat(tt, dt)
+            state_mat = gdyn.CoordinatedTurnKnown(
+                turn_rate=60 * np.pi / 180
+            ).get_state_mat(tt, dt)
 
-        true_agents = _update_true_agents_imm(true_agents, tt, dt, b_model, rng, state_mat)
+        true_agents = _update_true_agents_imm(
+            true_agents, tt, dt, b_model, rng, state_mat
+        )
         global_true.append(deepcopy(true_agents))
 
         filt_args = {"state_mat_args": state_mat_args}
         phd.predict(tt, filt_args=filt_args)
 
-        meas_in = _gen_meas_imm(tt, true_agents, filt.in_filt_list[0].proc_noise*1e-3, filt.in_filt_list[0].meas_noise*1e-3, rng)
+        meas_in = _gen_meas_imm(
+            tt,
+            true_agents,
+            filt.in_filt_list[0].proc_noise * 1e-3,
+            filt.in_filt_list[0].meas_noise * 1e-3,
+            rng,
+        )
 
         filt_args = {"meas_fun_args": meas_fun_args}
         phd.correct(
@@ -1128,7 +1175,7 @@ def test_IMM_PHD():
     for ii, lst in enumerate(global_true):
         true_covs.append([])
         for jj in lst:
-            true_covs[ii].append(np.diag([7e-5, 7e-5, 0.1, 0.1, 1.0 * np.pi / 180.]))
+            true_covs[ii].append(np.diag([7e-5, 7e-5, 0.1, 0.1, 1.0 * np.pi / 180.0]))
     # phd.calculate_ospa(global_true, 5, 1)
     # if debug_plots:
     #     phd.plot_ospa_history(time=time, time_units="s")
@@ -1160,12 +1207,11 @@ def test_IMM_CPHD():
     dt = 0.01
     t0, t1 = 0, 10 + dt
 
-
     filt = _setup_imm_ctktr_kf(dt)
     state_mat_args = (dt,)
     meas_fun_args = ("useless arg",)
 
-    #change for imm???
+    # change for imm???
     b_model = _setup_imm_phd_ct_ktr_birth()
 
     RFS_base_args = {
@@ -1182,7 +1228,9 @@ def test_IMM_CPHD():
     time = np.arange(t0, t1, dt)
     true_agents = []
     global_true = []
-    state_mat = gdyn.CoordinatedTurnKnown(turn_rate=0 * np.pi / 180).get_state_mat(0, dt)
+    state_mat = gdyn.CoordinatedTurnKnown(turn_rate=0 * np.pi / 180).get_state_mat(
+        0, dt
+    )
 
     # fig = plt.figure()
     # fig.add_subplot(111)
@@ -1192,16 +1240,26 @@ def test_IMM_CPHD():
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
         if tt > 5:
-            state_mat = gdyn.CoordinatedTurnKnown(turn_rate = 5 * np.pi / 180).get_state_mat(tt, dt)
+            state_mat = gdyn.CoordinatedTurnKnown(
+                turn_rate=5 * np.pi / 180
+            ).get_state_mat(tt, dt)
         if np.mod(kk, 588) == 0:
             asdfhpoa = 123
-        true_agents = _update_true_agents_imm(true_agents, tt, dt, b_model, rng, state_mat)
+        true_agents = _update_true_agents_imm(
+            true_agents, tt, dt, b_model, rng, state_mat
+        )
         global_true.append(deepcopy(true_agents))
 
         filt_args = {"state_mat_args": state_mat_args}
         phd.predict(tt, filt_args=filt_args)
 
-        meas_in = _gen_meas_imm(tt, true_agents, filt.in_filt_list[0].proc_noise*1e-3, filt.in_filt_list[0].meas_noise*1e-3, rng)
+        meas_in = _gen_meas_imm(
+            tt,
+            true_agents,
+            filt.in_filt_list[0].proc_noise * 1e-3,
+            filt.in_filt_list[0].meas_noise * 1e-3,
+            rng,
+        )
 
         filt_args = {"meas_fun_args": meas_fun_args}
         phd.correct(
@@ -1221,6 +1279,7 @@ def test_IMM_CPHD():
         phd.plot_states([0, 1])
         phd.plot_ospa_history(time=time, time_units="s")
     # assert len(true_agents) == phd.cardinality, "Wrong cardinality"
+
 
 def test_GLMB():  # noqa
     print("Test GM-GLMB")
@@ -1248,7 +1307,7 @@ def test_GLMB():  # noqa
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     glmb = tracker.GeneralizedLabeledMultiBernoulli(**GLMB_args, **RFS_base_args)
@@ -1334,7 +1393,7 @@ def test_STM_GLMB():  # noqa
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     glmb = tracker.STMGeneralizedLabeledMultiBernoulli(**GLMB_args, **RFS_base_args)
@@ -1422,7 +1481,7 @@ def test_SMC_GLMB():  # noqa
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     SMC_args = {
@@ -1511,7 +1570,7 @@ def test_USMC_GLMB():  # noqa
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     SMC_args = {
@@ -1603,7 +1662,7 @@ def test_MCMC_USMC_GLMB():  # noqa
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     SMC_args = {
@@ -1671,14 +1730,14 @@ def test_JGLMB():  # noqa
         "prob_survive": 0.98,
         "in_filter": filt,
         "birth_terms": b_model,
-        "clutter_den": 1 ** -3,
-        "clutter_rate": 1 ** -3,
+        "clutter_den": 1**-3,
+        "clutter_rate": 1**-3,
     }
     JGLMB_args = {
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     jglmb = tracker.JointGeneralizedLabeledMultiBernoulli(**JGLMB_args, **RFS_base_args)
@@ -1739,14 +1798,14 @@ def test_JGLMB_high_birth():  # noqa
         "prob_survive": 0.98,
         "in_filter": filt,
         "birth_terms": b_model,
-        "clutter_den": 1 ** -3,
-        "clutter_rate": 1 ** -3,
+        "clutter_den": 1**-3,
+        "clutter_rate": 1**-3,
     }
     JGLMB_args = {
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     jglmb = tracker.JointGeneralizedLabeledMultiBernoulli(**JGLMB_args, **RFS_base_args)
@@ -1806,14 +1865,14 @@ def test_STM_JGLMB():  # noqa
         "prob_survive": 0.98,
         "in_filter": filt,
         "birth_terms": b_model,
-        "clutter_den": 1 ** -3,
-        "clutter_rate": 1 ** -3,
+        "clutter_den": 1**-3,
+        "clutter_rate": 1**-3,
     }
     JGLMB_args = {
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     jglmb = tracker.STMJointGeneralizedLabeledMultiBernoulli(
@@ -1903,7 +1962,7 @@ def test_SMC_JGLMB():  # noqa
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     SMC_args = {
@@ -1992,7 +2051,7 @@ def test_USMC_JGLMB():  # noqa
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     SMC_args = {
@@ -2084,7 +2143,7 @@ def test_MCMC_USMC_JGLMB():  # noqa
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     SMC_args = {
@@ -2163,7 +2222,7 @@ def test_QKF_JGLMB():  # noqa
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     jglmb = tracker.JointGeneralizedLabeledMultiBernoulli(**JGLMB_args, **RFS_base_args)
@@ -2232,7 +2291,7 @@ def test_SQKF_JGLMB():  # noqa
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     jglmb = tracker.GeneralizedLabeledMultiBernoulli(**JGLMB_args, **RFS_base_args)
@@ -2300,7 +2359,7 @@ def test_UKF_JGLMB():  # noqa
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     jglmb = tracker.JointGeneralizedLabeledMultiBernoulli(**JGLMB_args, **RFS_base_args)
@@ -2371,7 +2430,7 @@ def test_QKF_GSM_JGLMB():  # noqa
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     jglmb = tracker.GSMJointGeneralizedLabeledMultiBernoulli(
@@ -2446,7 +2505,7 @@ def test_SQKF_GSM_JGLMB():  # noqa
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     jglmb = tracker.GSMJointGeneralizedLabeledMultiBernoulli(
@@ -2520,7 +2579,7 @@ def test_UKF_GSM_JGLMB():  # noqa
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     jglmb = tracker.GSMJointGeneralizedLabeledMultiBernoulli(
@@ -2593,7 +2652,7 @@ def test_QKF_GLMB():  # noqa
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     glmb = tracker.GeneralizedLabeledMultiBernoulli(**GLMB_args, **RFS_base_args)
@@ -2662,7 +2721,7 @@ def test_SQKF_GLMB():  # noqa
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     glmb = tracker.GeneralizedLabeledMultiBernoulli(**GLMB_args, **RFS_base_args)
@@ -2730,7 +2789,7 @@ def test_UKF_GLMB():  # noqa
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     glmb = tracker.GeneralizedLabeledMultiBernoulli(**GLMB_args, **RFS_base_args)
@@ -2801,7 +2860,7 @@ def test_QKF_GSM_GLMB():  # noqa
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     glmb = tracker.GSMGeneralizedLabeledMultiBernoulli(**GLMB_args, **RFS_base_args)
@@ -2879,7 +2938,7 @@ def test_SQKF_GSM_GLMB():  # noqa
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     glmb = tracker.GSMGeneralizedLabeledMultiBernoulli(**GLMB_args, **RFS_base_args)
@@ -2951,7 +3010,7 @@ def test_UKF_GSM_GLMB():  # noqa
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     glmb = tracker.GSMGeneralizedLabeledMultiBernoulli(**GLMB_args, **RFS_base_args)
@@ -3023,7 +3082,7 @@ def test_EKF_GSM_GLMB():  # noqa
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     glmb = tracker.GSMGeneralizedLabeledMultiBernoulli(**GLMB_args, **RFS_base_args)
@@ -3090,7 +3149,7 @@ def test_GLMB_ct_ktr():
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     glmb = tracker.GeneralizedLabeledMultiBernoulli(**GLMB_args, **RFS_base_args)
@@ -3104,16 +3163,22 @@ def test_GLMB_ct_ktr():
     time = np.arange(t0, t1, dt)
     true_agents = []
     global_true = []
-    state_mat = gdyn.CoordinatedTurnKnown(turn_rate = 0 * np.pi / 180).get_state_mat(0, dt)
+    state_mat = gdyn.CoordinatedTurnKnown(turn_rate=0 * np.pi / 180).get_state_mat(
+        0, dt
+    )
     print("\tStarting sim")
     for kk, tt in enumerate(time):
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
         if tt > 5:
-            state_mat = gdyn.CoordinatedTurnKnown(turn_rate = 5 * np.pi / 180).get_state_mat(tt, dt)
+            state_mat = gdyn.CoordinatedTurnKnown(
+                turn_rate=5 * np.pi / 180
+            ).get_state_mat(tt, dt)
 
-        true_agents = _update_true_agents_prob_imm(true_agents, tt, dt, b_model, rng, state_mat)
+        true_agents = _update_true_agents_prob_imm(
+            true_agents, tt, dt, b_model, rng, state_mat
+        )
         global_true.append(deepcopy(true_agents))
 
         pred_args = {"state_mat_args": state_mat_args}
@@ -3153,6 +3218,7 @@ def test_GLMB_ct_ktr():
 
     assert len(true_agents) == glmb.cardinality, "Wrong cardinality"
 
+
 # TODO: TL;DR Need to figure out what's going on with the weights,
 # IMM weights are really low, which causes low costs, which causes hypotheses to not be accepted.
 # May have something to do with GLMB tuning, may have something to do with IMM tuning
@@ -3183,7 +3249,7 @@ def test_IMM_GLMB():
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
     glmb = tracker.IMMGeneralizedLabeledMultiBernoulli(**GLMB_args, **RFS_base_args)
@@ -3197,22 +3263,34 @@ def test_IMM_GLMB():
     time = np.arange(t0, t1, dt)
     true_agents = []
     global_true = []
-    state_mat = gdyn.CoordinatedTurnKnown(turn_rate = 0 * np.pi / 180).get_state_mat(0, dt)
+    state_mat = gdyn.CoordinatedTurnKnown(turn_rate=0 * np.pi / 180).get_state_mat(
+        0, dt
+    )
     print("\tStarting sim")
     for kk, tt in enumerate(time):
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
         if tt > 5:
-            state_mat = gdyn.CoordinatedTurnKnown(turn_rate = 5 * np.pi / 180).get_state_mat(tt, dt)
+            state_mat = gdyn.CoordinatedTurnKnown(
+                turn_rate=5 * np.pi / 180
+            ).get_state_mat(tt, dt)
 
-        true_agents = _update_true_agents_prob_imm(true_agents, tt, dt, b_model, rng, state_mat)
+        true_agents = _update_true_agents_prob_imm(
+            true_agents, tt, dt, b_model, rng, state_mat
+        )
         global_true.append(deepcopy(true_agents))
 
         pred_args = {"state_mat_args": state_mat_args}
         glmb.predict(tt, filt_args=pred_args)
 
-        meas_in = _gen_meas_imm(tt, true_agents, filt.in_filt_list[0].proc_noise, filt.in_filt_list[0].meas_noise, rng)
+        meas_in = _gen_meas_imm(
+            tt,
+            true_agents,
+            filt.in_filt_list[0].proc_noise,
+            filt.in_filt_list[0].meas_noise,
+            rng,
+        )
 
         cor_args = {"meas_fun_args": meas_fun_args}
         glmb.correct(tt, meas_in, filt_args=cor_args)
@@ -3246,6 +3324,7 @@ def test_IMM_GLMB():
 
     assert len(true_agents) == glmb.cardinality, "Wrong cardinality"
 
+
 def test_IMM_JGLMB():  # noqa
     print("Test IMM-JGLMB")
 
@@ -3265,37 +3344,51 @@ def test_IMM_JGLMB():  # noqa
         "prob_survive": 0.98,
         "in_filter": filt,
         "birth_terms": b_model,
-        "clutter_den": 1 ** -3,
-        "clutter_rate": 1 ** -3,
+        "clutter_den": 1**-3,
+        "clutter_rate": 1**-3,
     }
     JGLMB_args = {
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
-    jglmb = tracker.IMMJointGeneralizedLabeledMultiBernoulli(**JGLMB_args, **RFS_base_args)
+    jglmb = tracker.IMMJointGeneralizedLabeledMultiBernoulli(
+        **JGLMB_args, **RFS_base_args
+    )
 
     time = np.arange(t0, t1, dt)
     true_agents = []
     global_true = []
-    state_mat = gdyn.CoordinatedTurnKnown(turn_rate = 0 * np.pi / 180).get_state_mat(0, dt)
+    state_mat = gdyn.CoordinatedTurnKnown(turn_rate=0 * np.pi / 180).get_state_mat(
+        0, dt
+    )
     print("\tStarting sim")
     for kk, tt in enumerate(time):
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
         if tt > 5:
-            state_mat = gdyn.CoordinatedTurnKnown(turn_rate = 5 * np.pi / 180).get_state_mat(tt, dt)
+            state_mat = gdyn.CoordinatedTurnKnown(
+                turn_rate=5 * np.pi / 180
+            ).get_state_mat(tt, dt)
 
-        true_agents = _update_true_agents_prob_imm(true_agents, tt, dt, b_model, rng, state_mat)
+        true_agents = _update_true_agents_prob_imm(
+            true_agents, tt, dt, b_model, rng, state_mat
+        )
         global_true.append(deepcopy(true_agents))
 
         pred_args = {"state_mat_args": state_mat_args}
         jglmb.predict(tt, filt_args=pred_args)
 
-        meas_in = _gen_meas_imm(tt, true_agents, filt.in_filt_list[0].proc_noise, filt.in_filt_list[0].meas_noise, rng)
+        meas_in = _gen_meas_imm(
+            tt,
+            true_agents,
+            filt.in_filt_list[0].proc_noise,
+            filt.in_filt_list[0].meas_noise,
+            rng,
+        )
 
         cor_args = {"meas_fun_args": meas_fun_args}
         jglmb.correct(tt, meas_in, filt_args=cor_args)
@@ -3316,6 +3409,7 @@ def test_IMM_JGLMB():  # noqa
 
     assert len(true_agents) == jglmb.cardinality, "Wrong cardinality"
 
+
 def test_MS_JGLMB():  # noqa
     print("Test MS-GM-JGLMB")
 
@@ -3324,7 +3418,7 @@ def test_MS_JGLMB():  # noqa
     dt = 0.01
     t0, t1 = 0, 5.5 + dt
 
-    #TODO: CHANGE THIS TO A GCI FILTER SETUP
+    # TODO: CHANGE THIS TO A GCI FILTER SETUP
     filt = _setup_double_int_gci_kf(dt)
 
     state_mat_args = (dt,)
@@ -3337,17 +3431,19 @@ def test_MS_JGLMB():  # noqa
         "prob_survive": 0.98,
         "in_filter": filt,
         "birth_terms": b_model,
-        "clutter_den": 1 ** -3,
-        "clutter_rate": 1 ** -3,
+        "clutter_den": 1**-3,
+        "clutter_rate": 1**-3,
     }
     JGLMB_args = {
         "req_births": len(b_model) + 1,
         "req_surv": 1000,
         "req_upd": 800,
-        "prune_threshold": 10 ** -5,
+        "prune_threshold": 10**-5,
         "max_hyps": 1000,
     }
-    jglmb = tracker.MSJointGeneralizedLabeledMultiBernoulli(**JGLMB_args, **RFS_base_args)
+    jglmb = tracker.MSJointGeneralizedLabeledMultiBernoulli(
+        **JGLMB_args, **RFS_base_args
+    )
     time = np.arange(t0, t1, dt)
     true_agents = []
     global_true = []
@@ -3362,7 +3458,14 @@ def test_MS_JGLMB():  # noqa
         pred_args = {"state_mat_args": state_mat_args}
         jglmb.predict(tt, filt_args=pred_args)
 
-        meas_in = _gen_meas_ms(tt, true_agents, filt.proc_noise, filt.meas_noise_list, rng, filt.meas_model_list)
+        meas_in = _gen_meas_ms(
+            tt,
+            true_agents,
+            filt.proc_noise,
+            filt.meas_noise_list,
+            rng,
+            filt.meas_model_list,
+        )
 
         cor_args = {"meas_fun_args": meas_fun_args}
         jglmb.correct(tt, meas_in, filt_args=cor_args)
@@ -3382,6 +3485,7 @@ def test_MS_JGLMB():  # noqa
     print("\tExpecting {} agents".format(len(true_agents)))
 
     assert len(true_agents) == jglmb.cardinality, "Wrong cardinality"
+
 
 def test_PMBM():
     print("Test PMBM")
@@ -3407,8 +3511,8 @@ def test_PMBM():
     }
     PMBM_args = {
         "req_upd": 800,
-        "prune_threshold": 10 ** -4,
-        "exist_threshold" : 10 ** -5,
+        "prune_threshold": 10**-4,
+        "exist_threshold": 10**-5,
         "max_hyps": 1000,
     }
     pmbm = tracker.PoissonMultiBernoulliMixture(**PMBM_args, **RFS_base_args)
@@ -3428,7 +3532,7 @@ def test_PMBM():
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
         if np.mod(kk, 150) == 0:
-            kekw=1
+            kekw = 1
         true_agents = _update_true_agents_pmbm(true_agents, tt, dt, b_model, rng)
         global_true.append(deepcopy(true_agents))
 
@@ -3444,7 +3548,7 @@ def test_PMBM():
         pmbm.cleanup(extract_kwargs=extract_kwargs)
         # pmbm.plot_states([0, 1], meas_inds=[0, 1])
 
-        lel=1
+        lel = 1
     extract_kwargs = {"update": False, "calc_states": True}
     pmbm.extract_states(**extract_kwargs)
 
@@ -3474,7 +3578,7 @@ def test_PMBM():
     # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
 
-#MBM is a special case of PMBM, probably delete the below
+# MBM is a special case of PMBM, probably delete the below
 
 # def test_MBM():
 #     print("Test MBM")
@@ -3535,29 +3639,29 @@ def test_PMBM():
 #         true_covs.append([])
 #         for jj in lst:
 #             true_covs[ii].append(np.diag([7e-5, 7e-5, 0.1, 0.1]))
-    # mbm.calculate_ospa(global_true, 5, 1)
-    # if debug_plots:
-    #     mbm.plot_ospa_history(time=time, time_units="s")
-    # mbm.calculate_ospa(global_true, 5, 1, core_method=SingleObjectDistance.MANHATTAN)
-    # if debug_plots:
-    #     mbm.plot_ospa_history(time=time, time_units="s")
-    # mbm.calculate_ospa(
-    #     global_true,
-    #     1,
-    #     1,
-    #     core_method=SingleObjectDistance.HELLINGER,
-    #     true_covs=true_covs,
-    # )
-    # if debug_plots:
-    #     mbm.plot_ospa_history(time=time, time_units="s")
-    # mbm.calculate_ospa(global_true, 5, 1, core_method=SingleObjectDistance.MAHALANOBIS)
-    # if debug_plots:
-    #     mbm.plot_ospa_history(time=time, time_units="s")
-    # if debug_plots:
-    #     mbm.plot_states([0, 1])
-    # print(len(true_agents))
-    # print(mbm.cardinality)
-    # assert len(true_agents) == mbm.cardinality, "Wrong cardinality"
+# mbm.calculate_ospa(global_true, 5, 1)
+# if debug_plots:
+#     mbm.plot_ospa_history(time=time, time_units="s")
+# mbm.calculate_ospa(global_true, 5, 1, core_method=SingleObjectDistance.MANHATTAN)
+# if debug_plots:
+#     mbm.plot_ospa_history(time=time, time_units="s")
+# mbm.calculate_ospa(
+#     global_true,
+#     1,
+#     1,
+#     core_method=SingleObjectDistance.HELLINGER,
+#     true_covs=true_covs,
+# )
+# if debug_plots:
+#     mbm.plot_ospa_history(time=time, time_units="s")
+# mbm.calculate_ospa(global_true, 5, 1, core_method=SingleObjectDistance.MAHALANOBIS)
+# if debug_plots:
+#     mbm.plot_ospa_history(time=time, time_units="s")
+# if debug_plots:
+#     mbm.plot_states([0, 1])
+# print(len(true_agents))
+# print(mbm.cardinality)
+# assert len(true_agents) == mbm.cardinality, "Wrong cardinality"
 
 
 # %% main
@@ -3608,7 +3712,7 @@ if __name__ == "__main__":
     # test_IMM_JGLMB()
     # test_MS_JGLMB()
 
-    #test_GLMB()
+    # test_GLMB()
     test_PMBM()
 
     end = timer()

@@ -1,5 +1,5 @@
 [project]
-name = "caser"
+name = "carbs"
 # version = "0.0.0"
 dynamic = ["version"]
 description = "A package for Guidance, Navigation, and Control (GNC) for Autonomous Swarms Using Random finite sets (RFS)."
@@ -38,8 +38,8 @@ dependencies = [
 
 [project.urls]
 homepage = "http://lager.ua.edu/"
-documentation = "https://drjdlarson.github.io/caser/"
-repository = "https://github.com/drjdlarson/caser"
+documentation = "https://drjdlarson.github.io/carbs/"
+repository = "https://github.com/drjdlarson/carbs"
 # changelog = "https://github.com/me/spam/blob/master/CHANGELOG.md"
 
 
@@ -55,7 +55,7 @@ local_scheme = "no-local-version"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-junit_suite_name = "caser"
+junit_suite_name = "carbs"
 junit_log_passing_tests = true
 junit_duration_report = "call"
 junit_logging = "all"
