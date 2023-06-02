@@ -25,7 +25,7 @@ jobs:
       
       # Since this is a pure python wheel we can just do this
       - name: Build wheel
-        run: python -m pip wheel --no-binary ":caser:" -w dist --no-deps .
+        run: python -m pip wheel --no-binary ":carbs:" -w dist --no-deps .
 
       - uses: actions/upload-artifact@v3
         with:

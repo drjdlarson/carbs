@@ -16,8 +16,12 @@ from copy import deepcopy
 import warnings
 import itertools
 
-from caser.utilities.graphs import k_shortest, murty_m_best, murty_m_best_all_meas_assigned
-from caser.utilities.sampling import gibbs, mm_gibbs
+from carbs.utilities.graphs import (
+    k_shortest,
+    murty_m_best,
+    murty_m_best_all_meas_assigned,
+)
+from carbs.utilities.sampling import gibbs, mm_gibbs
 
 from gncpy.math import log_sum_exp, get_elem_sym_fnc
 import gncpy.plotting as pltUtil
@@ -231,7 +235,7 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
 
     @property
     def prob_death(self):
-        """Compliment of :attr:`caser.swarm_estimator.RandomFinitSetBase.prob_survive`."""
+        """Compliment of :attr:`carbs.swarm_estimator.RandomFinitSetBase.prob_survive`."""
         return 1 - self.prob_survive
 
     @property
@@ -307,7 +311,7 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
         if len(meas) == 0:
             return []
         valid = []
-        for (m, p) in zip(means, covs):
+        for m, p in zip(means, covs):
             meas_mat = self.filter.get_meas_mat(m, **meas_mat_args)
             est = self.filter.get_est_meas(m, **est_meas_args)
             meas_pred_cov = meas_mat @ p @ meas_mat.T + self.filter.meas_noise
@@ -315,7 +319,7 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
             v_s = la.cholesky(meas_pred_cov.T)
             inv_sqrt_m_cov = la.inv(v_s)
 
-            for (ii, z) in enumerate(meas):
+            for ii, z in enumerate(meas):
                 if ii in valid:
                     continue
                 inov = z - est
@@ -332,7 +336,10 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
 
         for lst in truth:
             num_objs = np.max(
-                [num_objs, np.sum([_x is not None and _x.size > 0 for _x in lst]).astype(int)]
+                [
+                    num_objs,
+                    np.sum([_x is not None and _x.size > 0 for _x in lst]).astype(int),
+                ]
             )
         # create matrices
         true_mat = np.nan * np.ones((state_dim, num_timesteps, num_objs))
@@ -656,7 +663,7 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         prune_threshold=1e-5,
         merge_threshold=4,
         max_gauss=100,
-        **kwargs
+        **kwargs,
     ):
         self.gating_on = gating_on
         self.inv_chi2_gate = inv_chi2_gate
@@ -939,22 +946,22 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
                     comp_inds.append(ii)
             w_new = sum([self._gaussMix.weights[ii] for ii in comp_inds])
             m_new = (
-                    sum(
-                        [
-                            self._gaussMix.weights[ii] * self._gaussMix.means[ii]
-                            for ii in comp_inds
-                        ]
-                    )
-                    / w_new
+                sum(
+                    [
+                        self._gaussMix.weights[ii] * self._gaussMix.means[ii]
+                        for ii in comp_inds
+                    ]
+                )
+                / w_new
             )
             p_new = (
-                    sum(
-                        [
-                            self._gaussMix.weights[ii] * self._gaussMix.covariances[ii]
-                            for ii in comp_inds
-                        ]
-                    )
-                    / w_new
+                sum(
+                    [
+                        self._gaussMix.weights[ii] * self._gaussMix.covariances[ii]
+                        for ii in comp_inds
+                    ]
+                )
+                / w_new
             )
 
             w_lst.append(w_new)
@@ -1018,7 +1025,7 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         timestep. If this is called with `enable_extract` set to true then
         the extract states method does not need to be called separately. It is
         recommended to call this function instead of
-        :meth:`caser.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`
+        :meth:`carbs.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`
         directly.
 
         Parameters
@@ -1126,7 +1133,7 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         state_color=None,
         x_lbl=None,
         y_lbl=None,
-        **kwargs
+        **kwargs,
     ):
         """Plots the best estimate for the states.
 
@@ -1346,7 +1353,7 @@ class ProbabilityHypothesisDensity(RandomFiniteSetBase):
         repeat=True,
         repeat_delay=1000,
         save_path=None,
-        **kwargs
+        **kwargs,
     ):
         """Creates an animated plot of the states.
 
@@ -1573,7 +1580,7 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
         timestep: float
             current timestep
         **kwargs : dict, optional
-            See :meth:caser.swarm_estimator.tracker.ProbabilityHypothesisDensity.predict`
+            See :meth:carbs.swarm_estimator.tracker.ProbabilityHypothesisDensity.predict`
             for the available arguments.
 
         Returns
@@ -2044,22 +2051,26 @@ class CardinalizedPHD(ProbabilityHypothesisDensity):
 
         return f_hndl
 
-class _IMMPHDBase:
 
-    def __init__(self,
-                 filter_lst = None,
-                 model_trans = None,
-                 init_weights = None,
-                 init_means = None,
-                 init_covs = None,
-                 **kwargs):
+class _IMMPHDBase:
+    def __init__(
+        self,
+        filter_lst=None,
+        model_trans=None,
+        init_weights=None,
+        init_means=None,
+        init_covs=None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         if not isinstance(self.filter, gfilts.InteractingMultipleModel):
             raise TypeError("Filter must be InteractingMultipleModel")
         if filter_lst is not None and model_trans is not None:
             self.filter.initialize_filter(filter_lst, model_trans)
         if init_means is not None and init_covs is not None:
-            self.filter.initialize_states(init_means, init_covs, init_weights=init_weights)
+            self.filter.initialize_states(
+                init_means, init_covs, init_weights=init_weights
+            )
         self._filter_states = []
 
     def _predict_prob_density(self, timestep, probDensity, filt_args):
@@ -2110,7 +2121,7 @@ class _IMMPHDBase:
                     init_covs.append(c)
                 self.filter.initialize_states(init_means, init_covs)
                 self._filter_states.append(self.filter.save_filter_state())
-        #new imm filter state to represent new means
+        # new imm filter state to represent new means
 
     def _prune(self):
         inds = super()._prune()
@@ -2121,7 +2132,7 @@ class _IMMPHDBase:
             else:
                 raise RuntimeError("Pruned index is greater than filter state length")
 
-        #remove pruned indices from filter state indicies
+        # remove pruned indices from filter state indicies
 
     def _merge(self):
         """Merges nearby hypotheses."""
@@ -2170,13 +2181,27 @@ class _IMMPHDBase:
                 fw_new = 0
 
                 for ii in comp_inds:
-                    ml_new = ml_new + self._gaussMix.weights[ii] * self._filter_states[ii]["mean_list"][kk]
-                    cl_new = cl_new + self._gaussMix.weights[ii] * self._filter_states[ii]["cov_list"][kk]
-                    fw_new = fw_new + self._gaussMix.weights[ii] * self._filter_states[ii]["filt_weights"][kk]
+                    ml_new = (
+                        ml_new
+                        + self._gaussMix.weights[ii]
+                        * self._filter_states[ii]["mean_list"][kk]
+                    )
+                    cl_new = (
+                        cl_new
+                        + self._gaussMix.weights[ii]
+                        * self._filter_states[ii]["cov_list"][kk]
+                    )
+                    fw_new = (
+                        fw_new
+                        + self._gaussMix.weights[ii]
+                        * self._filter_states[ii]["filt_weights"][kk]
+                    )
                 new_mean_list.append(ml_new / w_new)
                 new_cov_list.append(cl_new / w_new)
                 new_filt_weights.append(fw_new / w_new)
-            self.filter.initialize_states(new_mean_list, new_cov_list, init_weights=new_filt_weights)
+            self.filter.initialize_states(
+                new_mean_list, new_cov_list, init_weights=new_filt_weights
+            )
             fs_lst.append(self.filter.save_filter_state())
             w_lst.append(w_new)
             m_lst.append(m_new)
@@ -2190,6 +2215,7 @@ class _IMMPHDBase:
             means=m_lst, covariances=p_lst, weights=w_lst
         )
         # probably need to overwrite, do this later
+
     def _cap(self):
         inds = super()._cap()
         inds = sorted(inds, reverse=True)
@@ -2199,10 +2225,12 @@ class _IMMPHDBase:
             else:
                 raise RuntimeError("Capped index is greater than filter state length")
         # remove capped indices from filter state indicies
+
+
 class IMMProbabilityHypothesisDensity(_IMMPHDBase, ProbabilityHypothesisDensity):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        #TODO: init_filter_states_for_imm
+        # TODO: init_filter_states_for_imm
 
     def _correct_prob_density(self, timestep, meas, probDensity, filt_args):
         """Corrects the probability densities.
@@ -2251,7 +2279,7 @@ class IMMProbabilityHypothesisDensity(_IMMPHDBase, ProbabilityHypothesisDensity)
         )
 
     def correct(
-            self, timestep, meas_in, meas_mat_args={}, est_meas_args={}, filt_args={}
+        self, timestep, meas_in, meas_mat_args={}, est_meas_args={}, filt_args={}
     ):
         meas = deepcopy(meas_in)
 
@@ -2280,7 +2308,9 @@ class IMMProbabilityHypothesisDensity(_IMMPHDBase, ProbabilityHypothesisDensity)
             for ii in range(0, len(self.filter.in_filt_list)):
                 m_list.append(m)
                 c_list.append(c)
-            self.filter.initialize_states(m_list, c_list, init_weights=saved_filt_weights[jj])
+            self.filter.initialize_states(
+                m_list, c_list, init_weights=saved_filt_weights[jj]
+            )
             self._filter_states.append(self.filter.save_filter_state())
 
         self._gaussMix = gm
@@ -2319,9 +2349,7 @@ class IMMCardinalizedPHD(_IMMPHDBase, CardinalizedPHD):
                 # self.filter.initialize_states(probDensity.means[p_ind], probDensity.covariances[p_ind],
                 #                               init_weights=self.weight_list[p_ind])
 
-                (mean, qz) = self.filter.correct(
-                    timestep, meas[z_ind], **filt_args
-                )
+                (mean, qz) = self.filter.correct(timestep, meas[z_ind], **filt_args)
                 qz_temp[p_ind, z_ind] = qz
                 mean_temp[z_ind, :, p_ind] = np.ndarray.flatten(mean)
                 cov_temp[z_ind, p_ind, :, :] = self.filter.cov.copy()
@@ -2398,7 +2426,9 @@ class IMMCardinalizedPHD(_IMMPHDBase, CardinalizedPHD):
             for ff in range(0, len(self.filter.in_filt_list)):
                 m_list.append(m)
                 c_list.append(c)
-            self.filter.initialize_states(m_list, c_list, init_weights=saved_filt_weights[jj])
+            self.filter.initialize_states(
+                m_list, c_list, init_weights=saved_filt_weights[jj]
+            )
             old_filt_states.append(self.filter.save_filter_state())
 
         for ee in range(0, zlen):
@@ -2426,6 +2456,7 @@ class IMMCardinalizedPHD(_IMMPHDBase, CardinalizedPHD):
             old_filt_states.append(filt_state)
         self._filter_states = old_filt_states
         return gmix
+
 
 class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
     """Delta-Generalized Labeled Multi-Bernoulli filter.
@@ -2524,7 +2555,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         max_hyps=3000,
         decimal_places=2,
         save_measurements=False,
-        **kwargs
+        **kwargs,
     ):
         self.req_births = req_births
         self.req_surv = req_surv
@@ -2733,7 +2764,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
     def _gen_birth_hyps(self, paths, hyp_costs):
         birth_hyps = []
         tot_b_prob = sum([np.log(1 - x[1]) for x in self.birth_terms])
-        for (p, c) in zip(paths, hyp_costs):
+        for p, c in zip(paths, hyp_costs):
             hyp = self._HypothesisHelper()
             # NOTE: this may suffer from underflow and can be improved
             hyp.assoc_prob = tot_b_prob - c.item()
@@ -2774,7 +2805,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
 
     def _gen_surv_tab(self, timestep, filt_args):
         surv_tab = []
-        for (ii, track) in enumerate(self._track_tab):
+        for ii, track in enumerate(self._track_tab):
             entry = self._predict_track_tab_entry(track, timestep, filt_args)
 
             surv_tab.append(entry)
@@ -2802,7 +2833,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
                     [np.log(avg_prob_death[ii]) for ii in hyp.track_set]
                 )
 
-                for (p, c) in zip(paths, hyp_cost):
+                for p, c in zip(paths, hyp_cost):
                     new_hyp = self._HypothesisHelper()
                     new_hyp.assoc_prob = pdeath_log + np.log(hyp.assoc_prob) - c.item()
                     if len(p) > 0:
@@ -3050,7 +3081,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
                     pmd_log = np.sum(
                         [np.log(avg_prob_miss_detect[ii]) for ii in p_hyp.track_set]
                     )
-                    for (a, c) in zip(assigns, costs):
+                    for a, c in zip(assigns, costs):
                         new_hyp = self._HypothesisHelper()
                         new_hyp.assoc_prob = (
                             -self.clutter_rate
@@ -3084,12 +3115,12 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         track_cnt = len(nnz_inds)
 
         new_inds = [None] * len(self._track_tab)
-        for (ii, v) in zip(nnz_inds, [ii for ii in range(0, track_cnt)]):
+        for ii, v in zip(nnz_inds, [ii for ii in range(0, track_cnt)]):
             new_inds[ii] = v
         # new_tab = [self._TabEntry().setup(self._track_tab[ii]) for ii in nnz_inds]
         new_tab = [self._track_tab[ii] for ii in nnz_inds]
         new_hyps = []
-        for (ii, hyp) in enumerate(self._hypotheses):
+        for ii, hyp in enumerate(self._hypotheses):
             if len(hyp.track_set) > 0:
                 track_set = [new_inds[ii] for ii in hyp.track_set]
                 if None in track_set:
@@ -3276,13 +3307,13 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         -------
         state_sets : list
             Each element is the state list from the normal
-            :meth:`caser.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`.
+            :meth:`carbs.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`.
         label_sets : list
             Each element is the label list from the normal
-            :meth:`caser.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`
+            :meth:`carbs.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`
         cov_sets : list
             Each element is the covariance list from the normal
-            :meth:`caser.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`
+            :meth:`carbs.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`
             if the covariances are saved.
         probs : list
             Each element is the association probability for the extracted states.
@@ -3391,7 +3422,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         incremented. If this is called with `enable_extract` set to true then
         the extract states method does not need to be called separately. It is
         recommended to call this function instead of
-        :meth:`caser.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`
+        :meth:`carbs.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`
         directly.
 
         Parameters
@@ -3551,7 +3582,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         x_lbl=None,
         y_lbl=None,
         meas_tx_fnc=None,
-        **kwargs
+        **kwargs,
     ):
         """Plots the best estimate for the states and labels.
 
@@ -3983,7 +4014,7 @@ class _STMGLMBBase:
         for ent in self._track_tab:
             scalings.extend(ent.probDensity.scalings)
         valid = []
-        for (m, p) in zip(means, scalings):
+        for m, p in zip(means, scalings):
             meas_mat = self.filter.get_meas_mat(m, **kwargs)
             est = self.filter.get_est_meas(m, **kwargs)
             factor = (
@@ -3994,7 +4025,7 @@ class _STMGLMBBase:
             P_zz = meas_mat @ p @ meas_mat.T + factor * self.filter.meas_noise
             inv_P = la.inv(P_zz)
 
-            for (ii, z) in enumerate(meas):
+            for ii, z in enumerate(meas):
                 if ii in valid:
                     continue
                 innov = z - est
@@ -4473,9 +4504,7 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
                 (np.arange(0, num_births), num_births + np.array(p_hyp.track_set))
             ).astype(int)
             lselmask = np.zeros((len(self._track_tab), num_meas), dtype="bool")
-            lselmask[tindices,] = gate_meas_indc[
-                tindices,
-            ]
+            lselmask[tindices,] = gate_meas_indc[tindices,]
 
             keys = np.array([np.sort(gate_meas_indices[lselmask])])
             mindices = self._unique_faster(keys)
@@ -4523,9 +4552,7 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
                 ]
             # Assign updated hypotheses from gibbs sampler
             for c, cst in enumerate(costs.flatten()):
-                update_hyp_cmp_temp = assigns[
-                    c,
-                ]
+                update_hyp_cmp_temp = assigns[c,]
                 update_hyp_cmp_idx = cpreds * (update_hyp_cmp_temp + 1) + np.append(
                     np.array([np.arange(0, num_births)]),
                     num_births + np.array([p_hyp.track_set]),
@@ -4652,8 +4679,10 @@ class IMMJointGeneralizedLabeledMultiBernoulli(
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+
 class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernoulli):
-    """ Implementation of the Multiple Sensor JGLMB Filter"""
+    """Implementation of the Multiple Sensor JGLMB Filter"""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -4704,9 +4733,9 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
         )
 
         other_jc_terms = (
-                np.tile((avg_prob_surv * avg_prob_detect).reshape((-1, 1)), (1, num_meas))
-                * all_cost_m
-                / (clutter)
+            np.tile((avg_prob_surv * avg_prob_detect).reshape((-1, 1)), (1, num_meas))
+            * all_cost_m
+            / (clutter)
         )
 
         # Full joint cost matrix for sensor s
@@ -4734,11 +4763,9 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
                 (np.arange(0, num_births), num_births + np.array(p_hyp.track_set))
             ).astype(int)
             lselmask = np.zeros((len(self._track_tab), num_meas), dtype="bool")
-            lselmask[tindices,] = gate_meas_indc[
-                tindices,
-            ]
+            lselmask[tindices,] = gate_meas_indc[tindices,]
 
-            #verify sort works for 3d arrays similar to 2d arrays, may have to do this list-wise
+            # verify sort works for 3d arrays similar to 2d arrays, may have to do this list-wise
             keys = np.array([np.sort(gate_meas_indices[lselmask])])
             mindices = self._unique_faster(keys)
 
@@ -4778,9 +4805,7 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
                 ]
             # Assign updated hypotheses from gibbs sampler
             for c, cst in enumerate(costs.flatten()):
-                update_hyp_cmp_temp = assigns[
-                    c,
-                ]
+                update_hyp_cmp_temp = assigns[c,]
                 update_hyp_cmp_idx = cpreds * (update_hyp_cmp_temp + 1) + np.append(
                     np.array([np.arange(0, num_births)]),
                     num_births + np.array([p_hyp.track_set]),
@@ -4853,7 +4878,9 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
         num_sens = len(meas)
 
         # missed detection tracks
-        [up_tab, all_cost_m] = self._gen_cor_tab(num_meas, all_combs, timestep, filt_args)
+        [up_tab, all_cost_m] = self._gen_cor_tab(
+            num_meas, all_combs, timestep, filt_args
+        )
 
         up_hyp = self._gen_cor_hyps(
             num_meas,
@@ -4875,7 +4902,6 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
 
 
 class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
-
     class _TabEntry:
         def __init__(self):
             self.label = ()  # time step born, index of birth model born from
@@ -4930,16 +4956,17 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
             self.states = []
             self.covs = []
 
-    def __init__(self,
-                 req_upd=None,
-                 gating_on=False,
-                 prune_threshold=10**-15,
-                 exist_threshold=10**-15,
-                 max_hyps=3000,
-                 decimal_places=2,
-                 save_measurements=False,
-                 **kwargs):
-
+    def __init__(
+        self,
+        req_upd=None,
+        gating_on=False,
+        prune_threshold=10**-15,
+        exist_threshold=10**-15,
+        max_hyps=3000,
+        decimal_places=2,
+        save_measurements=False,
+        **kwargs,
+    ):
         self.req_upd = req_upd
         self.gating_on = gating_on
         self.prune_threshold = prune_threshold
@@ -5121,15 +5148,15 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
     def _gen_pred_tab(self, timestep, filt_args):
         pred_tab = []
 
-        for (ii, ent) in enumerate(self._track_tab):
+        for ii, ent in enumerate(self._track_tab):
             entry = self._predict_det_tab_entry(ent, timestep, filt_args)
             pred_tab.append(entry)
 
         return pred_tab
-    def predict(self, timestep, filt_args={}):
-        #all objects are propagated forward regardless of previous associations.
-        self._track_tab = self._gen_pred_tab(timestep, filt_args)
 
+    def predict(self, timestep, filt_args={}):
+        # all objects are propagated forward regardless of previous associations.
+        self._track_tab = self._gen_pred_tab(timestep, filt_args)
 
     def _calc_avg_prob_det_mdet(self, cor_tab):
         avg_prob_detect = self.prob_detection * np.ones(len(cor_tab))
@@ -5137,7 +5164,9 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
 
         return avg_prob_detect, avg_prob_miss_detect
 
-    def _inner_correct(self, timestep, meas, filt_state, distrib_weight, state, filt_args):
+    def _inner_correct(
+        self, timestep, meas, filt_state, distrib_weight, state, filt_args
+    ):
         self.filter.load_filter_state(filt_state)
         cor_state, likely = self.filter.correct(timestep, meas, state, **filt_args)
         new_f_state = self.filter.save_filter_state()
@@ -5149,7 +5178,6 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
         new_w = distrib_weight * likely
 
         return new_f_state, new_s, new_c, new_w
-
 
     def _correct_track_tab_entry(self, meas, tab, timestep, filt_args):
         new_tab = self._TabEntry().setup(tab)
@@ -5184,16 +5212,18 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
         new_w = [w + np.finfo(float).eps for w in new_w]
         if not depleted:
             cost = (new_tab.exist_prob * self.prob_detection * np.sum(new_w).item()) / (
-                (1 - new_tab.exist_prob + new_tab.exist_prob * self.prob_miss_detection) * np.sum(tab.distrib_weights_hist[-1]).item()
+                (1 - new_tab.exist_prob + new_tab.exist_prob * self.prob_miss_detection)
+                * np.sum(tab.distrib_weights_hist[-1]).item()
             )
             # new_tab.distrib_weights_hist[-1] = [w / cost for w in new_w]
             nw_list = [w * new_tab.exist_prob * self.prob_detection for w in new_w]
-            new_tab.distrib_weights_hist[-1] = [w / np.sum(nw_list).item() for w in nw_list]
+            new_tab.distrib_weights_hist[-1] = [
+                w / np.sum(nw_list).item() for w in nw_list
+            ]
             new_tab.exist_prob = 1
         else:
             cost = 0
         return new_tab, cost
-
 
     def _correct_birth_tab_entry(self, meas, distrib, timestep, filt_args):
         new_tab = self._TabEntry()
@@ -5203,7 +5233,7 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
         for ii, (m, cov) in enumerate(zip(distrib.means, distrib.covariances)):
             self._baseFilter.cov = cov.copy()
             if isinstance(self._baseFilter, gfilts.UnscentedKalmanFilter) or isinstance(
-                    self._baseFilter, gfilts.UKFGaussianScaleMixtureFilter
+                self._baseFilter, gfilts.UKFGaussianScaleMixtureFilter
             ):
                 self._baseFilter.init_sigma_points(m)
             filt_states[ii] = self._baseFilter.save_filter_state()
@@ -5213,13 +5243,7 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
         new_c_hist = [None] * len(filt_states)
         new_w = [None] * len(filt_states)
         depleted = False
-        for ii, (f_state, state, w) in enumerate(
-            zip(
-                filt_states,
-                states,
-                weights
-            )
-        ):
+        for ii, (f_state, state, w) in enumerate(zip(filt_states, states, weights)):
             try:
                 (
                     new_f_states[ii],
@@ -5228,9 +5252,9 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
                     new_w[ii],
                 ) = self._inner_correct(timestep, meas, f_state, w, state, filt_args)
             except (
-                    gerr.ParticleDepletionError,
-                    gerr.ParticleEstimationDomainError,
-                    gerr.ExtremeMeasurementNoiseError,
+                gerr.ParticleDepletionError,
+                gerr.ParticleEstimationDomainError,
+                gerr.ExtremeMeasurementNoiseError,
             ):
                 return None, 0
         new_tab.filt_states = new_f_states
@@ -5239,9 +5263,18 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
         new_tab.distrib_weights_hist = []
         new_w = [w + np.finfo(float).eps for w in new_w]
         if not depleted:
-            cost = np.sum(new_w).item() * self.prob_detection + self.clutter_rate * self.clutter_den
-            new_tab.distrib_weights_hist.append([w / np.sum(new_w).item() for w in new_w])
-            new_tab.exist_prob = self.prob_detection * cost / (self.clutter_rate * self.clutter_den + self.prob_detection * cost)
+            cost = (
+                np.sum(new_w).item() * self.prob_detection
+                + self.clutter_rate * self.clutter_den
+            )
+            new_tab.distrib_weights_hist.append(
+                [w / np.sum(new_w).item() for w in new_w]
+            )
+            new_tab.exist_prob = (
+                self.prob_detection
+                * cost
+                / (self.clutter_rate * self.clutter_den + self.prob_detection * cost)
+            )
         else:
             cost = 0
         new_tab.time_index = self._time_index_cntr
@@ -5252,12 +5285,20 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
         num_birth = len(self.birth_terms)
         up_tab = [None] * ((num_meas + 1) * num_pred + num_meas * num_birth)
 
-        #Missed Detection Updates
+        # Missed Detection Updates
         for ii, track in enumerate(self._track_tab):
             up_tab[ii] = self._TabEntry().setup(track)
-            sum_non_exist_prob = (1 - up_tab[ii].exist_prob + up_tab[ii].exist_prob * self.prob_miss_detection)
-            up_tab[ii].distrib_weights_hist.append([w * sum_non_exist_prob for w in up_tab[ii].distrib_weights_hist[-1]])
-            up_tab[ii].exist_prob = (up_tab[ii].exist_prob * self.prob_miss_detection)/(sum_non_exist_prob)
+            sum_non_exist_prob = (
+                1
+                - up_tab[ii].exist_prob
+                + up_tab[ii].exist_prob * self.prob_miss_detection
+            )
+            up_tab[ii].distrib_weights_hist.append(
+                [w * sum_non_exist_prob for w in up_tab[ii].distrib_weights_hist[-1]]
+            )
+            up_tab[ii].exist_prob = (
+                up_tab[ii].exist_prob * self.prob_miss_detection
+            ) / (sum_non_exist_prob)
             up_tab[ii].meas_assoc_hist.append(None)
         # left_cost_m = np.zeros()
         # all_cost_m = np.zeros((num_pred + num_birth * num_meas, num_meas))
@@ -5267,7 +5308,9 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
         for emm, z in enumerate(meas):
             for ii, ent in enumerate(self._track_tab):
                 s_to_ii = num_pred * emm + ii + num_pred
-                (up_tab[s_to_ii], cost) = self._correct_track_tab_entry(z, ent, timestep, filt_args)
+                (up_tab[s_to_ii], cost) = self._correct_track_tab_entry(
+                    z, ent, timestep, filt_args
+                )
                 if up_tab[s_to_ii] is not None:
                     up_tab[s_to_ii].meas_assoc_hist.append(emm)
                 all_cost_m[emm, ii] = cost
@@ -5276,10 +5319,12 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
         for emm, z in enumerate(meas):
             for ii, b_model in enumerate(self.birth_terms):
                 s_to_ii = ((num_meas + 1) * num_pred) + emm * num_birth + ii
-                (up_tab[s_to_ii], cost) = self._correct_birth_tab_entry(z, b_model, timestep, filt_args)
+                (up_tab[s_to_ii], cost) = self._correct_birth_tab_entry(
+                    z, b_model, timestep, filt_args
+                )
                 if up_tab[s_to_ii] is not None:
                     up_tab[s_to_ii].meas_assoc_hist.append(emm)
-                all_cost_m[emm, emm+num_pred] = cost
+                all_cost_m[emm, emm + num_pred] = cost
         return up_tab, all_cost_m
 
     # TODO This function probably not effective.
@@ -5293,33 +5338,39 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
         #             s_to_ii = num_pred + jj + ii * num_birth
         #             hyp.track_set.append(s_to_ii)
         #             hyp.assoc_prob = hyp.assoc_prob + np.sum(b_model.weights) * self.prob_detection + self.clutter_rate * self.clutter_den # Not correct, need to do a better job of determining associations
-        for ii in range (0, num_meas):
+        for ii in range(0, num_meas):
             for jj, b_model in enumerate(self.birth_terms):
                 s_to_ii = num_pred + jj + ii * num_birth
                 w_sum = np.sum(b_model.weights)
                 hyp = self._HypothesisHelper()
-                hyp.assoc_prob = w_sum * self.prob_detection + self.clutter_rate * self.clutter_den
+                hyp.assoc_prob = (
+                    w_sum * self.prob_detection + self.clutter_rate * self.clutter_den
+                )
                 hyp.track_set = [s_to_ii]
                 new_hyps.append(hyp)
         self._hypotheses = self._hypotheses + new_hyps
         assoc_prob_sum = np.sum([x.assoc_prob for x in self._hypotheses.copy()])
-        new_assoc_probs = [x.assoc_prob / assoc_prob_sum for x in self._hypotheses.copy()]
+        new_assoc_probs = [
+            x.assoc_prob / assoc_prob_sum for x in self._hypotheses.copy()
+        ]
         for ii, hyp in enumerate(self._hypotheses):
             hyp.assoc_prob = new_assoc_probs[ii]
 
     # TODO: Rewrite gen_cor_hyps to fit the pmbm
-    # need to write a function to generate hypotheses, or if not, then have cost mat 
+    # need to write a function to generate hypotheses, or if not, then have cost mat
     # pick best global hyps
     # also maybe need to include a set of poisson components separately,
     # i don't think this is necessary, but it may be
     def _gen_cor_hyps(
-            self, num_meas, avg_prob_detect, avg_prob_miss_detect, all_cost_m, cor_tab
+        self, num_meas, avg_prob_detect, avg_prob_miss_detect, all_cost_m, cor_tab
     ):
         num_pred = len(self._track_tab)
         up_hyps = []
         if num_meas == 0:
             for hyp in self._hypotheses:
-                pmd_log = np.sum([np.log(avg_prob_miss_detect[ii]) for ii in hyp.track_set])
+                pmd_log = np.sum(
+                    [np.log(avg_prob_miss_detect[ii]) for ii in hyp.track_set]
+                )
                 hyp.assoc_prob = -self.clutter_rate + pmd_log + np.log(hyp.assoc_prob)
                 up_hyps.append(hyp)
         else:
@@ -5331,7 +5382,10 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
                 if p_hyp.num_tracks == 0:  # all clutter
                     inds = np.arange(num_pred, num_pred + num_meas).tolist()
                 else:
-                    inds = p_hyp.track_set + np.arange(num_pred, num_pred+num_meas).tolist()
+                    inds = (
+                        p_hyp.track_set
+                        + np.arange(num_pred, num_pred + num_meas).tolist()
+                    )
 
                 cost_m = all_cost_m[:, inds]
                 max_row_inds, max_col_inds = np.where(cost_m >= np.inf)
@@ -5352,7 +5406,7 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
                 #     m=1
                 [assigns, costs] = murty_m_best_all_meas_assigned(neg_log, m)
                 """assignment matrix consisting of 0 or 1 entries such that each column sums
-                to one and each row sums to zero or one""" #(transposed from the paper)
+                to one and each row sums to zero or one"""  # (transposed from the paper)
                 # assigns = assigns.T
                 # assigns = np.delete(assigns, 1, axis=0)
                 # costs = np.delete(costs, 1, axis=0)
@@ -5360,14 +5414,14 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
                 pmd_log = np.sum(
                     [np.log(avg_prob_miss_detect[ii]) for ii in p_hyp.track_set]
                 )
-                for (a, c) in zip(assigns, costs):
+                for a, c in zip(assigns, costs):
                     new_hyp = self._HypothesisHelper()
                     new_hyp.assoc_prob = (
-                            -self.clutter_rate
-                            + num_meas * np.log(clutter)
-                            + pmd_log
-                            + np.log(p_hyp.assoc_prob)
-                            - c
+                        -self.clutter_rate
+                        + num_meas * np.log(clutter)
+                        + pmd_log
+                        + np.log(p_hyp.assoc_prob)
+                        - c
                     )
                     if p_hyp.num_tracks == 0:
                         new_track_list = list(num_pred * a + num_pred * num_meas)
@@ -5380,14 +5434,18 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
                                     # new_track_list.append(((np.array(t)) * ms + num_pred))
                                     new_track_list.append((num_pred * ms + np.array(t)))
                                 else:
-                                    new_track_list.append(num_pred * ms - ii * (num_pred - 1))
+                                    new_track_list.append(
+                                        num_pred * ms - ii * (num_pred - 1)
+                                    )
                         elif len(p_hyp.track_set) < len(a):
                             for ii, ms in enumerate(a):
                                 if len(p_hyp.track_set) >= ms:
                                     # coiuld be this one, trying -1 first
                                     # new_track_list.append(((np.array(p_hyp.track_set[(ms-ii)]) + num_pred) * ms))
                                     # new_track_list.append(((np.array(p_hyp.track_set[(ms-1)]) + num_pred) * ms + num_meas * ii))
-                                    new_track_list.append(ms * num_pred + p_hyp.track_set[(ms-1)])
+                                    new_track_list.append(
+                                        ms * num_pred + p_hyp.track_set[(ms - 1)]
+                                    )
                                 elif ms > len(p_hyp.track_set):
                                     new_track_list.append(num_meas * num_pred + ms)
 
@@ -5395,7 +5453,6 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
 
                     new_hyp.track_set = new_track_list
                     up_hyps.append(new_hyp)
-
 
         lse = log_sum_exp([x.assoc_prob for x in up_hyps])
         for ii in range(0, len(up_hyps)):
@@ -5412,12 +5469,12 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
         track_cnt = len(nnz_inds)
 
         new_inds = [None] * len(self._track_tab)
-        for (ii, v) in zip(nnz_inds, [ii for ii in range(0, track_cnt)]):
+        for ii, v in zip(nnz_inds, [ii for ii in range(0, track_cnt)]):
             new_inds[ii] = v
         # new_tab = [self._TabEntry().setup(self._track_tab[ii]) for ii in nnz_inds]
         new_tab = [self._track_tab[ii] for ii in nnz_inds]
         new_hyps = []
-        for (ii, hyp) in enumerate(self._hypotheses):
+        for ii, hyp in enumerate(self._hypotheses):
             if len(hyp.track_set) > 0:
                 track_set = [new_inds[ii] for ii in hyp.track_set]
                 if None in track_set:
@@ -5482,7 +5539,9 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
 
         avg_prob_det, avg_prob_mdet = self._calc_avg_prob_det_mdet(cor_tab)
 
-        cor_hyps = self._gen_cor_hyps(num_meas, avg_prob_det, avg_prob_mdet, all_cost_m, cor_tab)
+        cor_hyps = self._gen_cor_hyps(
+            num_meas, avg_prob_det, avg_prob_mdet, all_cost_m, cor_tab
+        )
 
         self._track_tab = cor_tab
         self._hypotheses = cor_hyps
@@ -5493,7 +5552,7 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
         states = [None] * len(track.state_hist)
         covs = [None] * len(track.state_hist)
         for ii, (w_lst, s_lst, c_lst) in enumerate(
-                zip(track.distrib_weights_hist, track.state_hist, track.cov_hist)
+            zip(track.distrib_weights_hist, track.state_hist, track.cov_hist)
         ):
             idx = np.argmax(w_lst)
             states[ii] = s_lst[idx]
@@ -5505,10 +5564,10 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
         used_meas_inds = [[] for ii in range(self._time_index_cntr)]
         new_extract_hists = [None] * len(self._hypotheses[idx_cmp].track_set)
         for ii, track in enumerate(
-                [
-                    self._track_tab[trk_ind]
-                    for trk_ind in self._hypotheses[idx_cmp].track_set
-                ]
+            [
+                self._track_tab[trk_ind]
+                for trk_ind in self._hypotheses[idx_cmp].track_set
+            ]
         ):
             new_extract_hists[ii] = self._ExtractHistHelper()
             new_extract_hists[ii].meas_ind_hist = track.meas_assoc_hist.copy()
@@ -5519,7 +5578,7 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
             ) = self._extract_helper(track)
 
             for t_inds_after_b, meas_ind in enumerate(
-                    new_extract_hists[ii].meas_ind_hist
+                new_extract_hists[ii].meas_ind_hist
             ):
                 tt = new_extract_hists[ii].b_time_index + t_inds_after_b
                 if meas_ind is not None and meas_ind not in used_meas_inds[tt]:
@@ -5577,7 +5636,7 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
         if calc_states:
             for existing in self._extractable_hists:
                 for t_inds_after_b, (s, c) in enumerate(
-                        zip(existing.states, existing.covs)
+                    zip(existing.states, existing.covs)
                 ):
                     tt = existing.b_time_index + t_inds_after_b
                     self._states[tt].append(s)
@@ -5585,6 +5644,7 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
         if not update and not calc_states:
             warnings.warn("Extracting states performed no actions")
         return idx_cmp
+
     def _prune(self):
         """Removes hypotheses below a threshold.
 
@@ -5655,17 +5715,17 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
             if self._track_tab[ii].exist_prob > self.exist_threshold:
                 used[ii] += 1
 
-        keep_inds = [idx for idx, val in enumerate(used) if val!= 0]
+        keep_inds = [idx for idx, val in enumerate(used) if val != 0]
         track_cnt = len(keep_inds)
 
         new_inds = [None] * len(self._track_tab)
-        for (ii, v) in zip(keep_inds, [ii for ii in range(0, track_cnt)]):
+        for ii, v in zip(keep_inds, [ii for ii in range(0, track_cnt)]):
             new_inds[ii] = v
 
         # loop over track table and remove pruned entries
         new_tab = [self._track_tab[ii] for ii in keep_inds]
         new_hyps = []
-        for (ii, hyp) in enumerate(self._hypotheses):
+        for ii, hyp in enumerate(self._hypotheses):
             if len(hyp.track_set) > 0:
                 track_set = [new_inds[ii] for ii in hyp.track_set]
                 if None in track_set:
@@ -5692,14 +5752,13 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
         self._track_tab = new_tab
         self._hypotheses = new_hyps
 
-
     def cleanup(
-            self,
-            enable_prune=True,
-            enable_cap=True,
-            enable_bern_prune=True,
-            enable_extract=True,
-            extract_kwargs=None,
+        self,
+        enable_prune=True,
+        enable_cap=True,
+        enable_bern_prune=True,
+        enable_extract=True,
+        extract_kwargs=None,
     ):
         """Performs the cleanup step of the filter.
 
@@ -5709,7 +5768,7 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
         incremented. If this is called with `enable_extract` set to true then
         the extract states method does not need to be called separately. It is
         recommended to call this function instead of
-        :meth:`caser.swarm_estimator.tracker.PoissonMultiBernoulliMixture.extract_states`
+        :meth:`carbs.swarm_estimator.tracker.PoissonMultiBernoulliMixture.extract_states`
         directly.
 
         Parameters
@@ -5833,14 +5892,14 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
         )
 
     def plot_states(
-            self,
-            plt_inds,
-            state_lbl="States",
-            ttl=None,
-            state_color=None,
-            x_lbl=None,
-            y_lbl=None,
-            **kwargs
+        self,
+        plt_inds,
+        state_lbl="States",
+        ttl=None,
+        state_color=None,
+        x_lbl=None,
+        y_lbl=None,
+        **kwargs,
     ):
         """Plots the best estimate for the states.
 
@@ -6224,6 +6283,7 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
                 main_opts,
             )
         return figs
+
 
 # class MultiBernoulliMixtureFilter(PoissonMultiBernoulliMixture):
 #     """Implements the Multi-Bernoulli Mixture filter.
@@ -6781,7 +6841,7 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
 #         timestep. If this is called with `enable_extract` set to true then
 #         the extract states method does not need to be called separately. It is
 #         recommended to call this function instead of
-#         :meth:`caser.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`
+#         :meth:`carbs.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`
 #         directly.
 #
 #         Parameters

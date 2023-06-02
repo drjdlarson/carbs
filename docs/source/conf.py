@@ -15,7 +15,7 @@ import sys
 
 from importlib.metadata import version as get_version
 
-sys.path.append(os.path.abspath('../../caser'))
+sys.path.append(os.path.abspath("../../carbs"))
 
 sys.path.append(os.path.abspath("."))
 from example_runner import run_examples
@@ -24,11 +24,11 @@ run_examples()
 
 # -- Project information -----------------------------------------------------
 
-project = 'CASER'
-copyright = '2019, Jordan D Larson'
-author = 'LAGER'
-version = get_version("caser")
-release = get_version("caser")
+project = "CARBS"
+copyright = "2019, Jordan D Larson"
+author = "LAGER"
+version = get_version("carbs")
+release = get_version("carbs")
 
 
 # -- General configuration ---------------------------------------------------
@@ -49,7 +49,7 @@ extensions = [
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -60,10 +60,10 @@ templates_path = ['_templates']
 # note see https://stackoverflow.com/questions/2701998/sphinx-autodoc-is-not-automatic-enough
 # for help/details
 autosummary_generate = True
-autodoc_member_order = 'groupwise'
+autodoc_member_order = "groupwise"
 add_module_names = False
 modindex_common_prefix = [
-    "caser.",
+    "carbs.",
 ]
 
 # configure copy button for code snippets
@@ -74,7 +74,7 @@ todo_include_todos = True
 todo_link_only = True
 
 # bibtex config
-bibtex_bibfiles = ['refs.bib']
+bibtex_bibfiles = ["refs.bib"]
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -88,7 +88,7 @@ html_theme_options = {
     "navigation_depth": 4,
 }
 html_show_sourcelink = False
-html_baseurl = "https://drjdlarson.github.io/caser/"
+html_baseurl = "https://drjdlarson.github.io/carbs/"
 html_extra_path = [
     "robots.txt",
 ]  # robots.txt is for search engine stuff

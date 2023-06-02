@@ -4,7 +4,7 @@ def modify_quadratize():
     import serums.models as smodels
     import gncpy.control as gcontrol
     from gncpy.dynamics.basic import IRobotCreate
-    from caser.guidance import ELQR
+    from carbs.guidance import ELQR
 
     d2r = np.pi / 180
 
@@ -74,7 +74,13 @@ def modify_quadratize():
     end_dist = elqr.targets_to_wayareas(end_states)
 
     # calculate guidance
-    (state_trajectories, costs, control_signals, fig, frame_list,) = elqr.plan(
+    (
+        state_trajectories,
+        costs,
+        control_signals,
+        fig,
+        frame_list,
+    ) = elqr.plan(
         tt,
         start_dist,
         end_dist,
@@ -94,7 +100,7 @@ def elqr_ospa():
     import serums.models as smodels
     import gncpy.control as gcontrol
     from gncpy.dynamics.basic import IRobotCreate
-    from caser.guidance import ELQROSPA
+    from carbs.guidance import ELQROSPA
     from serums.distances import SingleObjectDistance
 
     d2r = np.pi / 180
@@ -149,7 +155,13 @@ def elqr_ospa():
     )
 
     # calculate guidance
-    (state_trajectories, costs, control_signals, fig, frame_list,) = elqr.plan(
+    (
+        state_trajectories,
+        costs,
+        control_signals,
+        fig,
+        frame_list,
+    ) = elqr.plan(
         tt,
         start_states,
         end_states,
@@ -171,7 +183,7 @@ def elqr_ospa_obstacles():
     import gncpy.control as gcontrol
     import gncpy.plotting as gplot
     from gncpy.dynamics.basic import IRobotCreate
-    from caser.guidance import ELQROSPA
+    from carbs.guidance import ELQROSPA
     from serums.distances import SingleObjectDistance
 
     d2r = np.pi / 180
@@ -181,7 +193,9 @@ def elqr_ospa_obstacles():
     time_horizon = 150 * dt  # run for 120 timesteps
 
     # define starting and ending state for control calculation
-    end_states = np.array([[1.5, 2, 90 * d2r], [0, 0.75, 90 * d2r], [-1.5, 2, 90 * d2r]])
+    end_states = np.array(
+        [[1.5, 2, 90 * d2r], [0, 0.75, 90 * d2r], [-1.5, 2, 90 * d2r]]
+    )
     start_states = np.array([[-1, -0.15, 90 * d2r], [1, -0.15, 90 * d2r]])
 
     # define nominal control input
@@ -285,7 +299,7 @@ def elqr_ospa_obstacles():
         ospa_cutoff=cutoff,
         ospa_method=SingleObjectDistance.EUCLIDEAN,
         non_quad_fun=non_quadratic_cost,
-        non_quad_weight=10
+        non_quad_weight=10,
     )
 
     # create figure with obstacles to plot animation on
@@ -312,7 +326,13 @@ def elqr_ospa_obstacles():
     )
 
     # calculate guidance
-    (state_trajectories, costs, control_signals, fig, frame_list,) = elqr.plan(
+    (
+        state_trajectories,
+        costs,
+        control_signals,
+        fig,
+        frame_list,
+    ) = elqr.plan(
         tt,
         start_states,
         end_states,
