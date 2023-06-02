@@ -1,0 +1,54 @@
+SMCGeneralizedLabeledMultiBernoulli
+===================================
+
+.. currentmodule:: carbs.swarm_estimator.tracker
+
+.. autoclass:: SMCGeneralizedLabeledMultiBernoulli
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~SMCGeneralizedLabeledMultiBernoulli.__init__
+      ~SMCGeneralizedLabeledMultiBernoulli.calculate_ospa
+      ~SMCGeneralizedLabeledMultiBernoulli.calculate_ospa2
+      ~SMCGeneralizedLabeledMultiBernoulli.cleanup
+      ~SMCGeneralizedLabeledMultiBernoulli.correct
+      ~SMCGeneralizedLabeledMultiBernoulli.extract_most_prob_states
+      ~SMCGeneralizedLabeledMultiBernoulli.extract_states
+      ~SMCGeneralizedLabeledMultiBernoulli.load_filter_state
+      ~SMCGeneralizedLabeledMultiBernoulli.plot_card_dist
+      ~SMCGeneralizedLabeledMultiBernoulli.plot_card_history
+      ~SMCGeneralizedLabeledMultiBernoulli.plot_ospa2_history
+      ~SMCGeneralizedLabeledMultiBernoulli.plot_ospa_history
+      ~SMCGeneralizedLabeledMultiBernoulli.plot_states_labels
+      ~SMCGeneralizedLabeledMultiBernoulli.predict
+      ~SMCGeneralizedLabeledMultiBernoulli.save_filter_state
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~SMCGeneralizedLabeledMultiBernoulli.cardinality
+      ~SMCGeneralizedLabeledMultiBernoulli.covariances
+      ~SMCGeneralizedLabeledMultiBernoulli.filter
+      ~SMCGeneralizedLabeledMultiBernoulli.labels
+      ~SMCGeneralizedLabeledMultiBernoulli.num_birth_terms
+      ~SMCGeneralizedLabeledMultiBernoulli.ospa_method
+      ~SMCGeneralizedLabeledMultiBernoulli.prob_death
+      ~SMCGeneralizedLabeledMultiBernoulli.prob_miss_detection
+      ~SMCGeneralizedLabeledMultiBernoulli.states
+   
+   

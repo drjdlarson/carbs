@@ -1,0 +1,6 @@
+carbs.utilities.graphs\_subroutines.assign\_opt
+===============================================
+
+.. currentmodule:: carbs.utilities.graphs_subroutines
+
+.. autofunction:: assign_opt

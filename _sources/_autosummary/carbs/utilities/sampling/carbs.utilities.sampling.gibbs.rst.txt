@@ -1,0 +1,6 @@
+carbs.utilities.sampling.gibbs
+==============================
+
+.. currentmodule:: carbs.utilities.sampling
+
+.. autofunction:: gibbs

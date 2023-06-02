@@ -1,0 +1,6 @@
+carbs.utilities.graphs.a\_star\_search
+======================================
+
+.. currentmodule:: carbs.utilities.graphs
+
+.. autofunction:: a_star_search

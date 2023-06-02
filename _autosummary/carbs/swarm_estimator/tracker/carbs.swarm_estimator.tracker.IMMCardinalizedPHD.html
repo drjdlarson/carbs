@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMMCardinalizedPHD &mdash; CARBS 1.0.0 documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
+    <link rel="canonical" href="https://drjdlarson.github.io/carbs/_autosummary/carbs/swarm_estimator/tracker/carbs.swarm_estimator.tracker.IMMCardinalizedPHD.html" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../../_static/clipboard.min.js"></script>
+        <script src="../../../../_static/copybutton.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="IMMGeneralizedLabeledMultiBernoulli" href="carbs.swarm_estimator.tracker.IMMGeneralizedLabeledMultiBernoulli.html" />
+    <link rel="prev" title="GeneralizedLabeledMultiBernoulli" href="carbs.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #9E1B32" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            CARBS
+              <img src="../../../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                1.0.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../../../api.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../../carbs.html">carbs</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../../carbs.guidance.html">guidance</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../guidance/carbs.guidance.gaussian_density_cost.html">carbs.guidance.gaussian_density_cost</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../guidance/carbs.guidance.ELQR.html">ELQR</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../guidance/carbs.guidance.ELQROSPA.html">ELQROSPA</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="reference internal" href="../../carbs.swarm_estimator.html">swarm_estimator</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../carbs.swarm_estimator.slam.html">slam</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="../carbs.swarm_estimator.tracker.html">tracker</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../carbs.utilities.html">utilities</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../utilities/carbs.utilities.graphs.html">graphs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utilities/carbs.utilities.graphs_subroutines.html">graphs_subroutines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utilities/carbs.utilities.sampling.html">sampling</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../usage/elqr.html">ELQR Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../usage/elqr.html#gaussian-mixture-based">Gaussian Mixture Based</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../usage/elqr.html#optimal-sub-pattern-assignment-based">Optimal Sub-Pattern Assignment Based</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../usage/elqr.html#ospa-based-with-obstacles">OSPA Based with Obstacles</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../toolchain.html">Toolchain Setup</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../toolchain.html#development-environment-setup">Development Environment Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../toolchain.html#example-workflow">Example Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../toolchain.html#notes-on-tox">Notes on tox</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../cicd.html">CI/CD Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../cicd.html#github-actions-quick-guide">Github Actions Quick Guide</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="./reports/coverage/index.html#http://">Test Coverage Report</a></li>
+<li class="toctree-l1"><a class="reference external" href="./reports/junit/junit.html#http://">Test Results Report</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://lager.ua.edu/">LAGER Homepage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../References.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #9E1B32" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">CARBS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../api.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../../carbs.html">carbs</a></li>
+          <li class="breadcrumb-item"><a href="../../carbs.swarm_estimator.html">swarm_estimator</a></li>
+          <li class="breadcrumb-item"><a href="../carbs.swarm_estimator.tracker.html">tracker</a></li>
+      <li class="breadcrumb-item active">IMMCardinalizedPHD</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="immcardinalizedphd">
+<h1>IMMCardinalizedPHD<a class="headerlink" href="#immcardinalizedphd" title="Permalink to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">IMMCardinalizedPHD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/carbs/swarm_estimator/tracker.html#IMMCardinalizedPHD"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_IMMPHDBase</span></code>, <a class="reference internal" href="carbs.swarm_estimator.tracker.CardinalizedPHD.html#carbs.swarm_estimator.tracker.CardinalizedPHD" title="carbs.swarm_estimator.tracker.CardinalizedPHD"><code class="xref py py-class docutils literal notranslate"><span class="pre">CardinalizedPHD</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/carbs/swarm_estimator/tracker.html#IMMCardinalizedPHD.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Initialize an object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_filter</strong> – Inner filter object.</p></li>
+<li><p><strong>prob_detection</strong> – Probability of detection.</p></li>
+<li><p><strong>prob_survive</strong> – Probability of survival.</p></li>
+<li><p><strong>birth_terms</strong> – Birth model.</p></li>
+<li><p><strong>clutter_rate</strong> – Clutter rate per scan.</p></li>
+<li><p><strong>clutter_den</strong> – Clutter density.</p></li>
+<li><p><strong>inv_chi2_gate</strong> – Inverse Chi^2 gating threshold.</p></li>
+<li><p><strong>save_covs</strong> – Flag for saving covariances.</p></li>
+<li><p><strong>debug_plots</strong> – Flag for enabling debug plots.</p></li>
+<li><p><strong>enable_spawning</strong> – Flag for enabling spawning.</p></li>
+<li><p><strong>spawn_cov</strong> – Covariance for spawned targets.</p></li>
+<li><p><strong>spawn_weight</strong> – Weight for spawned targets.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.__init__" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a></p></td>
+<td><p>Initialize an object.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.animate_state_plot" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.animate_state_plot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate_state_plot</span></code></a></p></td>
+<td><p>Creates an animated plot of the states.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.calculate_ospa" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.calculate_ospa"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calculate_ospa</span></code></a></p></td>
+<td><p>Calculates the OSPA distance between the truth at all timesteps.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.cleanup" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.cleanup"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cleanup</span></code></a></p></td>
+<td><p>Performs the cleanup step of the filter.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.correct" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.correct"><code class="xref py py-obj docutils literal notranslate"><span class="pre">correct</span></code></a></p></td>
+<td><p>Correction step of the CPHD filter.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.extract_states" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.extract_states"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_states</span></code></a></p></td>
+<td><p>Extracts the best state estimates.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.load_filter_state" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.load_filter_state"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_filter_state</span></code></a></p></td>
+<td><p>Initializes filter using saved filter state.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.plot_card_dist" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.plot_card_dist"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_card_dist</span></code></a></p></td>
+<td><p>Plots the current cardinality distribution.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.plot_card_history" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.plot_card_history"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_card_history</span></code></a></p></td>
+<td><p>Plots the current cardinality time history.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.plot_number_states_per_time" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.plot_number_states_per_time"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_number_states_per_time</span></code></a></p></td>
+<td><p>Plots the number of states per timestep.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.plot_ospa_history" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.plot_ospa_history"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_ospa_history</span></code></a></p></td>
+<td><p>Plots the OSPA history.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.plot_states" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.plot_states"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_states</span></code></a></p></td>
+<td><p>Plots the best estimate for the states.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.predict" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.predict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">predict</span></code></a></p></td>
+<td><p>Prediction step of the CPHD filter.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.save_filter_state" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.save_filter_state"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_filter_state</span></code></a></p></td>
+<td><p>Saves filter variables so they can be restored later.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.cardinality" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.cardinality"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cardinality</span></code></a></p></td>
+<td><p>Cardinality of the RFS.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.covariances" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.covariances"><code class="xref py py-obj docutils literal notranslate"><span class="pre">covariances</span></code></a></p></td>
+<td><p>Read only list of extracted covariances.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.max_expected_card" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.max_expected_card"><code class="xref py py-obj docutils literal notranslate"><span class="pre">max_expected_card</span></code></a></p></td>
+<td><p>Maximum expected cardinality.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.num_birth_terms" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.num_birth_terms"><code class="xref py py-obj docutils literal notranslate"><span class="pre">num_birth_terms</span></code></a></p></td>
+<td><p>Number of terms in the birth model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.ospa_method" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.ospa_method"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ospa_method</span></code></a></p></td>
+<td><p>The distance metric used in the OSPA calculation (read only).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.prob_death" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.prob_death"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prob_death</span></code></a></p></td>
+<td><p>Compliment of <code class="xref py py-attr docutils literal notranslate"><span class="pre">carbs.swarm_estimator.RandomFinitSetBase.prob_survive</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.prob_miss_detection" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.prob_miss_detection"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prob_miss_detection</span></code></a></p></td>
+<td><p>Compliment of <code class="xref py py-attr docutils literal notranslate"><span class="pre">swarm_estimator.RandomFiniteSetBase.prob_detection</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.states" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.states"><code class="xref py py-obj docutils literal notranslate"><span class="pre">states</span></code></a></p></td>
+<td><p>Read only list of extracted states.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.animate_state_plot">
+<span class="sig-name descname"><span class="pre">animate_state_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plt_inds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_lbl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'States'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">250</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repeat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repeat_delay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.animate_state_plot" title="Permalink to this definition"></a></dt>
+<dd><p>Creates an animated plot of the states.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>plt_inds</strong> (<em>list</em>) – indices of the state vector to plot.</p></li>
+<li><p><strong>state_lbl</strong> (<em>string</em><em>, </em><em>optional</em>) – label for the states. The default is ‘States’.</p></li>
+<li><p><strong>state_color</strong> (<em>tuple</em><em>, </em><em>optional</em>) – 3-tuple for rgb value. The default is None.</p></li>
+<li><p><strong>interval</strong> (<em>int</em><em>, </em><em>optional</em>) – interval of the animation in ms. The default is 250.</p></li>
+<li><p><strong>repeat</strong> (<em>bool</em><em>, </em><em>optional</em>) – flag indicating if the animation loops. The default is True.</p></li>
+<li><p><strong>repeat_delay</strong> (<em>int</em><em>, </em><em>optional</em>) – delay between loops in ms. The default is 1000.</p></li>
+<li><p><strong>save_path</strong> (<em>string</em><em>, </em><em>optional</em>) – file path and name to save the gif, does not save if not given.
+The default is None.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – <p>Standard plotting options for
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">gncpy.plotting.init_plotting_opts()</span></code>. This function
+implements</p>
+<blockquote>
+<div><ul>
+<li><p>f_hndl</p></li>
+<li><p>sig_bnd</p></li>
+<li><p>rng</p></li>
+<li><p>meas_inds</p></li>
+<li><p>lgnd_loc</p></li>
+<li><p>marker</p></li>
+</ul>
+</div></blockquote>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>handle to the animation.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>anim</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.calculate_ospa">
+<span class="sig-name descname"><span class="pre">calculate_ospa</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">truth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">core_method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SingleObjectDistance</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_covs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_inds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.calculate_ospa" title="Permalink to this definition"></a></dt>
+<dd><p>Calculates the OSPA distance between the truth at all timesteps.</p>
+<p>Wrapper for <code class="xref py py-func docutils literal notranslate"><span class="pre">serums.distances.calculate_ospa()</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>truth</strong> (<em>list</em>) – Each element represents a timestep and is a list of N x 1 numpy array,
+one per true agent in the swarm.</p></li>
+<li><p><strong>c</strong> (<em>float</em>) – Distance cutoff for considering a point properly assigned. This
+influences how cardinality errors are penalized. For <span class="math notranslate nohighlight">\(p = 1\)</span>
+it is the penalty given false point estimate.</p></li>
+<li><p><strong>p</strong> (<em>int</em>) – The power of the distance term. Higher values penalize outliers
+more.</p></li>
+<li><p><strong>core_method</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">serums.enums.SingleObjectDistance</span></code>, Optional) – The main distance measure to use for the localization component.
+The default value of None implies <code class="xref py py-attr docutils literal notranslate"><span class="pre">SingleObjectDistance.EUCLIDEAN</span></code>.</p></li>
+<li><p><strong>true_covs</strong> (<em>list</em><em>, </em><em>Optional</em>) – Each element represents a timestep and is a list of N x N numpy arrays
+corresonponding to the uncertainty about the true states. Note the
+order must be consistent with the truth data given. This is only
+needed for core methods <code class="xref py py-attr docutils literal notranslate"><span class="pre">SingleObjectDistance.HELLINGER</span></code>. The defautl
+value is None.</p></li>
+<li><p><strong>state_inds</strong> (<em>list</em><em>, </em><em>optional</em>) – Indices in the state vector to use, will be applied to the truth
+data as well. The default is None which means the full state is
+used.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.cleanup">
+<span class="sig-name descname"><span class="pre">cleanup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">enable_prune</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_cap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_merge</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_extract</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extract_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.cleanup" title="Permalink to this definition"></a></dt>
+<dd><p>Performs the cleanup step of the filter.</p>
+<p>This can prune, cap, and extract states. It must be called once per
+timestep. If this is called with <cite>enable_extract</cite> set to true then
+the extract states method does not need to be called separately. It is
+recommended to call this function instead of
+<a class="reference internal" href="carbs.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.html#carbs.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states" title="carbs.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states"><code class="xref py py-meth docutils literal notranslate"><span class="pre">carbs.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states()</span></code></a>
+directly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>enable_prune</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag indicating if prunning should be performed. The default is True.</p></li>
+<li><p><strong>enable_cap</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag indicating if capping should be performed. The default is True.</p></li>
+<li><p><strong>enable_merge</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag indicating if merging should be performed. The default is True.</p></li>
+<li><p><strong>enable_extract</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag indicating if state extraction should be performed. The default is True.</p></li>
+<li><p><strong>extract_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Extra arguments to pass to the extract function.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.correct">
+<span class="sig-name descname"><span class="pre">correct</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timestep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meas_in</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meas_mat_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">est_meas_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.correct" title="Permalink to this definition"></a></dt>
+<dd><p>Correction step of the CPHD filter.</p>
+<p>This corrects the hypotheses based on the measurements and gates the
+measurements according to the class settings. It also updates the
+cardinality distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>timestep</strong> (<em>float</em>) – current timestep</p></li>
+<li><p><strong>meas_in</strong> (<em>list</em>) – 2d numpy arrays representing a measurement.</p></li>
+<li><p><strong>meas_mat_args</strong> (<em>dict</em><em>, </em><em>optional</em>) – keyword arguments to pass to the inner filters get measurement
+matrix function. Only used if gating is on. The default is {}.</p></li>
+<li><p><strong>est_meas_args</strong> (<em>TYPE</em><em>, </em><em>optional</em>) – keyword arguments to pass to the inner filters estimate
+measurements function. Only used if gating is on. The default is {}.</p></li>
+<li><p><strong>filt_args</strong> (<em>TYPE</em><em>, </em><em>optional</em>) – keyword arguments to pass to the inner filters correct function.
+The default is {}.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.extract_states">
+<span class="sig-name descname"><span class="pre">extract_states</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">allow_multiple</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.extract_states" title="Permalink to this definition"></a></dt>
+<dd><p>Extracts the best state estimates.</p>
+<p>This extracts the best states from the distribution. It should be
+called once per time step after the correction function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>allow_multiple</strong> (<em>bool</em>) – Flag inicating if extraction is allowed to map a single Gaussian
+to multiple states. The default is True.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.load_filter_state">
+<span class="sig-name descname"><span class="pre">load_filter_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filt_state</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.load_filter_state" title="Permalink to this definition"></a></dt>
+<dd><p>Initializes filter using saved filter state.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.filt_state">
+<span class="sig-name descname"><span class="pre">filt_state</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.filt_state" title="Permalink to this definition"></a></dt>
+<dd><p>Dictionary generated by <a class="reference internal" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.save_filter_state" title="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.save_filter_state"><code class="xref py py-meth docutils literal notranslate"><span class="pre">save_filter_state()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.plot_card_dist">
+<span class="sig-name descname"><span class="pre">plot_card_dist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.plot_card_dist" title="Permalink to this definition"></a></dt>
+<dd><p>Plots the current cardinality distribution.</p>
+<p>This assumes that the cardinality distribution has been calculated by
+the class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – <p>Keyword arguments are processed with
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">gncpy.plotting.init_plotting_opts()</span></code>. This function
+implements</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>f_hndl</p></li>
+</ul>
+</div></blockquote>
+</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Instance of the matplotlib figure used</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Matplotlib figure</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>RuntimeWarning</strong> – If the cardinality distribution is empty.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.plot_card_history">
+<span class="sig-name descname"><span class="pre">plot_card_history</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ttl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_card</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'index'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.plot_card_history" title="Permalink to this definition"></a></dt>
+<dd><p>Plots the current cardinality time history.</p>
+<p>This assumes that the cardinality distribution has been calculated by
+the class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ttl</strong> (<em>string</em>) – String for the title, if None a default is created. The default is
+None.</p></li>
+<li><p><strong>true_card</strong> (<em>array like</em>) – List of the true cardinality at each time</p></li>
+<li><p><strong>time_units</strong> (<em>string</em><em>, </em><em>optional</em>) – Text representing the units of time in the plot. The default is
+‘index’.</p></li>
+<li><p><strong>time</strong> (<em>numpy array</em><em>, </em><em>optional</em>) – Vector to use for the x-axis of the plot. If none is given then
+vector indices are used. The default is None.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – <p>Keyword arguments are processed with
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">gncpy.plotting.init_plotting_opts()</span></code>. This function
+implements</p>
+<blockquote>
+<div><ul>
+<li><p>f_hndl</p></li>
+<li><p>sig_bnd</p></li>
+<li><p>time_vec</p></li>
+<li><p>lgnd_loc</p></li>
+</ul>
+</div></blockquote>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Instance of the matplotlib figure used</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Matplotlib figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.plot_number_states_per_time">
+<span class="sig-name descname"><span class="pre">plot_number_states_per_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.plot_number_states_per_time" title="Permalink to this definition"></a></dt>
+<dd><p>Plots the number of states per timestep.</p>
+<p>This is a debug plot for if there are 0 weights in the GM but the
+cardinality is not reached. Debug plots must be turned on prior to
+running the filter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – <p>Keyword arguments are processed with
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">gncpy.plotting.init_plotting_opts()</span></code>. This function
+implements</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>f_hndl</p></li>
+<li><p>lgnd_loc</p></li>
+</ul>
+</div></blockquote>
+</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>f_hndl</strong> – handle to the current figure.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>matplotlib figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.plot_ospa_history">
+<span class="sig-name descname"><span class="pre">plot_ospa_history</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'index'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">main_opts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sub_opts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_subs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.plot_ospa_history" title="Permalink to this definition"></a></dt>
+<dd><p>Plots the OSPA history.</p>
+<p>This requires that the OSPA has been calcualted by the approriate
+function first.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>time_units</strong> (<em>string</em><em>, </em><em>optional</em>) – Text representing the units of time in the plot. The default is
+‘index’.</p></li>
+<li><p><strong>time</strong> (<em>numpy array</em><em>, </em><em>optional</em>) – Vector to use for the x-axis of the plot. If none is given then
+vector indices are used. The default is None.</p></li>
+<li><p><strong>main_opts</strong> (<em>dict</em><em>, </em><em>optional</em>) – Additional plotting options for <code class="xref py py-meth docutils literal notranslate"><span class="pre">gncpy.plotting.init_plotting_opts()</span></code>
+function. Values implemented here are <cite>f_hndl</cite>, and any values
+relating to title/axis text formatting. The default of None implies
+the default options are used for the main plot.</p></li>
+<li><p><strong>sub_opts</strong> (<em>dict</em><em>, </em><em>optional</em>) – Additional plotting options for <code class="xref py py-meth docutils literal notranslate"><span class="pre">gncpy.plotting.init_plotting_opts()</span></code>
+function. Values implemented here are <cite>f_hndl</cite>, and any values
+relating to title/axis text formatting. The default of None implies
+the default options are used for the sub plot.</p></li>
+<li><p><strong>plot_subs</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag indicating if the component statistics (cardinality and
+localization) should also be plotted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>figs</strong> – Dictionary of matplotlib figure objects the data was plotted on.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.plot_states">
+<span class="sig-name descname"><span class="pre">plot_states</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plt_inds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_lbl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'States'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ttl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_lbl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_lbl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.plot_states" title="Permalink to this definition"></a></dt>
+<dd><p>Plots the best estimate for the states.</p>
+<p>This assumes that the states have been extracted. It’s designed to plot
+two of the state variables (typically x/y position). The error ellipses
+are calculated according to <span id="id1">[<a class="reference internal" href="../../../../References.html#id4" title="Wayne E Hoover. Algorithms for confidence circles and ellipses. Technical Report, National Oceanic and Atmospheric Administration, 1984.">2</a>]</span></p>
+<p>Keyword arguments are processed with
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">gncpy.plotting.init_plotting_opts()</span></code>. This function
+implements</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>f_hndl</p></li>
+<li><p>true_states</p></li>
+<li><p>sig_bnd</p></li>
+<li><p>rng</p></li>
+<li><p>meas_inds</p></li>
+<li><p>lgnd_loc</p></li>
+<li><p>marker</p></li>
+</ul>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>plt_inds</strong> (<em>list</em>) – List of indices in the state vector to plot</p></li>
+<li><p><strong>state_lbl</strong> (<em>string</em>) – Value to appear in legend for the states. Only appears if the
+legend is shown</p></li>
+<li><p><strong>ttl</strong> (<em>string</em><em>, </em><em>optional</em>) – Title for the plot, if None a default title is generated. The default
+is None.</p></li>
+<li><p><strong>x_lbl</strong> (<em>string</em>) – Label for the x-axis.</p></li>
+<li><p><strong>y_lbl</strong> (<em>string</em>) – Label for the y-axis.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Instance of the matplotlib figure used</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Matplotlib figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timestep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.predict" title="Permalink to this definition"></a></dt>
+<dd><p>Prediction step of the CPHD filter.</p>
+<p>This predicts new hypothesis, and propogates them to the next time
+step. It also updates the cardinality distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>timestep</strong> (<em>float</em>) – current timestep</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – See :meth:carbs.swarm_estimator.tracker.ProbabilityHypothesisDensity.predict`
+for the available arguments.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.save_filter_state">
+<span class="sig-name descname"><span class="pre">save_filter_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.save_filter_state" title="Permalink to this definition"></a></dt>
+<dd><p>Saves filter variables so they can be restored later.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.cardinality">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">cardinality</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.cardinality" title="Permalink to this definition"></a></dt>
+<dd><p>Cardinality of the RFS.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.covariances">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">covariances</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.covariances" title="Permalink to this definition"></a></dt>
+<dd><p>Read only list of extracted covariances.</p>
+<p>This is a list with 1 element per timestep, and each element is a list
+of the best covariances extracted at that timestep. The order of each
+element corresponds to the state order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Warns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>RuntimeWarning</strong> – If the class is not saving the covariances, and returns an
+empty list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.max_expected_card">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">max_expected_card</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.max_expected_card" title="Permalink to this definition"></a></dt>
+<dd><p>Maximum expected cardinality. The default is 10.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.num_birth_terms">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_birth_terms</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.num_birth_terms" title="Permalink to this definition"></a></dt>
+<dd><p>Number of terms in the birth model.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.ospa_method">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ospa_method</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.ospa_method" title="Permalink to this definition"></a></dt>
+<dd><p>The distance metric used in the OSPA calculation (read only).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.prob_death">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">prob_death</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.prob_death" title="Permalink to this definition"></a></dt>
+<dd><p>Compliment of <code class="xref py py-attr docutils literal notranslate"><span class="pre">carbs.swarm_estimator.RandomFinitSetBase.prob_survive</span></code>.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.prob_miss_detection">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">prob_miss_detection</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.prob_miss_detection" title="Permalink to this definition"></a></dt>
+<dd><p>Compliment of <code class="xref py py-attr docutils literal notranslate"><span class="pre">swarm_estimator.RandomFiniteSetBase.prob_detection</span></code>.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.IMMCardinalizedPHD.states">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">states</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.IMMCardinalizedPHD.states" title="Permalink to this definition"></a></dt>
+<dd><p>Read only list of extracted states.</p>
+<p>This is a list with 1 element per timestep, and each element is a list
+of the best states extracted at that timestep. The order of each
+element corresponds to the label order.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="carbs.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.html" class="btn btn-neutral float-left" title="GeneralizedLabeledMultiBernoulli" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="carbs.swarm_estimator.tracker.IMMGeneralizedLabeledMultiBernoulli.html" class="btn btn-neutral float-right" title="IMMGeneralizedLabeledMultiBernoulli" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019, Jordan D Larson.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

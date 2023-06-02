@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>carbs.utilities.graphs_subroutines &mdash; CARBS 1.0.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+    <link rel="canonical" href="https://drjdlarson.github.io/carbs/_modules/carbs/utilities/graphs_subroutines.html" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/clipboard.min.js"></script>
+        <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #9E1B32" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            CARBS
+              <img src="../../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                1.0.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../_autosummary/carbs.html">carbs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/carbs/carbs.guidance.html">guidance</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/carbs/guidance/carbs.guidance.gaussian_density_cost.html">carbs.guidance.gaussian_density_cost</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/carbs/guidance/carbs.guidance.ELQR.html">ELQR</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/carbs/guidance/carbs.guidance.ELQROSPA.html">ELQROSPA</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/carbs/carbs.swarm_estimator.html">swarm_estimator</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/carbs/swarm_estimator/carbs.swarm_estimator.slam.html">slam</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/carbs/swarm_estimator/carbs.swarm_estimator.tracker.html">tracker</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/carbs/carbs.utilities.html">utilities</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/carbs/utilities/carbs.utilities.graphs.html">graphs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/carbs/utilities/carbs.utilities.graphs_subroutines.html">graphs_subroutines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/carbs/utilities/carbs.utilities.sampling.html">sampling</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/elqr.html">ELQR Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../usage/elqr.html#gaussian-mixture-based">Gaussian Mixture Based</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../usage/elqr.html#optimal-sub-pattern-assignment-based">Optimal Sub-Pattern Assignment Based</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../usage/elqr.html#ospa-based-with-obstacles">OSPA Based with Obstacles</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolchain.html">Toolchain Setup</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../toolchain.html#development-environment-setup">Development Environment Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../toolchain.html#example-workflow">Example Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../toolchain.html#notes-on-tox">Notes on tox</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cicd.html">CI/CD Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../cicd.html#github-actions-quick-guide">Github Actions Quick Guide</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="./reports/coverage/index.html#http://">Test Coverage Report</a></li>
+<li class="toctree-l1"><a class="reference external" href="./reports/junit/junit.html#http://">Test Results Report</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://lager.ua.edu/">LAGER Homepage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../References.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #9E1B32" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">CARBS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">carbs.utilities.graphs_subroutines</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for carbs.utilities.graphs_subroutines</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot; Implements helper functions for graph search algorithms.</span>
+
+<span class="sd">This module contains the longer helper functions for the graph search</span>
+<span class="sd">algorithms.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<div class="viewcode-block" id="assign_opt"><a class="viewcode-back" href="../../../_autosummary/carbs/utilities/graphs_subroutines/carbs.utilities.graphs_subroutines.assign_opt.html#carbs.utilities.graphs_subroutines.assign_opt">[docs]</a><span class="k">def</span> <span class="nf">assign_opt</span><span class="p">(</span><span class="n">dist_mat_in</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Optimal assignment used by Murty&#39;s m-best assignment algorithm.</span>
+
+<span class="sd">    This ports the implementation from</span>
+<span class="sd">    `here &lt;https://ba-tuong.vo-au.com/codes.html&gt;`_.</span>
+<span class="sd">    to python.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dist_mat_in (numpy array): Distance matrix to calculate assignment from</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple containing</span>
+
+<span class="sd">            - assign (numpy array): Optimal assignment</span>
+<span class="sd">            - cost (float): Cost of the assignment</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">dist_mat</span> <span class="o">=</span> <span class="n">dist_mat_in</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dist_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">dist_mat</span> <span class="o">=</span> <span class="n">dist_mat</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">dist_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">dist_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Distance matrix must have at most 2 dimensions&#39;</span><span class="p">)</span>
+    <span class="n">dist_mat_orig</span> <span class="o">=</span> <span class="n">dist_mat</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="p">(</span><span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">)</span> <span class="o">=</span> <span class="n">dist_mat</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">assign</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_rows</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">dist_mat</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">dist_mat</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">))</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;All matrix values must be non-negative&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">dist_mat</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">assign</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># replace any infite values with a large number</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">dist_mat</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="n">max_finite</span> <span class="o">=</span> <span class="n">dist_mat</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">dist_mat</span><span class="p">))]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">max_finite</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">assign</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">max_finite</span> <span class="o">=</span> <span class="n">max_finite</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">max_finite</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">inf_val</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">max_finite</span> <span class="o">*</span> <span class="n">n_rows</span> <span class="o">*</span> <span class="n">n_cols</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">inf_val</span> <span class="o">=</span> <span class="mi">10</span>
+        <span class="n">dist_mat</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">dist_mat</span><span class="p">))]</span> <span class="o">=</span> <span class="n">inf_val</span>
+
+    <span class="n">covered_cols</span> <span class="o">=</span> <span class="p">[</span><span class="kc">False</span><span class="p">]</span> <span class="o">*</span> <span class="n">n_cols</span>
+    <span class="n">covered_rows</span> <span class="o">=</span> <span class="p">[</span><span class="kc">False</span><span class="p">]</span> <span class="o">*</span> <span class="n">n_rows</span>
+    <span class="n">star_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="n">prime_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">n_rows</span> <span class="o">&lt;=</span> <span class="n">n_cols</span><span class="p">:</span>
+        <span class="n">min_dim</span> <span class="o">=</span> <span class="n">n_rows</span>
+
+        <span class="c1"># find min of each row and subract from each element in the row</span>
+        <span class="n">dist_mat</span> <span class="o">=</span> <span class="n">dist_mat</span> <span class="o">-</span> <span class="n">dist_mat</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">n_rows</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+        <span class="c1"># steps 1 and 2a</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">dist_mat</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">covered_cols</span><span class="p">[</span><span class="n">col</span><span class="p">]:</span>
+                        <span class="n">star_mat</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">covered_cols</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">break</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">min_dim</span> <span class="o">=</span> <span class="n">n_cols</span>
+
+        <span class="c1"># find min of each column and subract from each element in the column</span>
+        <span class="n">dist_mat</span> <span class="o">=</span> <span class="n">dist_mat</span> <span class="o">-</span> <span class="n">dist_mat</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># steps 1 and 2a</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">dist_mat</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">covered_rows</span><span class="p">[</span><span class="n">row</span><span class="p">]:</span>
+                        <span class="n">star_mat</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">covered_cols</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">covered_rows</span><span class="p">[</span><span class="n">row</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">break</span>
+
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">):</span>
+            <span class="n">covered_rows</span><span class="p">[</span><span class="n">row</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">__aop_step2b</span><span class="p">(</span><span class="n">assign</span><span class="p">,</span> <span class="n">dist_mat</span><span class="p">,</span> <span class="n">star_mat</span><span class="p">,</span> <span class="n">prime_mat</span><span class="p">,</span> <span class="n">covered_cols</span><span class="p">,</span>
+                 <span class="n">covered_rows</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">,</span> <span class="n">min_dim</span><span class="p">)</span>
+    <span class="n">cost</span> <span class="o">=</span> <span class="n">__aop_comp_assign</span><span class="p">(</span><span class="n">assign</span><span class="p">,</span> <span class="n">dist_mat_orig</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">assign</span><span class="p">,</span> <span class="n">cost</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">__aop_step2a</span><span class="p">(</span><span class="n">assign</span><span class="p">,</span> <span class="n">dist_mat</span><span class="p">,</span> <span class="n">star_mat</span><span class="p">,</span> <span class="n">prime_mat</span><span class="p">,</span> <span class="n">covered_cols</span><span class="p">,</span>
+                 <span class="n">covered_rows</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">,</span> <span class="n">min_dim</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">star_mat</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]:</span>
+                <span class="n">covered_cols</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">break</span>
+
+    <span class="n">__aop_step2b</span><span class="p">(</span><span class="n">assign</span><span class="p">,</span> <span class="n">dist_mat</span><span class="p">,</span> <span class="n">star_mat</span><span class="p">,</span> <span class="n">prime_mat</span><span class="p">,</span> <span class="n">covered_cols</span><span class="p">,</span>
+                 <span class="n">covered_rows</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">,</span> <span class="n">min_dim</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">__aop_step2b</span><span class="p">(</span><span class="n">assign</span><span class="p">,</span> <span class="n">dist_mat</span><span class="p">,</span> <span class="n">star_mat</span><span class="p">,</span> <span class="n">prime_mat</span><span class="p">,</span> <span class="n">covered_cols</span><span class="p">,</span>
+                 <span class="n">covered_rows</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">,</span> <span class="n">min_dim</span><span class="p">):</span>
+    <span class="n">n_covered_cols</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">covered_cols</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">v</span><span class="p">:</span>
+            <span class="n">n_covered_cols</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">n_covered_cols</span> <span class="o">==</span> <span class="n">min_dim</span><span class="p">:</span>
+        <span class="n">__aop_build_assign</span><span class="p">(</span><span class="n">assign</span><span class="p">,</span> <span class="n">star_mat</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">__aop_step3</span><span class="p">(</span><span class="n">assign</span><span class="p">,</span> <span class="n">dist_mat</span><span class="p">,</span> <span class="n">star_mat</span><span class="p">,</span>
+                    <span class="n">prime_mat</span><span class="p">,</span> <span class="n">covered_cols</span><span class="p">,</span> <span class="n">covered_rows</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span>
+                    <span class="n">n_cols</span><span class="p">,</span> <span class="n">min_dim</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">__aop_step3</span><span class="p">(</span><span class="n">assign</span><span class="p">,</span> <span class="n">dist_mat</span><span class="p">,</span> <span class="n">star_mat</span><span class="p">,</span> <span class="n">prime_mat</span><span class="p">,</span> <span class="n">covered_cols</span><span class="p">,</span>
+                <span class="n">covered_rows</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">,</span> <span class="n">min_dim</span><span class="p">):</span>
+    <span class="n">z_found</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">while</span> <span class="n">z_found</span><span class="p">:</span>
+        <span class="n">z_found</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">covered_cols</span><span class="p">[</span><span class="n">col</span><span class="p">]:</span>
+                <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">):</span>
+                    <span class="n">cond1</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">covered_rows</span><span class="p">[</span><span class="n">row</span><span class="p">]</span>
+                    <span class="n">cond2</span> <span class="o">=</span> <span class="n">dist_mat</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
+                    <span class="k">if</span> <span class="n">cond1</span> <span class="ow">and</span> <span class="n">cond2</span><span class="p">:</span>
+                        <span class="n">prime_mat</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+                        <span class="n">star_col</span> <span class="o">=</span> <span class="mi">0</span>
+                        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="n">star_mat</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">ii</span><span class="p">]:</span>
+                                <span class="n">star_col</span> <span class="o">=</span> <span class="n">ii</span>
+                                <span class="k">break</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="n">star_col</span> <span class="o">=</span> <span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span>
+
+                        <span class="k">if</span> <span class="n">star_col</span> <span class="o">==</span> <span class="n">n_cols</span><span class="p">:</span>
+                            <span class="n">__aop_step4</span><span class="p">(</span><span class="n">assign</span><span class="p">,</span> <span class="n">dist_mat</span><span class="p">,</span> <span class="n">star_mat</span><span class="p">,</span>
+                                        <span class="n">prime_mat</span><span class="p">,</span> <span class="n">covered_cols</span><span class="p">,</span> <span class="n">covered_rows</span><span class="p">,</span>
+                                        <span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">,</span> <span class="n">min_dim</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+                            <span class="k">return</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">covered_rows</span><span class="p">[</span><span class="n">row</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="n">covered_cols</span><span class="p">[</span><span class="n">star_col</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+                            <span class="n">z_found</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="k">break</span>
+
+    <span class="n">__aop_step5</span><span class="p">(</span><span class="n">assign</span><span class="p">,</span> <span class="n">dist_mat</span><span class="p">,</span> <span class="n">star_mat</span><span class="p">,</span> <span class="n">prime_mat</span><span class="p">,</span> <span class="n">covered_cols</span><span class="p">,</span>
+                <span class="n">covered_rows</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">,</span> <span class="n">min_dim</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">__aop_step4</span><span class="p">(</span><span class="n">assign</span><span class="p">,</span> <span class="n">dist_mat</span><span class="p">,</span> <span class="n">star_mat</span><span class="p">,</span> <span class="n">prime_mat</span><span class="p">,</span> <span class="n">covered_cols</span><span class="p">,</span>
+                <span class="n">covered_rows</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">,</span> <span class="n">min_dim</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">):</span>
+    <span class="n">new_star_mat</span> <span class="o">=</span> <span class="n">star_mat</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="n">new_star_mat</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">star_col</span> <span class="o">=</span> <span class="n">col</span>
+    <span class="n">star_row</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">):</span>
+        <span class="n">star_row</span> <span class="o">=</span> <span class="n">ii</span>
+        <span class="k">if</span> <span class="n">star_mat</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="n">star_col</span><span class="p">]:</span>
+            <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">star_row</span> <span class="o">=</span> <span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span>
+
+
+    <span class="k">while</span> <span class="n">star_row</span> <span class="o">&lt;</span> <span class="n">n_rows</span><span class="p">:</span>
+        <span class="n">new_star_mat</span><span class="p">[</span><span class="n">star_row</span><span class="p">,</span> <span class="n">star_col</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="n">prime_row</span> <span class="o">=</span> <span class="n">star_row</span>
+        <span class="n">prime_col</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">):</span>
+            <span class="n">prime_col</span> <span class="o">=</span> <span class="n">ii</span>
+            <span class="k">if</span> <span class="n">prime_mat</span><span class="p">[</span><span class="n">prime_row</span><span class="p">,</span> <span class="n">ii</span><span class="p">]:</span>
+                <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">prime_col</span> <span class="o">=</span> <span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="n">new_star_mat</span><span class="p">[</span><span class="n">prime_row</span><span class="p">,</span> <span class="n">prime_col</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="n">star_col</span> <span class="o">=</span> <span class="n">prime_col</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">star_mat</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="n">star_col</span><span class="p">]:</span>
+                <span class="n">star_row</span> <span class="o">=</span> <span class="n">ii</span>
+                <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">star_row</span> <span class="o">=</span> <span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">):</span>
+            <span class="n">prime_mat</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">star_mat</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_star_mat</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">):</span>
+        <span class="n">covered_rows</span><span class="p">[</span><span class="n">row</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">__aop_step2a</span><span class="p">(</span><span class="n">assign</span><span class="p">,</span> <span class="n">dist_mat</span><span class="p">,</span> <span class="n">star_mat</span><span class="p">,</span> <span class="n">prime_mat</span><span class="p">,</span> <span class="n">covered_cols</span><span class="p">,</span>
+                 <span class="n">covered_rows</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">,</span> <span class="n">min_dim</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">__aop_step5</span><span class="p">(</span><span class="n">assign</span><span class="p">,</span> <span class="n">dist_mat</span><span class="p">,</span> <span class="n">star_mat</span><span class="p">,</span> <span class="n">prime_mat</span><span class="p">,</span> <span class="n">covered_cols</span><span class="p">,</span>
+                <span class="n">covered_rows</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">,</span> <span class="n">min_dim</span><span class="p">):</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">covered_rows</span><span class="p">[</span><span class="n">row</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">covered_cols</span><span class="p">[</span><span class="n">col</span><span class="p">]:</span>
+                    <span class="n">v</span> <span class="o">=</span> <span class="n">dist_mat</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="n">h</span><span class="p">:</span>
+                        <span class="n">h</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">covered_rows</span><span class="p">[</span><span class="n">row</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">):</span>
+                <span class="n">dist_mat</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span> <span class="o">+=</span> <span class="n">h</span>
+
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">covered_cols</span><span class="p">[</span><span class="n">col</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">):</span>
+                <span class="n">dist_mat</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span> <span class="o">-=</span> <span class="n">h</span>
+
+    <span class="n">__aop_step3</span><span class="p">(</span><span class="n">assign</span><span class="p">,</span> <span class="n">dist_mat</span><span class="p">,</span> <span class="n">star_mat</span><span class="p">,</span> <span class="n">prime_mat</span><span class="p">,</span> <span class="n">covered_cols</span><span class="p">,</span>
+                <span class="n">covered_rows</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">,</span> <span class="n">min_dim</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">__aop_build_assign</span><span class="p">(</span><span class="n">assign</span><span class="p">,</span> <span class="n">star_mat</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">star_mat</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]:</span>
+                <span class="n">assign</span><span class="p">[</span><span class="n">row</span><span class="p">]</span> <span class="o">=</span> <span class="n">col</span>
+                <span class="k">break</span>
+
+
+<span class="k">def</span> <span class="nf">__aop_comp_assign</span><span class="p">(</span><span class="n">assign</span><span class="p">,</span> <span class="n">dist_mat</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">):</span>
+    <span class="n">cost</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">):</span>
+        <span class="n">col</span> <span class="o">=</span> <span class="n">assign</span><span class="p">[</span><span class="n">row</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">col</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">dist_mat</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+                <span class="n">cost</span> <span class="o">+=</span> <span class="n">v</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">assign</span><span class="p">[</span><span class="n">row</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">return</span> <span class="n">cost</span>
+
+
+<div class="viewcode-block" id="AStarNode"><a class="viewcode-back" href="../../../_autosummary/carbs/utilities/graphs_subroutines/carbs.utilities.graphs_subroutines.AStarNode.html#carbs.utilities.graphs_subroutines.AStarNode">[docs]</a><span class="k">class</span> <span class="nc">AStarNode</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A node class for A* Pathfinding</span>
+<span class="sd">        parent is parent of the current Node</span>
+<span class="sd">        position is current position of the Node in the maze</span>
+<span class="sd">        g is cost from start to current Node</span>
+<span class="sd">        h is heuristic based estimated cost for current Node to end Node</span>
+<span class="sd">        f is total cost of present node i.e. :  f = g + h</span>
+<span class="sd">        x and y are Cartesian coordinates of the node</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="AStarNode.__init__"><a class="viewcode-back" href="../../../_autosummary/carbs/utilities/graphs_subroutines/carbs.utilities.graphs_subroutines.AStarNode.html#carbs.utilities.graphs_subroutines.AStarNode.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">position</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">=</span> <span class="n">position</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">g</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">position</span></div>
+
+
+<div class="viewcode-block" id="astar_return_path"><a class="viewcode-back" href="../../../_autosummary/carbs/utilities/graphs_subroutines/carbs.utilities.graphs_subroutines.astar_return_path.html#carbs.utilities.graphs_subroutines.astar_return_path">[docs]</a><span class="k">def</span> <span class="nf">astar_return_path</span><span class="p">(</span><span class="n">current_node</span><span class="p">,</span> <span class="n">maze</span><span class="p">):</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">no_rows</span><span class="p">,</span> <span class="n">no_columns</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">maze</span><span class="p">)</span>
+
+    <span class="c1"># here we create the initialized result maze with -1 in every position</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">[[</span><span class="o">-</span><span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">no_columns</span><span class="p">)]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">no_rows</span><span class="p">)]</span>
+    <span class="n">current</span> <span class="o">=</span> <span class="n">current_node</span>
+    <span class="n">total_cost</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">while</span> <span class="n">current</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
+        <span class="n">total_cost</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">parent</span>
+
+    <span class="c1"># Return reversed path as we need to show from start to end path</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">start_value</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1"># we update the path of start to end found by A-star serch with every step</span>
+    <span class="c1"># incremented by 1</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)):</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">path</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]][</span><span class="n">path</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">start_value</span>
+        <span class="n">start_value</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">vals</span> <span class="o">=</span> <span class="p">[</span><span class="n">result</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">inds</span><span class="p">]</span>
+    <span class="n">s_inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span>
+    <span class="n">vals</span> <span class="o">=</span> <span class="p">[</span><span class="n">vals</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">s_inds</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">([(</span><span class="n">inds</span><span class="p">[</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">inds</span><span class="p">[</span><span class="n">ii</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">s_inds</span><span class="p">]),</span> <span class="nb">max</span><span class="p">(</span><span class="n">total_cost</span><span class="p">))</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019, Jordan D Larson.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

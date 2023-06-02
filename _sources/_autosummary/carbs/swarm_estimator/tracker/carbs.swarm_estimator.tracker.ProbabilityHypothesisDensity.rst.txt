@@ -1,0 +1,48 @@
+ProbabilityHypothesisDensity
+============================
+
+.. currentmodule:: carbs.swarm_estimator.tracker
+
+.. autoclass:: ProbabilityHypothesisDensity
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~ProbabilityHypothesisDensity.__init__
+      ~ProbabilityHypothesisDensity.animate_state_plot
+      ~ProbabilityHypothesisDensity.calculate_ospa
+      ~ProbabilityHypothesisDensity.cleanup
+      ~ProbabilityHypothesisDensity.correct
+      ~ProbabilityHypothesisDensity.extract_states
+      ~ProbabilityHypothesisDensity.load_filter_state
+      ~ProbabilityHypothesisDensity.plot_ospa_history
+      ~ProbabilityHypothesisDensity.plot_states
+      ~ProbabilityHypothesisDensity.predict
+      ~ProbabilityHypothesisDensity.save_filter_state
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ProbabilityHypothesisDensity.cardinality
+      ~ProbabilityHypothesisDensity.covariances
+      ~ProbabilityHypothesisDensity.num_birth_terms
+      ~ProbabilityHypothesisDensity.ospa_method
+      ~ProbabilityHypothesisDensity.prob_death
+      ~ProbabilityHypothesisDensity.prob_miss_detection
+      ~ProbabilityHypothesisDensity.states
+   
+   

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ELQR &mdash; CARBS 1.0.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+    <link rel="canonical" href="https://drjdlarson.github.io/carbs/_autosummary/carbs/guidance/carbs.guidance.ELQR.html" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/clipboard.min.js"></script>
+        <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="ELQROSPA" href="carbs.guidance.ELQROSPA.html" />
+    <link rel="prev" title="carbs.guidance.gaussian_density_cost" href="carbs.guidance.gaussian_density_cost.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #9E1B32" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            CARBS
+              <img src="../../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                1.0.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../../api.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../carbs.html">carbs</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../carbs.guidance.html">guidance</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="carbs.guidance.gaussian_density_cost.html">carbs.guidance.gaussian_density_cost</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">ELQR</a></li>
+<li class="toctree-l4"><a class="reference internal" href="carbs.guidance.ELQROSPA.html">ELQROSPA</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../carbs.swarm_estimator.html">swarm_estimator</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../swarm_estimator/carbs.swarm_estimator.slam.html">slam</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../swarm_estimator/carbs.swarm_estimator.tracker.html">tracker</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../carbs.utilities.html">utilities</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../utilities/carbs.utilities.graphs.html">graphs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../utilities/carbs.utilities.graphs_subroutines.html">graphs_subroutines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../utilities/carbs.utilities.sampling.html">sampling</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../usage/elqr.html">ELQR Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../usage/elqr.html#gaussian-mixture-based">Gaussian Mixture Based</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../usage/elqr.html#optimal-sub-pattern-assignment-based">Optimal Sub-Pattern Assignment Based</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../usage/elqr.html#ospa-based-with-obstacles">OSPA Based with Obstacles</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolchain.html">Toolchain Setup</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../toolchain.html#development-environment-setup">Development Environment Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../toolchain.html#example-workflow">Example Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../toolchain.html#notes-on-tox">Notes on tox</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cicd.html">CI/CD Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../cicd.html#github-actions-quick-guide">Github Actions Quick Guide</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="./reports/coverage/index.html#http://">Test Coverage Report</a></li>
+<li class="toctree-l1"><a class="reference external" href="./reports/junit/junit.html#http://">Test Results Report</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://lager.ua.edu/">LAGER Homepage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../References.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #9E1B32" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">CARBS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../api.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../carbs.html">carbs</a></li>
+          <li class="breadcrumb-item"><a href="../carbs.guidance.html">guidance</a></li>
+      <li class="breadcrumb-item active">ELQR</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="elqr">
+<h1>ELQR<a class="headerlink" href="#elqr" title="Permalink to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="carbs.guidance.ELQR">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ELQR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_iters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/carbs/guidance.html#ELQR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carbs.guidance.ELQR" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Implements the ELQR algorithm for swarms.</p>
+<p class="rubric">Notes</p>
+<p>This follows <span id="id1">[<a class="reference internal" href="../../../References.html#id10" title="Ryan W. Thomas and Jordan D. Larson. Receding horizon extended linear quadratic regulator for RFS-based swarms with target planning and automatic cost function scaling. IEEE Transactions on Control of Network Systems, 8(2):566–575, jun 2021. doi:10.1109/tcns.2021.3050133.">3</a>]</span>.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="carbs.guidance.ELQR.max_iters">
+<span class="sig-name descname"><span class="pre">max_iters</span></span><a class="headerlink" href="#carbs.guidance.ELQR.max_iters" title="Permalink to this definition"></a></dt>
+<dd><p>Maximum number of iterations to optimize.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="carbs.guidance.ELQR.tol">
+<span class="sig-name descname"><span class="pre">tol</span></span><a class="headerlink" href="#carbs.guidance.ELQR.tol" title="Permalink to this definition"></a></dt>
+<dd><p>Relative tolerance for convergence.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.guidance.ELQR.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_iters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/carbs/guidance.html#ELQR.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carbs.guidance.ELQR.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Initialize an object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max_iters</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of iterations to optimize. The default is 1e3.</p></li>
+<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Relative tolerance for convergence. The default is 1e-4.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#carbs.guidance.ELQR.__init__" title="carbs.guidance.ELQR.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a></p></td>
+<td><p>Initialize an object.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_outputs</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">draw_init_states</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#carbs.guidance.ELQR.find_end_state" title="carbs.guidance.ELQR.find_end_state"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_end_state</span></code></a></p></td>
+<td><p>Finds the ending state for the given current state.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#carbs.guidance.ELQR.gen_final_traj" title="carbs.guidance.ELQR.gen_final_traj"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gen_final_traj</span></code></a></p></td>
+<td><p>Generates the final trajectory state and control trajectories.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#carbs.guidance.ELQR.get_state_dist" title="carbs.guidance.ELQR.get_state_dist"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_state_dist</span></code></a></p></td>
+<td><p>Calculates the current state distribution.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#carbs.guidance.ELQR.init_elqr_lst" title="carbs.guidance.ELQR.init_elqr_lst"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init_elqr_lst</span></code></a></p></td>
+<td><p>Initialize the list of single agent ELQR controllers.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">init_plot</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#carbs.guidance.ELQR.non_quad_fun_factory" title="carbs.guidance.ELQR.non_quad_fun_factory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">non_quad_fun_factory</span></code></a></p></td>
+<td><p>Factory for creating the non-quadratic cost function.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">output_helper</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#carbs.guidance.ELQR.plan" title="carbs.guidance.ELQR.plan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plan</span></code></a></p></td>
+<td><p>Main planning function.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_animation</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#carbs.guidance.ELQR.set_control_model" title="carbs.guidance.ELQR.set_control_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_control_model</span></code></a></p></td>
+<td><p>Sets the single agent control model used.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#carbs.guidance.ELQR.set_cost_model" title="carbs.guidance.ELQR.set_cost_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_cost_model</span></code></a></p></td>
+<td><p>Set the parameters for the cost non-quadratic function.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#carbs.guidance.ELQR.targets_to_wayareas" title="carbs.guidance.ELQR.targets_to_wayareas"><code class="xref py py-obj docutils literal notranslate"><span class="pre">targets_to_wayareas</span></code></a></p></td>
+<td><p>Converts target locations to wayareas with automatic scaling.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.guidance.ELQR.find_end_state">
+<span class="sig-name descname"><span class="pre">find_end_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cur_ind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cur_state</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/carbs/guidance.html#ELQR.find_end_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carbs.guidance.ELQR.find_end_state" title="Permalink to this definition"></a></dt>
+<dd><p>Finds the ending state for the given current state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tt</strong> (<em>float</em>) – Current timestep</p></li>
+<li><p><strong>cur_ind</strong> (<em>int</em>) – Current index into the state distribution</p></li>
+<li><p><strong>cur_state</strong> (<em>N x 1 numpy array</em>) – Current state.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Best ending state given the current state.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>N x 1 numpy array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.guidance.ELQR.gen_final_traj">
+<span class="sig-name descname"><span class="pre">gen_final_traj</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_timesteps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elqr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctrl_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cost_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inv_state_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inv_ctrl_args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/carbs/guidance.html#ELQR.gen_final_traj"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carbs.guidance.ELQR.gen_final_traj" title="Permalink to this definition"></a></dt>
+<dd><p>Generates the final trajectory state and control trajectories.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_timesteps</strong> (<em>int</em>) – total number of timesteps.</p></li>
+<li><p><strong>start</strong> (<em>N x 1 numpy array</em>) – Initial state.</p></li>
+<li><p><strong>elqr</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">gncpy.control.ELQR</span></code>) – Single agent controller for the given starting state.</p></li>
+<li><p><strong>state_args</strong> (<em>tuple</em>) – Additional arguments for the state matrix.</p></li>
+<li><p><strong>ctrl_args</strong> (<em>tuple</em>) – Additional arguments for the input matrix.</p></li>
+<li><p><strong>cost_args</strong> (<em>tuple</em>) – Additional arguments for the cost function.</p></li>
+<li><p><strong>inv_state_args</strong> (<em>tuple</em>) – Additional arguments for the inverse state transition matrix.</p></li>
+<li><p><strong>inv_ctrl_args</strong> (<em>tuple</em>) – Additional arguments for the inverse input matrix.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>state_traj</strong> (<em>Nh+1 x N numpy array</em>) – state trajectory.</p></li>
+<li><p><strong>ctrl_signal</strong> (<em>Nh x Nu numpy array</em>) – control signal.</p></li>
+<li><p><strong>cost</strong> (<em>float</em>) – cost of the trajectory.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.guidance.ELQR.get_state_dist">
+<span class="sig-name descname"><span class="pre">get_state_dist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/carbs/guidance.html#ELQR.get_state_dist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carbs.guidance.ELQR.get_state_dist" title="Permalink to this definition"></a></dt>
+<dd><p>Calculates the current state distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tt</strong> (<em>float</em>) – Current timestep.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>State distribution.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">serums.models.GaussianMixture</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.guidance.ELQR.init_elqr_lst">
+<span class="sig-name descname"><span class="pre">init_elqr_lst</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_dist</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/carbs/guidance.html#ELQR.init_elqr_lst"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carbs.guidance.ELQR.init_elqr_lst" title="Permalink to this definition"></a></dt>
+<dd><p>Initialize the list of single agent ELQR controllers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tt</strong> (<em>float</em>) – current time.</p></li>
+<li><p><strong>start_dist</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">serums.models.GaussianMixture</span></code>) – Starting gaussian mixture.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>num_timesteps</strong> – total number of timesteps.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.guidance.ELQR.non_quad_fun_factory">
+<span class="sig-name descname"><span class="pre">non_quad_fun_factory</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/carbs/guidance.html#ELQR.non_quad_fun_factory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carbs.guidance.ELQR.non_quad_fun_factory" title="Permalink to this definition"></a></dt>
+<dd><p>Factory for creating the non-quadratic cost function.</p>
+<p>This should generate a function of the same form needed by the single
+agent controller, that is <cite>time, state, control input, end state,
+is initial flag, is final flag, *args</cite>. For this class, it implements
+a GM density based cost function plus an optional additional cost function
+of the same form. It returns a float for the non-quadratic part of
+the cost.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>function to calculate cost.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>callable</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.guidance.ELQR.plan">
+<span class="sig-name descname"><span class="pre">plan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_dist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_dist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctrl_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cost_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inv_state_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inv_ctrl_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provide_details</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_animation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_animation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plt_opts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ttl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plt_inds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_end_iters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/carbs/guidance.html#ELQR.plan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carbs.guidance.ELQR.plan" title="Permalink to this definition"></a></dt>
+<dd><p>Main planning function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tt</strong> (<em>float</em>) – Starting timestep for the plan.</p></li>
+<li><p><strong>start_dist</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">serums.models.GaussianMixture</span></code>) – Starting state distribution.</p></li>
+<li><p><strong>end_dist</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">serums.models.GaussianMixture</span></code>) – Ending state distribution.</p></li>
+<li><p><strong>state_args</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Additional arguments for getting the state transition matrix. The
+default is None.</p></li>
+<li><p><strong>ctrl_args</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Additional arguements for getting the input matrix. The default is
+None.</p></li>
+<li><p><strong>cost_args</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Additional arguments for the cost function. The default is None.</p></li>
+<li><p><strong>inv_state_args</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Additional arguments to get the inverse state matrix. The default
+is None.</p></li>
+<li><p><strong>inv_ctrl_args</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Additional arguments to get the inverse input matrix. The default
+is None.</p></li>
+<li><p><strong>provide_details</strong> (<em>bool</em><em>, </em><em>optional</em>) – Falg for if optional outputs should be output. The default is False.</p></li>
+<li><p><strong>disp</strong> (<em>bool</em><em>, </em><em>optional</em>) – Falg for if additional text should be printed. The default is True.</p></li>
+<li><p><strong>show_animation</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag for if an animation is generated. The default is False.</p></li>
+<li><p><strong>save_animation</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag for saving the animation. Only applies if the animation is
+shown. The default is False.</p></li>
+<li><p><strong>plt_opts</strong> (<em>dict</em><em>, </em><em>optional</em>) – Additional plotting options. See
+<code class="xref py py-func docutils literal notranslate"><span class="pre">gncpy.plotting.init_plotting_opts()</span></code>. The default is None.</p></li>
+<li><p><strong>ttl</strong> (<em>string</em><em>, </em><em>optional</em>) – Title of the generated plot. The default is None.</p></li>
+<li><p><strong>fig</strong> (<em>matplotlib figure</em><em>, </em><em>optional</em>) – Handle to the figure. If supplied only the end states are added.
+The default is None.</p></li>
+<li><p><strong>cmap</strong> (<em>matplotlib colormap</em><em>, </em><em>optional</em>) – Color map for the different agents. See <code class="xref py py-func docutils literal notranslate"><span class="pre">gncpy.plotting.get_cmap()</span></code>.
+The default is None.</p></li>
+<li><p><strong>plt_inds</strong> (<em>list</em><em>, </em><em>optional</em>) – Indices in the state vector to plot. The default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>state_trajs</strong> (<em>list</em>) – Each element is an Nh+1xN numpy array.</p></li>
+<li><p><strong>costs</strong> (<em>list, optional</em>) – Each element is a float for the cost of that trajectory</p></li>
+<li><p><strong>ctrl_signals</strong> (<em>list, optional</em>) – Each element is an NhxNu numpy array</p></li>
+<li><p><strong>fig</strong> (<em>matplotlib figure, optional</em>) – Handle to the generated figure</p></li>
+<li><p><strong>frame_list</strong> (<em>list, optional</em>) – Each element is a PIL image if the animation is being saved.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.guidance.ELQR.set_control_model">
+<span class="sig-name descname"><span class="pre">set_control_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">singleELQR</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/carbs/guidance.html#ELQR.set_control_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carbs.guidance.ELQR.set_control_model" title="Permalink to this definition"></a></dt>
+<dd><p>Sets the single agent control model used.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>singleELQR</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">gncpy.control.ELQR</span></code>) – Single agent controller for generating trajectories.</p></li>
+<li><p><strong>quad_modifier</strong> (<em>callable</em><em>, </em><em>optional</em>) – Modifing function for the quadratization. See
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">gncpy.control.ELQR.set_cost_model()</span></code>. The default is None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.guidance.ELQR.set_cost_model">
+<span class="sig-name descname"><span class="pre">set_cost_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">safety_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_ref</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">non_quad_fun</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quad_modifier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">non_quad_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/carbs/guidance.html#ELQR.set_cost_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carbs.guidance.ELQR.set_cost_model" title="Permalink to this definition"></a></dt>
+<dd><p>Set the parameters for the cost non-quadratic function.</p>
+<p>This sets the parameters for the built-in non-quadratic cost function
+and allows specifying an additional non-quadratic function (see
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">gncpy.control.ELQR()</span></code>) for the agents. Any additional non-quadratic
+terms must be set here instead of within the single control model directly
+due to the built-in multi-agent non-quadratic cost.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>safety_factor</strong> (<em>float</em><em>, </em><em>optional</em>) – Additional scaling factor on the radius of influence. The default
+is None.</p></li>
+<li><p><strong>y_ref</strong> (<em>float</em><em>, </em><em>optional</em>) – Reference point on the sigmoid function to use when determining
+th radius of influence. Should be between 0 and 1 (non-inclusive).
+The default is None.</p></li>
+<li><p><strong>non_quad_fun</strong> (<em>callable</em><em>, </em><em>optional</em>) – Optional additional non-quadratic cost. Must have the same form as
+that of the single agent controller. See <code class="xref py py-meth docutils literal notranslate"><span class="pre">gncpy.control.ELQR()</span></code>.
+The default is None.</p></li>
+<li><p><strong>quad_modifier</strong> (<em>callable</em><em>, </em><em>optional</em>) – Function to modify the quadratization process, see
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">gncpy.control.ELQR()</span></code>. The default is None.</p></li>
+<li><p><strong>non_quad_weight</strong> (<em>float</em>) – Additional scaling to be applied to the additional non_quadratic
+cost (the non built-in term). The default is None</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="carbs.guidance.ELQR.targets_to_wayareas">
+<span class="sig-name descname"><span class="pre">targets_to_wayareas</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">end_states</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/carbs/guidance.html#ELQR.targets_to_wayareas"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carbs.guidance.ELQR.targets_to_wayareas" title="Permalink to this definition"></a></dt>
+<dd><p>Converts target locations to wayareas with automatic scaling.</p>
+<p>Performs a Principal Component Analysis (PCA) on the ending state
+locations to create a Gaussian Mixture.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>end_states</strong> (<em>Nt x N numpy array</em>) – All possible ending states, one per row.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Ending state distribution.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">serums.models.GaussianMixture</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="carbs.guidance.gaussian_density_cost.html" class="btn btn-neutral float-left" title="carbs.guidance.gaussian_density_cost" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="carbs.guidance.ELQROSPA.html" class="btn btn-neutral float-right" title="ELQROSPA" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019, Jordan D Larson.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

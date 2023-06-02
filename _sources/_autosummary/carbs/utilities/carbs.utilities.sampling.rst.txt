@@ -1,0 +1,32 @@
+sampling
+========
+
+.. automodule:: carbs.utilities.sampling
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree: sampling
+      :nosignatures:
+   
+      gibbs
+      mm_gibbs
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

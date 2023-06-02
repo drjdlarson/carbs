@@ -5,7 +5,7 @@ Toolchain Setup
    :maxdepth: 2
    :caption: Contents:
 
-This provides information on initial setup of the toolchain when developing for caser, information on how to use **tox** for running unit and validation tests, and for using **tox** to build documentation.
+This provides information on initial setup of the toolchain when developing for carbs, information on how to use **tox** for running unit and validation tests, and for using **tox** to build documentation.
 
 .. contents:: Table of Contents
     :depth: 2

@@ -1,0 +1,41 @@
+ELQROSPA
+========
+
+.. currentmodule:: carbs.guidance
+
+.. autoclass:: ELQROSPA
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~ELQROSPA.__init__
+      ~ELQROSPA.create_outputs
+      ~ELQROSPA.draw_init_states
+      ~ELQROSPA.find_end_state
+      ~ELQROSPA.gen_final_traj
+      ~ELQROSPA.get_state_dist
+      ~ELQROSPA.init_elqr_lst
+      ~ELQROSPA.init_plot
+      ~ELQROSPA.non_quad_fun_factory
+      ~ELQROSPA.output_helper
+      ~ELQROSPA.plan
+      ~ELQROSPA.reset
+      ~ELQROSPA.save_animation
+      ~ELQROSPA.set_control_model
+      ~ELQROSPA.set_cost_model
+      ~ELQROSPA.targets_to_wayareas
+   
+   
+
+   
+   
+   

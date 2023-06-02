@@ -1,0 +1,6 @@
+carbs.utilities.graphs.bfm\_shortest\_path
+==========================================
+
+.. currentmodule:: carbs.utilities.graphs
+
+.. autofunction:: bfm_shortest_path

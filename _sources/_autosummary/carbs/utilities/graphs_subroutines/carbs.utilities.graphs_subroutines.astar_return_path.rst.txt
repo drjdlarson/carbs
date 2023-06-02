@@ -1,0 +1,6 @@
+carbs.utilities.graphs\_subroutines.astar\_return\_path
+=======================================================
+
+.. currentmodule:: carbs.utilities.graphs_subroutines
+
+.. autofunction:: astar_return_path

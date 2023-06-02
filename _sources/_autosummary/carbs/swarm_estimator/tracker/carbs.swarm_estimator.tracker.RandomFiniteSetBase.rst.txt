@@ -1,0 +1,43 @@
+RandomFiniteSetBase
+===================
+
+.. currentmodule:: carbs.swarm_estimator.tracker
+
+.. autoclass:: RandomFiniteSetBase
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~RandomFiniteSetBase.__init__
+      ~RandomFiniteSetBase.calculate_ospa
+      ~RandomFiniteSetBase.cleanup
+      ~RandomFiniteSetBase.correct
+      ~RandomFiniteSetBase.extract_states
+      ~RandomFiniteSetBase.load_filter_state
+      ~RandomFiniteSetBase.plot_ospa_history
+      ~RandomFiniteSetBase.predict
+      ~RandomFiniteSetBase.save_filter_state
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~RandomFiniteSetBase.num_birth_terms
+      ~RandomFiniteSetBase.ospa_method
+      ~RandomFiniteSetBase.prob_death
+      ~RandomFiniteSetBase.prob_miss_detection
+   
+   

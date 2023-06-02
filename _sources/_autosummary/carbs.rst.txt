@@ -1,0 +1,34 @@
+﻿carbs
+=====
+
+.. automodule:: carbs
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree: carbs
+   :template: module.rst_t
+   :recursive:
+
+   ~carbs.guidance
+   ~carbs.swarm_estimator
+   ~carbs.utilities
+

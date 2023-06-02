@@ -1,0 +1,48 @@
+tracker
+=======
+
+.. automodule:: carbs.swarm_estimator.tracker
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: tracker
+      :nosignatures:
+      :template: class.rst_t
+   
+      CardinalizedPHD
+      GSMGeneralizedLabeledMultiBernoulli
+      GSMJointGeneralizedLabeledMultiBernoulli
+      GeneralizedLabeledMultiBernoulli
+      IMMCardinalizedPHD
+      IMMGeneralizedLabeledMultiBernoulli
+      IMMJointGeneralizedLabeledMultiBernoulli
+      IMMProbabilityHypothesisDensity
+      JointGeneralizedLabeledMultiBernoulli
+      MSJointGeneralizedLabeledMultiBernoulli
+      PoissonMultiBernoulliMixture
+      ProbabilityHypothesisDensity
+      RandomFiniteSetBase
+      SMCGeneralizedLabeledMultiBernoulli
+      SMCJointGeneralizedLabeledMultiBernoulli
+      STMGeneralizedLabeledMultiBernoulli
+      STMJointGeneralizedLabeledMultiBernoulli
+   
+   
+
+   
+   
+   
+
+
+

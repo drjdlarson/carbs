@@ -1,0 +1,41 @@
+guidance
+========
+
+.. automodule:: carbs.guidance
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree: guidance
+      :nosignatures:
+   
+      gaussian_density_cost
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: guidance
+      :nosignatures:
+      :template: class.rst_t
+   
+      ELQR
+      ELQROSPA
+   
+   
+
+   
+   
+   
+
+
+

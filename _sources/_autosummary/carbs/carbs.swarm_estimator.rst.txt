@@ -1,0 +1,33 @@
+swarm\_estimator
+================
+
+.. automodule:: carbs.swarm_estimator
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree: swarm_estimator
+   :template: module.rst_t
+   :recursive:
+
+   ~carbs.swarm_estimator.slam
+   ~carbs.swarm_estimator.tracker
+

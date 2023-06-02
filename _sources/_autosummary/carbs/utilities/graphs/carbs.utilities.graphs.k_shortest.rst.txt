@@ -1,0 +1,6 @@
+carbs.utilities.graphs.k\_shortest
+==================================
+
+.. currentmodule:: carbs.utilities.graphs
+
+.. autofunction:: k_shortest

@@ -1,0 +1,6 @@
+carbs.guidance.gaussian\_density\_cost
+======================================
+
+.. currentmodule:: carbs.guidance
+
+.. autofunction:: gaussian_density_cost

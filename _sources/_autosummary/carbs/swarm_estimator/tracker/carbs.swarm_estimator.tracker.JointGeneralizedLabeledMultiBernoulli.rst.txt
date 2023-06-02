@@ -1,0 +1,54 @@
+JointGeneralizedLabeledMultiBernoulli
+=====================================
+
+.. currentmodule:: carbs.swarm_estimator.tracker
+
+.. autoclass:: JointGeneralizedLabeledMultiBernoulli
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~JointGeneralizedLabeledMultiBernoulli.__init__
+      ~JointGeneralizedLabeledMultiBernoulli.calculate_ospa
+      ~JointGeneralizedLabeledMultiBernoulli.calculate_ospa2
+      ~JointGeneralizedLabeledMultiBernoulli.cleanup
+      ~JointGeneralizedLabeledMultiBernoulli.correct
+      ~JointGeneralizedLabeledMultiBernoulli.extract_most_prob_states
+      ~JointGeneralizedLabeledMultiBernoulli.extract_states
+      ~JointGeneralizedLabeledMultiBernoulli.load_filter_state
+      ~JointGeneralizedLabeledMultiBernoulli.plot_card_dist
+      ~JointGeneralizedLabeledMultiBernoulli.plot_card_history
+      ~JointGeneralizedLabeledMultiBernoulli.plot_ospa2_history
+      ~JointGeneralizedLabeledMultiBernoulli.plot_ospa_history
+      ~JointGeneralizedLabeledMultiBernoulli.plot_states_labels
+      ~JointGeneralizedLabeledMultiBernoulli.predict
+      ~JointGeneralizedLabeledMultiBernoulli.save_filter_state
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~JointGeneralizedLabeledMultiBernoulli.cardinality
+      ~JointGeneralizedLabeledMultiBernoulli.covariances
+      ~JointGeneralizedLabeledMultiBernoulli.filter
+      ~JointGeneralizedLabeledMultiBernoulli.labels
+      ~JointGeneralizedLabeledMultiBernoulli.num_birth_terms
+      ~JointGeneralizedLabeledMultiBernoulli.ospa_method
+      ~JointGeneralizedLabeledMultiBernoulli.prob_death
+      ~JointGeneralizedLabeledMultiBernoulli.prob_miss_detection
+      ~JointGeneralizedLabeledMultiBernoulli.states
+   
+   

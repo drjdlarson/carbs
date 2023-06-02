@@ -1,0 +1,41 @@
+graphs\_subroutines
+===================
+
+.. automodule:: carbs.utilities.graphs_subroutines
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree: graphs_subroutines
+      :nosignatures:
+   
+      assign_opt
+      astar_return_path
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: graphs_subroutines
+      :nosignatures:
+      :template: class.rst_t
+   
+      AStarNode
+   
+   
+
+   
+   
+   
+
+
+
