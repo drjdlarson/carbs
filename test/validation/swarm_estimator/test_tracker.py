@@ -734,8 +734,9 @@ def _gen_meas_imm(tt, true_agents, proc_noise, meas_noise, rng):
         # xp = rng.multivariate_normal(x.flatten(), proc_noise).reshape(x.shape)
         # meas = m_mat @ xp
         meas = m_mat @ x
-        m = rng.multivariate_normal(meas.flatten(), meas_noise).reshape(meas.shape)
-        meas_in.append(m.copy())
+        # m = rng.multivariate_normal(meas.flatten(), meas_noise).reshape(meas.shape)
+        # meas_in.append(m.copy())
+        meas_in.append(meas.copy())
     return meas_in
 
 def _gen_meas_ms(tt, true_agents, proc_noise, meas_noise, rng, meas_model_list):
@@ -3719,7 +3720,7 @@ def test_IMM_PMBM():
     }
     PMBM_args = {
         "req_upd": 800,
-        "prune_threshold": 10 ** -3,
+        "prune_threshold": 10 ** -5,
         "exist_threshold": 10 ** -5,
         "max_hyps": 1000,
     }
@@ -3911,7 +3912,7 @@ def test_MS_PMBM():  # noqa
     print("\tStarting sim")
     for kk, tt in enumerate(time):
         # if np.mod(kk, 100) == 0:
-        if np.mod(kk, 10) == 0:
+        if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
         true_agents = _update_true_agents_pmbm(true_agents, tt, dt, b_model, rng)
@@ -4200,7 +4201,7 @@ if __name__ == "__main__":
     # test_LPMBM()
     # test_IMM_PMBM()
     # test_IMM_LPMBM()
-    # test_MS_PMBM()
+    test_MS_PMBM()
     # test_MS_LPMBM()
     # test_MS_IMM_PMBM()
     # test_MS_IMM_LPMBM()
