@@ -12,18 +12,23 @@
 #
 import os
 import sys
-import sphinx_theme
-sys.path.append(os.path.abspath('../../casur'))
 
+from importlib.metadata import version as get_version
+
+sys.path.append(os.path.abspath("../../carbs"))
+
+sys.path.append(os.path.abspath("."))
+from example_runner import run_examples
+
+run_examples()
 
 # -- Project information -----------------------------------------------------
 
-project = 'CASER'
-copyright = '2020, Laboratory for Autonomy, GNC, and Estimation Research (LAGER)'
-author = 'Laboratory for Autonomy, GNC, and Estimation Research (LAGER)'
-
-# The full version, including alpha/beta/rc tags
-release = '0.0.0'
+project = "CARBS"
+copyright = "2019, Jordan D Larson"
+author = "LAGER"
+version = get_version("carbs")
+release = get_version("carbs")
 
 
 # -- General configuration ---------------------------------------------------
@@ -31,17 +36,20 @@ release = '0.0.0'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.todo',
-    'sphinx.ext.viewcode',
-    'sphinxcontrib.bibtex',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.todo",
+    "sphinx.ext.viewcode",
+    "sphinxcontrib.bibtex",
+    "sphinx_sitemap",
+    "sphinx_copybutton",
+    "sphinx_rtd_theme",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -52,34 +60,39 @@ templates_path = ['_templates']
 # note see https://stackoverflow.com/questions/2701998/sphinx-autodoc-is-not-automatic-enough
 # for help/details
 autosummary_generate = True
-autodoc_member_order = 'groupwise'
+autodoc_member_order = "groupwise"
 add_module_names = False
+modindex_common_prefix = [
+    "carbs.",
+]
+
+# configure copy button for code snippets
+copybutton_only_copy_prompt_lines = False
 
 # Todo configuration
 todo_include_todos = True
 todo_link_only = True
 
 # bibtex config
-bibtex_bibfiles = ['refs.bib']
+bibtex_bibfiles = ["refs.bib"]
 
 
 # -- Options for HTML output -------------------------------------------------
-
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-# html_theme = 'classic'
-# html_theme = 'alabaster'
-html_theme = "stanford_theme"
-html_theme_path = [sphinx_theme.get_html_theme_path('stanford-theme')]
+html_theme = "sphinx_rtd_theme"
 html_theme_options = {
-    'display_version': True,
+    "display_version": True,
+    "style_nav_header_background": "#9E1B32",
     # Toc options
-    'collapse_navigation': False,
-    'sticky_navigation': True,
-    'navigation_depth': 4,
+    "collapse_navigation": False,
+    "sticky_navigation": True,
+    "navigation_depth": 4,
 }
 html_show_sourcelink = False
+html_baseurl = "https://drjdlarson.github.io/carbs/"
+html_extra_path = [
+    "robots.txt",
+]  # robots.txt is for search engine stuff
+html_logo = "logo.svg"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

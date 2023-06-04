@@ -1,0 +1,61 @@
+[project]
+name = "carbs"
+# version = "0.0.0"
+dynamic = ["version"]
+description = "A package for Guidance, Navigation, and Control (GNC) for Autonomous Swarms Using Random finite sets (RFS)."
+readme = "README.rst"
+requires-python = ">=3.7, <3.10"
+license = {file = "LICENSE"}
+keywords = [
+    "Guidance Navigation and Control",
+    "multi-vehicle teams",
+    "Random Finite Sets",
+    "multi-object tracking"
+]
+authors = [
+    { name = "Laboratory for Autonomy GNC and Estimation Research (LAGER)" },
+]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Topic :: Scientific/Engineering",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+]
+dependencies = [
+    "serums",
+    "gncpy",
+    "numpy",
+    "scipy",
+    "matplotlib",
+]
+
+
+[project.urls]
+homepage = "http://lager.ua.edu/"
+documentation = "https://drjdlarson.github.io/carbs/"
+repository = "https://github.com/drjdlarson/carbs"
+# changelog = "https://github.com/me/spam/blob/master/CHANGELOG.md"
+
+
+[build-system]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+
+# activates the extension
+[tool.setuptools_scm]
+local_scheme = "no-local-version"
+
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+junit_suite_name = "carbs"
+junit_log_passing_tests = true
+junit_duration_report = "call"
+junit_logging = "all"

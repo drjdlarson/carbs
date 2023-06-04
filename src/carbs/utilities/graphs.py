@@ -5,11 +5,11 @@ This module contains the functions for graph search algorithms.
 import numpy as np
 from warnings import warn
 
-import caser.utilities.graphs_subroutines as subs
+import carbs.utilities.graphs_subroutines as subs
 
 
 def k_shortest(log_cost_in, k):
-    """ This implents k-shortest path algorithm.
+    """This implents k-shortest path algorithm.
 
     This ports the implementation from
     `here <https://ba-tuong.vo-au.com/codes.html>`_.
@@ -83,7 +83,7 @@ def k_shortest(log_cost_in, k):
 
 def __k_short_helper(net_cost_mat, src, dst, k_paths):
     if src > net_cost_mat.shape[0] or dst > net_cost_mat.shape[0]:
-        msg = 'Source or destination nodes not part of cost matrix'
+        msg = "Source or destination nodes not part of cost matrix"
         warn(msg, RuntimeWarning)
         return ([], [])
 
@@ -129,21 +129,22 @@ def __k_short_helper(net_cost_mat, src, dst, k_paths):
             sp_same_sub_p.append(P_)
             for sp in shortest_paths:
                 if len(sp) > ind_dev_vert:
-                    if np.array_equal(np.array(P_[0:ind_dev_vert + 1]),
-                                      np.array(sp[0:ind_dev_vert + 1])):
+                    if np.array_equal(
+                        np.array(P_[0 : ind_dev_vert + 1]),
+                        np.array(sp[0 : ind_dev_vert + 1]),
+                    ):
                         sp_same_sub_p.append(sp)
             v_ = P_[ind_dev_vert]
             for sp in sp_same_sub_p:
                 nxt = sp[ind_dev_vert + 1]
                 temp_cost_mat[v_, nxt] = np.inf
 
-            sub_P = P_[0:ind_dev_vert+1]
+            sub_P = P_[0 : ind_dev_vert + 1]
             cost_sub_P = 0
             for ii in range(0, len(sub_P) - 1):
                 cost_sub_P += net_cost_mat[sub_P[ii], sub_P[ii + 1]]
 
-            (c, dev_p, _) = bfm_shortest_path(temp_cost_mat, P_[ind_dev_vert],
-                                              dst)
+            (c, dev_p, _) = bfm_shortest_path(temp_cost_mat, P_[ind_dev_vert], dst)
             if len(dev_p) > 0:
                 tmp_path = sub_P[0:-2] + dev_p
                 P.append((tmp_path, cost_sub_P + c))
@@ -166,7 +167,7 @@ def __k_short_helper(net_cost_mat, src, dst, k_paths):
 
 
 def bfm_shortest_path(ncm, src, dst):
-    """ This implements the Bellman-Ford-Moore shortest path algorithm.
+    """This implements the Bellman-Ford-Moore shortest path algorithm.
 
     This ports the implementation from
     `here <https://ba-tuong.vo-au.com/codes.html>`_.
@@ -233,7 +234,7 @@ def bfm_shortest_path(ncm, src, dst):
         path = []
     else:
         path = [dst]
-        while not(path[0] == src):
+        while not (path[0] == src):
             path = [pred[path[0]]] + path
 
     return (dist, path, pred)
@@ -266,6 +267,7 @@ def __bfm_helper(G, r):
     ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
     POSSIBILITY OF SUCH DAMAGE.
     """
+
     def init(G):
         # Transforms the sparse matrix G into the list-of-arcs form
         # and intializes the shortest path parent-pointer and distance
@@ -307,7 +309,7 @@ def __bfm_helper(G, r):
 
 
 def murty_m_best(cost_mat, m):
-    """ This implements Murty's m-best ranked optimal assignment.
+    """This implements Murty's m-best ranked optimal assignment.
 
     This ports the implementation from
     `here <https://ba-tuong.vo-au.com/codes.html>`_.
@@ -328,7 +330,7 @@ def murty_m_best(cost_mat, m):
             - costs (numpy array): Cost of each path
     """
     if len(cost_mat.shape) == 1 or len(cost_mat.shape) > 2:
-        raise RuntimeError('Cost matrix must be 2D array')
+        raise RuntimeError("Cost matrix must be 2D array")
 
     if m == 0:
         return ([], [])
@@ -340,19 +342,20 @@ def murty_m_best(cost_mat, m):
 
     (assigns, costs) = __murty_helper(cm, m)
 
-    for (ii, a) in enumerate(assigns):
+    for ii, a in enumerate(assigns):
         costs[ii] += x * np.count_nonzero(a >= 0)
     assigns += 1
 
     # remove extra entries
-    assigns = assigns[:, 0:cost_mat.shape[0]]
+    assigns = assigns[:, 0 : cost_mat.shape[0]]
     # dummy assignmets are clutter
     assigns[np.where(assigns > cost_mat.shape[1])] = 0
     assigns = assigns.astype(int)
     return (assigns, costs)
 
+
 def murty_m_best_all_meas_assigned(cost_mat, m):
-    """ This implements Murty's m-best ranked optimal assignment.
+    """This implements Murty's m-best ranked optimal assignment.
 
     This ports the implementation from
     `here <https://ba-tuong.vo-au.com/codes.html>`_.
@@ -373,7 +376,7 @@ def murty_m_best_all_meas_assigned(cost_mat, m):
             - costs (numpy array): Cost of each path
     """
     if len(cost_mat.shape) == 1 or len(cost_mat.shape) > 2:
-        raise RuntimeError('Cost matrix must be 2D array')
+        raise RuntimeError("Cost matrix must be 2D array")
 
     if m == 0:
         return ([], [])
@@ -384,16 +387,17 @@ def murty_m_best_all_meas_assigned(cost_mat, m):
 
     (assigns, costs) = __murty_helper(cm, m)
 
-    for (ii, a) in enumerate(assigns):
+    for ii, a in enumerate(assigns):
         costs[ii] += x * np.count_nonzero(a >= 0)
     assigns += 1
 
     # remove extra entries
-    assigns = assigns[:, 0:cost_mat.shape[0]]
+    assigns = assigns[:, 0 : cost_mat.shape[0]]
     # dummy assignmets are clutter
     assigns[np.where(assigns > cost_mat.shape[1])] = 0
     assigns = assigns.astype(int)
     return (assigns, costs)
+
 
 def __murty_helper(p0, m):
     (s0, c0) = subs.assign_opt(p0)
@@ -434,13 +438,13 @@ def __murty_helper(p0, m):
 
         ans_lst_C[idx_top] = np.nan
 
-        for (aw, aj) in enumerate(S_now):
+        for aw, aj in enumerate(S_now):
             if aj >= 0:
                 P_tmp = P_now.copy()
                 if aj <= n_cols - n_rows - 1:
                     P_tmp[aw, aj] = np.inf
                 else:
-                    P_tmp[aw, (n_cols - n_rows):] = np.inf
+                    P_tmp[aw, (n_cols - n_rows) :] = np.inf
 
                 (S_tmp, C_tmp) = subs.assign_opt(P_tmp)
 
@@ -448,16 +452,13 @@ def __murty_helper(p0, m):
                 if (S_tmp >= 0).all():
                     # allocate more space as needed
                     if ans_nxt_ind >= len(ans_lst_C):
-                        ans_lst_P = np.concatenate((ans_lst_P,
-                                                    np.zeros((n_rows, n_cols,
-                                                              blk_sz))),
-                                                   axis=2)
-                        ans_lst_S = np.concatenate((ans_lst_S,
-                                                    np.zeros((n_rows, blk_sz),
-                                                             dtype=int)),
-                                                   axis=1)
-                        ans_lst_C = np.hstack((ans_lst_C,
-                                               np.nan * np.ones(blk_sz)))
+                        ans_lst_P = np.concatenate(
+                            (ans_lst_P, np.zeros((n_rows, n_cols, blk_sz))), axis=2
+                        )
+                        ans_lst_S = np.concatenate(
+                            (ans_lst_S, np.zeros((n_rows, blk_sz), dtype=int)), axis=1
+                        )
+                        ans_lst_C = np.hstack((ans_lst_C, np.nan * np.ones(blk_sz)))
 
                     ans_lst_P[:, :, ans_nxt_ind] = P_tmp
                     ans_lst_S[:, ans_nxt_ind] = S_tmp
@@ -474,12 +475,12 @@ def __murty_helper(p0, m):
 
 def a_star_search(maze, start, end, cost=1):
     """
-        Returns a list of tuples as a path from the given start to the given end in the given maze
-        :param maze:
-        :param cost
-        :param start:
-        :param end:
-        :return:
+    Returns a list of tuples as a path from the given start to the given end in the given maze
+    :param maze:
+    :param cost
+    :param start:
+    :param end:
+    :return:
     """
 
     # Create start and end node with initized values for g, h and f
@@ -506,14 +507,16 @@ def a_star_search(maze, start, end, cost=1):
 
     # what squares do we search . search movement is left-right-top-bottom
     # (4 movements) from every positon
-    move = [[-1, 0],  # go up
-            [0, -1],  # go left
-            [1, 0],  # go down
-            [0, 1],  # go right
-            [1, 1],  # diagonals
-            [1, -1],
-            [-1, 1],
-            [-1, -1]]
+    move = [
+        [-1, 0],  # go up
+        [0, -1],  # go left
+        [1, 0],  # go down
+        [0, 1],  # go right
+        [1, 1],  # diagonals
+        [1, -1],
+        [-1, 1],
+        [-1, -1],
+    ]
 
     """
         1) We first get the current node by comparing all f cost and selecting the lowest cost node for further expansion
@@ -532,16 +535,14 @@ def a_star_search(maze, start, end, cost=1):
                 c) if child in yet_to_visit list then ignore it
                 d) else move the child to yet_to_visit list
     """
-    #find maze has got how many rows and columns
+    # find maze has got how many rows and columns
     no_rows, no_columns = np.shape(maze)
 
     # Loop until you find the end
 
     while len(yet_to_visit_list) > 0:
-
         # Every time any node is referred from yet_to_visit list, counter of limit operation incremented
         outer_iterations += 1
-
 
         # Get the current node
         current_node = yet_to_visit_list[0]
@@ -554,8 +555,8 @@ def a_star_search(maze, start, end, cost=1):
         # if we hit this point return the path such as it may be no solution or
         # computation cost is too high
         if outer_iterations > max_iterations:
-            print ("giving up on pathfinding too many iterations")
-            return subs.astar_return_path(current_node,maze)
+            print("giving up on pathfinding too many iterations")
+            return subs.astar_return_path(current_node, maze)
 
         # Pop current node out off yet_to_visit list, add to visited list
         yet_to_visit_list.pop(current_index)
@@ -569,20 +570,27 @@ def a_star_search(maze, start, end, cost=1):
         children = []
 
         for new_position in move:
-
             # Get node position
-            node_position = (current_node.position[0] + new_position[0],
-                             current_node.position[1] + new_position[1])
+            node_position = (
+                current_node.position[0] + new_position[0],
+                current_node.position[1] + new_position[1],
+            )
 
             # Make sure within range (check if within maze boundary)
-            if (node_position[0] > (no_rows - 1) or
-                node_position[0] < 0 or
-                node_position[1] > (no_columns -1) or
-                node_position[1] < 0 or
-                node_position[0] < 0 and node_position[1] < 0 or
-                node_position[0] > (no_rows-1) and node_position[1] < 0 or
-                node_position[0] < 0 and node_position[1] < (no_columns-1) or
-                node_position[0] > (no_rows-1) and node_position[1] > (no_columns-1)):
+            if (
+                node_position[0] > (no_rows - 1)
+                or node_position[0] < 0
+                or node_position[1] > (no_columns - 1)
+                or node_position[1] < 0
+                or node_position[0] < 0
+                and node_position[1] < 0
+                or node_position[0] > (no_rows - 1)
+                and node_position[1] < 0
+                or node_position[0] < 0
+                and node_position[1] < (no_columns - 1)
+                or node_position[0] > (no_rows - 1)
+                and node_position[1] > (no_columns - 1)
+            ):
                 continue
 
             # Make sure walkable terrain
@@ -598,17 +606,29 @@ def a_star_search(maze, start, end, cost=1):
         # Loop through children
         for child in children:
             # Child is on the visited list (search entire visited list)
-            if len([visited_child for visited_child in visited_list
-                    if visited_child == child]) > 0:
+            if (
+                len(
+                    [
+                        visited_child
+                        for visited_child in visited_list
+                        if visited_child == child
+                    ]
+                )
+                > 0
+            ):
                 continue
 
             # Create the f, g, and h values
             child.g = current_node.g + cost
 
             # Heuristic costs calculated here, this is using euclidian distance
-            child.h = np.sqrt((((child.position[0] - end_node.position[0]) ** 2) +
-                        ((child.position[1] - end_node.position[1]) ** 2)))
-            
+            child.h = np.sqrt(
+                (
+                    ((child.position[0] - end_node.position[0]) ** 2)
+                    + ((child.position[1] - end_node.position[1]) ** 2)
+                )
+            )
+
             # dx = abs(child.position[0] - end_node.position[0])  # diagonal heuristic
             # dy = abs(child.position[1] - end_node.position[1])
             # child.h = dx + dy - 1 + min(dx, dy)
@@ -616,8 +636,7 @@ def a_star_search(maze, start, end, cost=1):
             child.f = child.g + child.h
 
             # Child is already in the yet_to_visit list and g cost is already lower
-            if len([i for i in yet_to_visit_list
-                    if child == i and child.g > i.g]) > 0:
+            if len([i for i in yet_to_visit_list if child == i and child.g > i.g]) > 0:
                 continue
 
             # Add the child to the yet_to_visit list
