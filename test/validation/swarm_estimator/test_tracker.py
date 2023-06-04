@@ -3810,7 +3810,7 @@ def test_IMM_LPMBM():
     }
     PMBM_args = {
         "req_upd": 800,
-        "prune_threshold": 10 ** -3,
+        "prune_threshold": 10 ** -5,
         "exist_threshold": 10 ** -5,
         "max_hyps": 1000,
     }
@@ -4200,8 +4200,8 @@ if __name__ == "__main__":
     # test_PMBM()
     # test_LPMBM()
     # test_IMM_PMBM()
-    # test_IMM_LPMBM()
-    test_MS_PMBM()
+    test_IMM_LPMBM()
+    # test_MS_PMBM()
     # test_MS_LPMBM()
     # test_MS_IMM_PMBM()
     # test_MS_IMM_LPMBM()
