@@ -4705,7 +4705,7 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
                     z, ent, timestep, filt_args
                 )
                 if up_tab[s_to_ii] is not None:
-                    up_tab[s_to_ii].meas_assoc_hist.append((emm, z))
+                    up_tab[s_to_ii].meas_assoc_hist.append(emm)
                 all_cost_m[ii, emm] = cost
 
         return up_tab, all_cost_m
@@ -4753,6 +4753,10 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
         for p_hyp in self._hypotheses:
             ss_w += np.sqrt(p_hyp.assoc_prob)
         for p_hyp in self._hypotheses:
+            #insert loop here
+            # for ind_lst in meas_combs:
+            #     if len(meas_combs) == 1:
+
             cpreds = len(self._track_tab)
             num_births = len(self.birth_terms)
             num_exists = len(p_hyp.track_set)
@@ -4800,9 +4804,11 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
                             assigns[ii][jj] = -1
             assigns[assigns >= 2 * num_tracks] -= 2 * num_tracks
             if assigns[assigns >= 0].size != 0:
-                assigns[assigns >= 0] = mindices[
-                    assigns.astype(int)[assigns.astype(int) >= 0]
-                ]
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", RuntimeWarning)
+                    assigns[assigns >= 0] = mindices[
+                        assigns.astype(int)[assigns.astype(int) >= 0]
+                    ]
             # Assign updated hypotheses from gibbs sampler
             for c, cst in enumerate(costs.flatten()):
                 update_hyp_cmp_temp = assigns[c,]
@@ -4901,8 +4907,11 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
         self._old_track_tab_len = len(self._track_tab)
 
 
-class MSIMMJointGeneralizedLabeledMultiBernoulli(_IMMGLMBBase, MSJointGeneralizedLabeledMultiBernoulli):
+class MSIMMJointGeneralizedLabeledMultiBernoulli(
+    _IMMGLMBBase, MSJointGeneralizedLabeledMultiBernoulli
+):
     """An implementation of the Multi-Sensor IMM-JGLMB algorithm."""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -4943,6 +4952,7 @@ class MSIMMJointGeneralizedLabeledMultiBernoulli(_IMMGLMBBase, MSJointGeneralize
         else:
             cost = 0
         return newTab, cost
+
 
 class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
     class _TabEntry:
@@ -5159,7 +5169,7 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
     def cardinality(self):
         """Cardinality estimate."""
         return np.argmax(self._card_dist)
-    
+
     def _init_filt_states(self, distrib):
         filt_states = [None] * len(distrib.means)
         states = [m.copy() for m in distrib.means]
@@ -5289,7 +5299,6 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
         new_tab = self._TabEntry()
         (filt_states, weights, states, covs) = self._init_filt_states(distrib)
 
-
         new_f_states = [None] * len(filt_states)
         new_s_hist = [None] * len(filt_states)
         new_c_hist = [None] * len(filt_states)
@@ -5379,6 +5388,8 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
                 all_cost_m[emm, emm + num_pred] = cost
         return up_tab, all_cost_m
 
+    # TODO: find some way to cherry pick the appropriate all_combs to ensure that
+    # measurements are not duplicated before being passed to assignment
     def _gen_cor_hyps(
         self, num_meas, avg_prob_detect, avg_prob_miss_detect, all_cost_m, cor_tab
     ):
@@ -5461,10 +5472,25 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
                                     # coiuld be this one, trying -1 first
                                     # new_track_list.append(((np.array(p_hyp.track_set[(ms-ii)]) + num_pred) * ms))
                                     # new_track_list.append(((np.array(p_hyp.track_set[(ms-1)]) + num_pred) * ms + num_meas * ii))
-                                    new_track_list.append(ms * num_pred + p_hyp.track_set[(ms-1)])
+                                    new_track_list.append(
+                                        ms * num_pred + p_hyp.track_set[(ms - 1)]
+                                    )
                                 elif len(p_hyp.track_set) < ms:
-                                    new_track_list.append(num_pred * (num_meas + 1) + (ms - num_meas))
+                                    new_track_list.append(
+                                        num_pred * (num_meas + 1) + (ms - num_meas)
+                                    )
                                     # new_track_list.append(num_meas * num_pred + ms)
+                        elif len(p_hyp.track_set) > len(a):
+                            # May need to modify this
+                            for ii, ms in enumerate(a):
+                                if len(p_hyp.track_set) >= ms:
+                                    new_track_list.append(
+                                        ms * num_pred + p_hyp.track_set[(ms - 1)]
+                                    )
+                                elif len(p_hyp.track_set) < ms:
+                                    new_track_list.append(
+                                        num_pred * (num_meas + 1) + (ms - num_meas)
+                                    )
 
                         # new_track_list = list(np.array(p_hyp.track_set) + num_pred + num_pred * a)# new_track_list = list(num_pred * a + np.array(p_hyp.track_set))
 
@@ -6303,7 +6329,7 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
 
 
 class LabeledPoissonMultiBernoulliMixture(PoissonMultiBernoulliMixture):
-    def __init__ (self, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     @property
@@ -6325,13 +6351,7 @@ class LabeledPoissonMultiBernoulliMixture(PoissonMultiBernoulliMixture):
         new_c_hist = [None] * len(filt_states)
         new_w = [None] * len(filt_states)
         depleted = False
-        for ii, (f_state, state, w) in enumerate(
-            zip(
-                filt_states,
-                states,
-                weights
-            )
-        ):
+        for ii, (f_state, state, w) in enumerate(zip(filt_states, states, weights)):
             try:
                 (
                     new_f_states[ii],
@@ -6340,9 +6360,9 @@ class LabeledPoissonMultiBernoulliMixture(PoissonMultiBernoulliMixture):
                     new_w[ii],
                 ) = self._inner_correct(timestep, meas, f_state, w, state, filt_args)
             except (
-                    gerr.ParticleDepletionError,
-                    gerr.ParticleEstimationDomainError,
-                    gerr.ExtremeMeasurementNoiseError,
+                gerr.ParticleDepletionError,
+                gerr.ParticleEstimationDomainError,
+                gerr.ExtremeMeasurementNoiseError,
             ):
                 return None, 0
         new_tab.filt_states = new_f_states
@@ -6351,9 +6371,18 @@ class LabeledPoissonMultiBernoulliMixture(PoissonMultiBernoulliMixture):
         new_tab.distrib_weights_hist = []
         new_w = [w + np.finfo(float).eps for w in new_w]
         if not depleted:
-            cost = np.sum(new_w).item() * self.prob_detection + self.clutter_rate * self.clutter_den
-            new_tab.distrib_weights_hist.append([w / np.sum(new_w).item() for w in new_w])
-            new_tab.exist_prob = self.prob_detection * cost / (self.clutter_rate * self.clutter_den + self.prob_detection * cost)
+            cost = (
+                np.sum(new_w).item() * self.prob_detection
+                + self.clutter_rate * self.clutter_den
+            )
+            new_tab.distrib_weights_hist.append(
+                [w / np.sum(new_w).item() for w in new_w]
+            )
+            new_tab.exist_prob = (
+                self.prob_detection
+                * cost
+                / (self.clutter_rate * self.clutter_den + self.prob_detection * cost)
+            )
         else:
             cost = 0
         new_tab.time_index = self._time_index_cntr
@@ -6364,12 +6393,20 @@ class LabeledPoissonMultiBernoulliMixture(PoissonMultiBernoulliMixture):
         num_birth = len(self.birth_terms)
         up_tab = [None] * ((num_meas + 1) * num_pred + num_meas * num_birth)
 
-        #Missed Detection Updates
+        # Missed Detection Updates
         for ii, track in enumerate(self._track_tab):
             up_tab[ii] = self._TabEntry().setup(track)
-            sum_non_exist_prob = (1 - up_tab[ii].exist_prob + up_tab[ii].exist_prob * self.prob_miss_detection)
-            up_tab[ii].distrib_weights_hist.append([w * sum_non_exist_prob for w in up_tab[ii].distrib_weights_hist[-1]])
-            up_tab[ii].exist_prob = (up_tab[ii].exist_prob * self.prob_miss_detection)/(sum_non_exist_prob)
+            sum_non_exist_prob = (
+                1
+                - up_tab[ii].exist_prob
+                + up_tab[ii].exist_prob * self.prob_miss_detection
+            )
+            up_tab[ii].distrib_weights_hist.append(
+                [w * sum_non_exist_prob for w in up_tab[ii].distrib_weights_hist[-1]]
+            )
+            up_tab[ii].exist_prob = (
+                up_tab[ii].exist_prob * self.prob_miss_detection
+            ) / (sum_non_exist_prob)
             up_tab[ii].meas_assoc_hist.append(None)
         # left_cost_m = np.zeros()
         # all_cost_m = np.zeros((num_pred + num_birth * num_meas, num_meas))
@@ -6379,7 +6416,9 @@ class LabeledPoissonMultiBernoulliMixture(PoissonMultiBernoulliMixture):
         for emm, z in enumerate(meas):
             for ii, ent in enumerate(self._track_tab):
                 s_to_ii = num_pred * emm + ii + num_pred
-                (up_tab[s_to_ii], cost) = self._correct_track_tab_entry(z, ent, timestep, filt_args)
+                (up_tab[s_to_ii], cost) = self._correct_track_tab_entry(
+                    z, ent, timestep, filt_args
+                )
                 if up_tab[s_to_ii] is not None:
                     up_tab[s_to_ii].meas_assoc_hist.append(emm)
                 all_cost_m[emm, ii] = cost
@@ -6388,11 +6427,13 @@ class LabeledPoissonMultiBernoulliMixture(PoissonMultiBernoulliMixture):
         for emm, z in enumerate(meas):
             for ii, b_model in enumerate(self.birth_terms):
                 s_to_ii = ((num_meas + 1) * num_pred) + emm * num_birth + ii
-                (up_tab[s_to_ii], cost) = self._correct_birth_tab_entry(z, b_model, timestep, filt_args)
+                (up_tab[s_to_ii], cost) = self._correct_birth_tab_entry(
+                    z, b_model, timestep, filt_args
+                )
                 if up_tab[s_to_ii] is not None:
                     up_tab[s_to_ii].meas_assoc_hist.append(emm)
                     up_tab[s_to_ii].label = (round(timestep, self.decimal_places), ii)
-                all_cost_m[emm, emm+num_pred] = cost
+                all_cost_m[emm, emm + num_pred] = cost
         return up_tab, all_cost_m
 
     def _update_extract_hist(self, idx_cmp):
@@ -6623,7 +6664,7 @@ class LabeledPoissonMultiBernoulliMixture(PoissonMultiBernoulliMixture):
         x_lbl=None,
         y_lbl=None,
         meas_tx_fnc=None,
-        **kwargs
+        **kwargs,
     ):
         """Plots the best estimate for the states and labels.
 
@@ -6853,6 +6894,7 @@ class LabeledPoissonMultiBernoulliMixture(PoissonMultiBernoulliMixture):
 
         return f_hndl
 
+
 class _IMMPMBMBase:
     def _init_filt_states(self, distrib):
         filt_states = [None] * len(distrib.means)
@@ -6906,88 +6948,89 @@ class IMMPoissonMultiBernoulliMixture(_IMMPMBMBase, PoissonMultiBernoulliMixture
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-class IMMLabeledPoissonMultiBernoulliMixture(_IMMPMBMBase, LabeledPoissonMultiBernoulliMixture):
+
+class IMMLabeledPoissonMultiBernoulliMixture(
+    _IMMPMBMBase, LabeledPoissonMultiBernoulliMixture
+):
     """An implementation of the IMM-LPMBM algorithm."""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+
 class MSPoissonMultiBernoulliMixture(PoissonMultiBernoulliMixture):
     """An Implementation of the Multiple Sensor PMBM Filter."""
-    # TODO: NEED TO MODIFY MEASUREMENT DRIVEN BIRTHS
-    #  SO THEY BETTER ACCOUNT FOR CERTAIN COMBINATIONS
-    #
+
+    # Need measurement association history to incorporate meas inds from each sensor
     def __init__(selfself, **kwargs):
         super().__init__(**kwargs)
 
-    # def _gen_cor_tab(self, num_meas, meas, timestep, filt_args):
-    #     num_pred = len(self._track_tab)
-    #     num_sens = len(meas)
-    #     # if len(meas) != len(self.filter.meas_model_list):
-    #     #     raise ValueError("measurement lists must match number of measurement models")
-    #     up_tab = [None] * (num_meas + 1) * num_pred
-    #
-    #     for ii, track in enumerate(self._track_tab):
-    #         up_tab[ii] = self._TabEntry().setup(track)
-    #         up_tab[ii].meas_assoc_hist.append(None)
-    #     # measurement updated tracks
-    #     all_cost_m = np.zeros((num_pred, num_meas))
-    #     for ii, ent in enumerate(self._track_tab):
-    #         for emm, z in enumerate(meas):
-    #             s_to_ii = num_pred * emm + ii + num_pred
-    #             (up_tab[s_to_ii], cost) = self._correct_track_tab_entry(
-    #                 z, ent, timestep, filt_args
-    #             )
-    #             if up_tab[s_to_ii] is not None:
-    #                 up_tab[s_to_ii].meas_assoc_hist.append((emm, z))
-    #             all_cost_m[ii, emm] = cost
-    #
-    #     return up_tab, all_cost_m
-    #
-    # def _gen_cor_tab(self, num_meas, meas, timestep, filt_args):
-    #     num_pred = len(self._track_tab)
-    #     num_birth = len(self.birth_terms)
-    #     up_tab = [None] * ((num_meas + 1) * num_pred + num_meas * num_birth)
-    #
-    #     #Missed Detection Updates
-    #     for ii, track in enumerate(self._track_tab):
-    #         up_tab[ii] = self._TabEntry().setup(track)
-    #         sum_non_exist_prob = (1 - up_tab[ii].exist_prob + up_tab[ii].exist_prob * self.prob_miss_detection)
-    #         up_tab[ii].distrib_weights_hist.append([w * sum_non_exist_prob for w in up_tab[ii].distrib_weights_hist[-1]])
-    #         up_tab[ii].exist_prob = (up_tab[ii].exist_prob * self.prob_miss_detection)/(sum_non_exist_prob)
-    #         up_tab[ii].meas_assoc_hist.append(None)
-    #     # left_cost_m = np.zeros()
-    #     # all_cost_m = np.zeros((num_pred + num_birth * num_meas, num_meas))
-    #     all_cost_m = np.zeros((num_meas, num_pred + num_birth * num_meas))
-    #
-    #     # Update for all existing tracks
-    #     for emm, z in enumerate(meas):
-    #         for ii, ent in enumerate(self._track_tab):
-    #             s_to_ii = num_pred * emm + ii + num_pred
-    #             (up_tab[s_to_ii], cost) = self._correct_track_tab_entry(z, ent, timestep, filt_args)
-    #             if up_tab[s_to_ii] is not None:
-    #                 up_tab[s_to_ii].meas_assoc_hist.append(emm)
-    #             all_cost_m[emm, ii] = cost
-    #
-    #     # Update for all potential new births
-    #     for emm, z in enumerate(meas):
-    #         for ii, b_model in enumerate(self.birth_terms):
-    #             s_to_ii = ((num_meas + 1) * num_pred) + emm * num_birth + ii
-    #             (up_tab[s_to_ii], cost) = self._correct_birth_tab_entry(z, b_model, timestep, filt_args)
-    #             if up_tab[s_to_ii] is not None:
-    #                 up_tab[s_to_ii].meas_assoc_hist.append(emm)
-    #             all_cost_m[emm, emm+num_pred] = cost
-    #     return up_tab, all_cost_m
+    def _gen_cor_tab(self, num_meas, meas, timestep, comb_inds, filt_args):
+        num_pred = len(self._track_tab)
+        num_birth = len(self.birth_terms)
+        up_tab = [None] * ((num_meas + 1) * num_pred + num_meas * num_birth)
+
+        # Missed Detection Updates
+        for ii, track in enumerate(self._track_tab):
+            up_tab[ii] = self._TabEntry().setup(track)
+            sum_non_exist_prob = (
+                1
+                - up_tab[ii].exist_prob
+                + up_tab[ii].exist_prob * self.prob_miss_detection
+            )
+            up_tab[ii].distrib_weights_hist.append(
+                [w * sum_non_exist_prob for w in up_tab[ii].distrib_weights_hist[-1]]
+            )
+            up_tab[ii].exist_prob = (
+                up_tab[ii].exist_prob * self.prob_miss_detection
+            ) / (sum_non_exist_prob)
+            up_tab[ii].meas_assoc_hist.append(None)
+        # left_cost_m = np.zeros()
+        # all_cost_m = np.zeros((num_pred + num_birth * num_meas, num_meas))
+        all_cost_m = np.zeros((num_meas, num_pred + num_birth * num_meas))
+
+        # Update for all existing tracks
+        for emm, z in enumerate(meas):
+            for ii, ent in enumerate(self._track_tab):
+                s_to_ii = num_pred * emm + ii + num_pred
+                (up_tab[s_to_ii], cost) = self._correct_track_tab_entry(
+                    z, ent, timestep, filt_args
+                )
+                if up_tab[s_to_ii] is not None:
+                    up_tab[s_to_ii].meas_assoc_hist.append(comb_inds[emm])
+                all_cost_m[emm, ii] = cost
+
+        # Update for all potential new births
+        for emm, z in enumerate(meas):
+            for ii, b_model in enumerate(self.birth_terms):
+                s_to_ii = ((num_meas + 1) * num_pred) + emm * num_birth + ii
+                (up_tab[s_to_ii], cost) = self._correct_birth_tab_entry(
+                    z, b_model, timestep, filt_args
+                )
+                if up_tab[s_to_ii] is not None:
+                    up_tab[s_to_ii].meas_assoc_hist.append(comb_inds[emm])
+                all_cost_m[emm, emm + num_pred] = cost
+        return up_tab, all_cost_m
 
     def _gen_cor_hyps(
-            self, num_meas, avg_prob_detect, avg_prob_miss_detect, all_cost_m, num_sens, cor_tab
+        self,
+        num_meas,
+        avg_prob_detect,
+        avg_prob_miss_detect,
+        all_cost_m,
+        meas_combs,
+        cor_tab,
     ):
         num_pred = len(self._track_tab)
         up_hyps = []
+        if not meas_combs:
+            meas_combs = np.arange(0, np.shape(all_cost_m)[0]).tolist()
         # n_obj_for_tracks =
         if num_meas == 0:
             for hyp in self._hypotheses:
-                pmd_log = np.sum([np.log(avg_prob_miss_detect[ii]) for ii in hyp.track_set])
+                pmd_log = np.sum(
+                    [np.log(avg_prob_miss_detect[ii]) for ii in hyp.track_set]
+                )
                 hyp.assoc_prob = -self.clutter_rate + pmd_log + np.log(hyp.assoc_prob)
                 up_hyps.append(hyp)
         else:
@@ -6996,75 +7039,96 @@ class MSPoissonMultiBernoulliMixture(PoissonMultiBernoulliMixture):
             for p_hyp in self._hypotheses:
                 ss_w += np.sqrt(p_hyp.assoc_prob)
             for p_hyp in self._hypotheses:
-                if p_hyp.num_tracks == 0:  # all clutter
-                    inds = np.arange(num_pred, num_pred + num_meas).tolist()
-                else:
-                    inds = p_hyp.track_set + np.arange(num_pred, num_pred+num_meas).tolist()
+                for ind_lst in meas_combs:
+                    if len(meas_combs) == 1:
+                        if p_hyp.num_tracks == 0:  # all clutter
+                            inds = np.arange(num_pred, num_pred + num_meas).tolist()
+                        else:
+                            inds = (
+                                p_hyp.track_set
+                                + np.arange(num_pred, num_pred + num_meas).tolist()
+                            )
+                        cost_m = all_cost_m[:, inds]
+                    else:
+                        if p_hyp.num_tracks == 0:  # all clutter
+                            inds = np.arange(num_pred, num_pred + len(ind_lst)).tolist()
+                        else:
+                            inds = p_hyp.track_set + [x + num_pred for x in ind_lst]
+                        tcm = all_cost_m[
+                            :, inds
+                        ]  # error is certainly caused here. I'm going to bed now because it's past 11.
+                        cost_m = tcm[ind_lst, :]
+                    max_row_inds, max_col_inds = np.where(cost_m >= np.inf)
+                    if max_row_inds.size > 0:
+                        cost_m[max_row_inds, max_col_inds] = np.finfo(float).max
+                    min_row_inds, min_col_inds = np.where(cost_m <= 0.0)
+                    if min_row_inds.size > 0:
+                        cost_m[min_row_inds, min_col_inds] = np.finfo(float).eps  # 1
+                    neg_log = -np.log(cost_m)
 
-                cost_m = all_cost_m[:, inds]
-                max_row_inds, max_col_inds = np.where(cost_m >= np.inf)
-                if max_row_inds.size > 0:
-                    cost_m[max_row_inds, max_col_inds] = np.finfo(float).max
-                min_row_inds, min_col_inds = np.where(cost_m <= 0.0)
-                if min_row_inds.size > 0:
-                    cost_m[min_row_inds, min_col_inds] = np.finfo(float).eps  # 1
-                neg_log = -np.log(cost_m)
-                # if max_row_inds.size > 0:
-                #     neg_log[max_row_inds, max_col_inds] = -np.inf
-                # if min_row_inds.size > 0:
-                #     neg_log[min_row_inds, min_col_inds] = np.inf
+                    m = np.round(self.req_upd * np.sqrt(p_hyp.assoc_prob) / ss_w)
+                    m = int(m.item())
 
-                m = np.round(self.req_upd * np.sqrt(p_hyp.assoc_prob) / ss_w)
-                m = int(m.item())
-                # if m <1:
-                #     m=1
-                [assigns, costs] = murty_m_best_all_meas_assigned(neg_log, m)
-                """assignment matrix consisting of 0 or 1 entries such that each column sums
-                to one and each row sums to zero or one""" #(transposed from the paper)
-                # assigns = assigns.T
-                # assigns = np.delete(assigns, 1, axis=0)
-                # costs = np.delete(costs, 1, axis=0)
+                    [assigns, costs] = murty_m_best_all_meas_assigned(neg_log, m)
 
-                pmd_log = np.sum(
-                    [np.log(avg_prob_miss_detect[ii]) for ii in p_hyp.track_set]
-                )
-                for (a, c) in zip(assigns, costs):
-                    new_hyp = self._HypothesisHelper()
-                    new_hyp.assoc_prob = (
+                    pmd_log = np.sum(
+                        [np.log(avg_prob_miss_detect[ii]) for ii in p_hyp.track_set]
+                    )
+                    for a, c in zip(assigns, costs):
+                        new_hyp = self._HypothesisHelper()
+                        new_hyp.assoc_prob = (
                             -self.clutter_rate
                             + num_meas * np.log(clutter)
                             + pmd_log
                             + np.log(p_hyp.assoc_prob)
                             - c
-                    )
-                    if p_hyp.num_tracks == 0:
-                        new_track_list = list(num_pred * a + num_pred * num_meas)
-                    else:
-                        # track_inds = np.argwhere(a==1)
-                        new_track_list = []
-                        if len(a) == len(p_hyp.track_set):
-                            for ii, (ms, t) in enumerate(zip(a, p_hyp.track_set)):
-                                if len(p_hyp.track_set) >= ms:
-                                    # new_track_list.append(((np.array(t)) * ms + num_pred))
-                                    new_track_list.append((num_pred * ms + np.array(t)))
-                                else:
-                                    new_track_list.append(num_pred * ms - ii * (num_pred - 1))
-                        elif len(p_hyp.track_set) < len(a):
-                            for ii, ms in enumerate(a):
-                                if len(p_hyp.track_set) >= ms:
-                                    # coiuld be this one, trying -1 first
-                                    # new_track_list.append(((np.array(p_hyp.track_set[(ms-ii)]) + num_pred) * ms))
-                                    # new_track_list.append(((np.array(p_hyp.track_set[(ms-1)]) + num_pred) * ms + num_meas * ii))
-                                    new_track_list.append(ms * num_pred + p_hyp.track_set[(ms-1)])
-                                elif len(p_hyp.track_set) < ms:
-                                    new_track_list.append(num_pred * (num_meas + 1) + (ms - num_meas))
-                                    # new_track_list.append(num_meas * num_pred + ms)
+                        )
+                        if p_hyp.num_tracks == 0:
+                            new_track_list = list(num_pred * a + num_pred * num_meas)
+                        else:
+                            # track_inds = np.argwhere(a==1)
+                            new_track_list = []
+                            if len(a) == len(p_hyp.track_set):
+                                for ii, (ms, t) in enumerate(zip(a, p_hyp.track_set)):
+                                    if len(p_hyp.track_set) >= ms:
+                                        # new_track_list.append(((np.array(t)) * ms + num_pred))
+                                        new_track_list.append(
+                                            (num_pred * (ind_lst[ii] + 1) + np.array(t))
+                                        )
+                                        # new_track_list.append((num_pred * ms + np.array(t)))
+                                    else:
+                                        # new_track_list.append(num_pred * ms - ind_lst[ii] * (num_pred - 1))
+                                        new_track_list.append(
+                                            num_pred * (ind_lst[ii] + 1)
+                                            - ii * (num_pred - 1)
+                                        )
+                            elif len(p_hyp.track_set) < len(a):
+                                for ii, ms in enumerate(a):
+                                    if len(p_hyp.track_set) >= ms:
+                                        new_track_list.append(
+                                            (1 + ind_lst[ii]) * num_pred
+                                            + p_hyp.track_set[(ms - 1)]
+                                        )
+                                    elif len(p_hyp.track_set) < ms:
+                                        new_track_list.append(
+                                            num_pred * (num_meas + 1) + (ind_lst[ii])
+                                        )
+                            elif len(p_hyp.track_set) > len(a):
+                                # May need to modify this
+                                for ii, ms in enumerate(a):
+                                    if len(p_hyp.track_set) >= ms:
+                                        new_track_list.append(
+                                            ms * num_pred + p_hyp.track_set[(ms - 1)]
+                                        )
+                                    elif len(p_hyp.track_set) < ms:
+                                        new_track_list.append(
+                                            num_pred * (num_meas + 1) + (ms - num_meas)
+                                        )
 
-                        # new_track_list = list(np.array(p_hyp.track_set) + num_pred + num_pred * a)# new_track_list = list(num_pred * a + np.array(p_hyp.track_set))
+                            # new_track_list = list(np.array(p_hyp.track_set) + num_pred + num_pred * a)# new_track_list = list(num_pred * a + np.array(p_hyp.track_set))
 
-                    new_hyp.track_set = new_track_list
-                    up_hyps.append(new_hyp)
-
+                        new_hyp.track_set = new_track_list
+                        up_hyps.append(new_hyp)
 
         lse = log_sum_exp([x.assoc_prob for x in up_hyps])
         for ii in range(0, len(up_hyps)):
@@ -7106,29 +7170,238 @@ class MSPoissonMultiBernoulliMixture(PoissonMultiBernoulliMixture):
         if self.save_measurements:
             self._meas_tab.append(deepcopy(meas))
 
+        # get matrix of indices in all_combs somehow
+        num_meas_per_sens = [len(x) for x in meas]
         num_meas = len(all_combs)
         num_sens = len(meas)
+        mnmps = min(num_meas_per_sens)
 
-        cor_tab, all_cost_m = self._gen_cor_tab(num_meas, all_combs, timestep, filt_args)
+        # find a way to make this list of lists not list of tuples
+        comb_inds = list(itertools.product(*list(np.arange(0, len(x)) for x in meas)))
+        comb_inds = [list(ele) for ele in comb_inds]
+        min_meas_in_sens = np.min([len(x) for x in meas])
+
+        all_meas_combs = list(itertools.combinations(comb_inds, mnmps))
+        all_meas_combs = [list(ele) for ele in all_meas_combs]
+
+        poss_meas_combs = []
+
+        for ii in range(0, len(all_meas_combs)):
+            break_flag = False
+            cur_comb = []
+            for jj, lst1 in enumerate(all_meas_combs[ii]):
+                for kk, lst2 in enumerate(all_meas_combs[ii]):
+                    if jj == kk:
+                        continue
+                    else:
+                        out = (np.array(lst1) == np.array(lst2)).tolist()
+                        if any(out):
+                            break_flag = True
+                            break
+                if break_flag:
+                    break
+            if break_flag:
+                pass
+            else:
+                for lst1 in all_meas_combs[ii]:
+                    for ii, lst2 in enumerate(comb_inds):
+                        if lst1 == lst2:
+                            cur_comb.append(ii)
+                poss_meas_combs.append(cur_comb)
+
+        cor_tab, all_cost_m = self._gen_cor_tab(
+            num_meas, all_combs, timestep, comb_inds, filt_args
+        )
 
         # self._add_birth_hyps(num_meas)
 
         avg_prob_det, avg_prob_mdet = self._calc_avg_prob_det_mdet(cor_tab)
 
-        cor_hyps = self._gen_cor_hyps(num_meas, avg_prob_det, avg_prob_mdet, all_cost_m, num_sens, cor_tab)
+        cor_hyps = self._gen_cor_hyps(
+            num_meas, avg_prob_det, avg_prob_mdet, all_cost_m, poss_meas_combs, cor_tab
+        )
 
         self._track_tab = cor_tab
         self._hypotheses = cor_hyps
         self._card_dist = self._calc_card_dist(self._hypotheses)
         self._clean_updates()
 
-class MSLabeledPoissonMultiBernoulliMixture(LabeledPoissonMultiBernoulliMixture):
 
+class MSLabeledPoissonMultiBernoulliMixture(LabeledPoissonMultiBernoulliMixture):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+    def _gen_cor_tab(self, num_meas, meas, timestep, comb_inds, filt_args):
+        num_pred = len(self._track_tab)
+        num_birth = len(self.birth_terms)
+        up_tab = [None] * ((num_meas + 1) * num_pred + num_meas * num_birth)
+
+        # Missed Detection Updates
+        for ii, track in enumerate(self._track_tab):
+            up_tab[ii] = self._TabEntry().setup(track)
+            sum_non_exist_prob = (
+                1
+                - up_tab[ii].exist_prob
+                + up_tab[ii].exist_prob * self.prob_miss_detection
+            )
+            up_tab[ii].distrib_weights_hist.append(
+                [w * sum_non_exist_prob for w in up_tab[ii].distrib_weights_hist[-1]]
+            )
+            up_tab[ii].exist_prob = (
+                up_tab[ii].exist_prob * self.prob_miss_detection
+            ) / (sum_non_exist_prob)
+            up_tab[ii].meas_assoc_hist.append(None)
+        all_cost_m = np.zeros((num_meas, num_pred + num_birth * num_meas))
+
+        # Update for all existing tracks
+        for emm, z in enumerate(meas):
+            for ii, ent in enumerate(self._track_tab):
+                s_to_ii = num_pred * emm + ii + num_pred
+                (up_tab[s_to_ii], cost) = self._correct_track_tab_entry(
+                    z, ent, timestep, filt_args
+                )
+                if up_tab[s_to_ii] is not None:
+                    up_tab[s_to_ii].meas_assoc_hist.append(comb_inds[emm])
+                all_cost_m[emm, ii] = cost
+
+        # Update for all potential new births
+        for emm, z in enumerate(meas):
+            for ii, b_model in enumerate(self.birth_terms):
+                s_to_ii = ((num_meas + 1) * num_pred) + emm * num_birth + ii
+                (up_tab[s_to_ii], cost) = self._correct_birth_tab_entry(
+                    z, b_model, timestep, filt_args
+                )
+                if up_tab[s_to_ii] is not None:
+                    up_tab[s_to_ii].meas_assoc_hist.append(comb_inds[emm])
+                    up_tab[s_to_ii].label = (round(timestep, self.decimal_places), ii)
+                all_cost_m[emm, emm + num_pred] = cost
+        return up_tab, all_cost_m
+
+    def _gen_cor_hyps(
+        self,
+        num_meas,
+        avg_prob_detect,
+        avg_prob_miss_detect,
+        all_cost_m,
+        meas_combs,
+        cor_tab,
+    ):
+        num_pred = len(self._track_tab)
+        up_hyps = []
+        if not meas_combs:
+            meas_combs = np.arange(0, np.shape(all_cost_m)[0]).tolist()
+        # n_obj_for_tracks =
+        if num_meas == 0:
+            for hyp in self._hypotheses:
+                pmd_log = np.sum(
+                    [np.log(avg_prob_miss_detect[ii]) for ii in hyp.track_set]
+                )
+                hyp.assoc_prob = -self.clutter_rate + pmd_log + np.log(hyp.assoc_prob)
+                up_hyps.append(hyp)
+        else:
+            clutter = self.clutter_rate * self.clutter_den
+            ss_w = 0
+            for p_hyp in self._hypotheses:
+                ss_w += np.sqrt(p_hyp.assoc_prob)
+            for p_hyp in self._hypotheses:
+                for ind_lst in meas_combs:
+                    if len(meas_combs) == 1:
+                        if p_hyp.num_tracks == 0:  # all clutter
+                            inds = np.arange(num_pred, num_pred + num_meas).tolist()
+                        else:
+                            inds = (
+                                p_hyp.track_set
+                                + np.arange(num_pred, num_pred + num_meas).tolist()
+                            )
+                        cost_m = all_cost_m[:, inds]
+                    else:
+                        if p_hyp.num_tracks == 0:  # all clutter
+                            inds = np.arange(num_pred, num_pred + len(ind_lst)).tolist()
+                        else:
+                            inds = p_hyp.track_set + [x + num_pred for x in ind_lst]
+                        tcm = all_cost_m[
+                            :, inds
+                        ]  # error is certainly caused here. I'm going to bed now because it's past 11.
+                        cost_m = tcm[ind_lst, :]
+                    max_row_inds, max_col_inds = np.where(cost_m >= np.inf)
+                    if max_row_inds.size > 0:
+                        cost_m[max_row_inds, max_col_inds] = np.finfo(float).max
+                    min_row_inds, min_col_inds = np.where(cost_m <= 0.0)
+                    if min_row_inds.size > 0:
+                        cost_m[min_row_inds, min_col_inds] = np.finfo(float).eps  # 1
+                    neg_log = -np.log(cost_m)
+
+                    m = np.round(self.req_upd * np.sqrt(p_hyp.assoc_prob) / ss_w)
+                    m = int(m.item())
+
+                    [assigns, costs] = murty_m_best_all_meas_assigned(neg_log, m)
+
+                    pmd_log = np.sum(
+                        [np.log(avg_prob_miss_detect[ii]) for ii in p_hyp.track_set]
+                    )
+                    for a, c in zip(assigns, costs):
+                        new_hyp = self._HypothesisHelper()
+                        new_hyp.assoc_prob = (
+                            -self.clutter_rate
+                            + num_meas * np.log(clutter)
+                            + pmd_log
+                            + np.log(p_hyp.assoc_prob)
+                            - c
+                        )
+                        if p_hyp.num_tracks == 0:
+                            new_track_list = list(num_pred * a + num_pred * num_meas)
+                        else:
+                            # track_inds = np.argwhere(a==1)
+                            new_track_list = []
+                            if len(a) == len(p_hyp.track_set):
+                                for ii, (ms, t) in enumerate(zip(a, p_hyp.track_set)):
+                                    if len(p_hyp.track_set) >= ms:
+                                        # new_track_list.append(((np.array(t)) * ms + num_pred))
+                                        new_track_list.append(
+                                            (num_pred * (ind_lst[ii] + 1) + np.array(t))
+                                        )
+                                        # new_track_list.append((num_pred * ms + np.array(t)))
+                                    else:
+                                        # new_track_list.append(num_pred * ms - ind_lst[ii] * (num_pred - 1))
+                                        new_track_list.append(
+                                            num_pred * (ind_lst[ii] + 1)
+                                            - ii * (num_pred - 1)
+                                        )
+                            elif len(p_hyp.track_set) < len(a):
+                                for ii, ms in enumerate(a):
+                                    if len(p_hyp.track_set) >= ms:
+                                        new_track_list.append(
+                                            (1 + ind_lst[ii]) * num_pred
+                                            + p_hyp.track_set[(ms - 1)]
+                                        )
+                                    elif len(p_hyp.track_set) < ms:
+                                        new_track_list.append(
+                                            num_pred * (num_meas + 1) + (ind_lst[ii])
+                                        )
+                            elif len(p_hyp.track_set) > len(a):
+                                # May need to modify this
+                                for ii, ms in enumerate(a):
+                                    if len(p_hyp.track_set) >= ms:
+                                        new_track_list.append(
+                                            ms * num_pred + p_hyp.track_set[(ms - 1)]
+                                        )
+                                    elif len(p_hyp.track_set) < ms:
+                                        new_track_list.append(
+                                            num_pred * (num_meas + 1) + (ms - num_meas)
+                                        )
+
+                            # new_track_list = list(np.array(p_hyp.track_set) + num_pred + num_pred * a)# new_track_list = list(num_pred * a + np.array(p_hyp.track_set))
+
+                        new_hyp.track_set = new_track_list
+                        up_hyps.append(new_hyp)
+
+        lse = log_sum_exp([x.assoc_prob for x in up_hyps])
+        for ii in range(0, len(up_hyps)):
+            up_hyps[ii].assoc_prob = np.exp(up_hyps[ii].assoc_prob - lse)
+        return up_hyps
+
     def correct(self, timestep, meas, filt_args={}):
-        """Correction step of the PMBM filter.
+        """Correction step of the MS-PMBM filter.
 
         Notes
         -----
@@ -7162,16 +7435,56 @@ class MSLabeledPoissonMultiBernoulliMixture(LabeledPoissonMultiBernoulliMixture)
         if self.save_measurements:
             self._meas_tab.append(deepcopy(meas))
 
+        # get matrix of indices in all_combs somehow
+        num_meas_per_sens = [len(x) for x in meas]
         num_meas = len(all_combs)
         num_sens = len(meas)
+        mnmps = min(num_meas_per_sens)
 
-        cor_tab, all_cost_m = self._gen_cor_tab(num_meas, all_combs, timestep, filt_args)
+        # find a way to make this list of lists not list of tuples
+        comb_inds = list(itertools.product(*list(np.arange(0, len(x)) for x in meas)))
+        comb_inds = [list(ele) for ele in comb_inds]
+        min_meas_in_sens = np.min([len(x) for x in meas])
+
+        all_meas_combs = list(itertools.combinations(comb_inds, mnmps))
+        all_meas_combs = [list(ele) for ele in all_meas_combs]
+
+        poss_meas_combs = []
+
+        for ii in range(0, len(all_meas_combs)):
+            break_flag = False
+            cur_comb = []
+            for jj, lst1 in enumerate(all_meas_combs[ii]):
+                for kk, lst2 in enumerate(all_meas_combs[ii]):
+                    if jj == kk:
+                        continue
+                    else:
+                        out = (np.array(lst1) == np.array(lst2)).tolist()
+                        if any(out):
+                            break_flag = True
+                            break
+                if break_flag:
+                    break
+            if break_flag:
+                pass
+            else:
+                for lst1 in all_meas_combs[ii]:
+                    for ii, lst2 in enumerate(comb_inds):
+                        if lst1 == lst2:
+                            cur_comb.append(ii)
+                poss_meas_combs.append(cur_comb)
+
+        cor_tab, all_cost_m = self._gen_cor_tab(
+            num_meas, all_combs, timestep, comb_inds, filt_args
+        )
 
         # self._add_birth_hyps(num_meas)
 
         avg_prob_det, avg_prob_mdet = self._calc_avg_prob_det_mdet(cor_tab)
 
-        cor_hyps = self._gen_cor_hyps(num_meas, avg_prob_det, avg_prob_mdet, all_cost_m, cor_tab)
+        cor_hyps = self._gen_cor_hyps(
+            num_meas, avg_prob_det, avg_prob_mdet, all_cost_m, poss_meas_combs, cor_tab
+        )
 
         self._track_tab = cor_tab
         self._hypotheses = cor_hyps
@@ -7183,6 +7496,9 @@ class MSIMMPoissonMultiBernoulliMixture(_IMMPMBMBase, MSPoissonMultiBernoulliMix
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-class MSIMMLabeledPoissonMultiBernoulliMixture(_IMMPMBMBase, MSLabeledPoissonMultiBernoulliMixture):
+
+class MSIMMLabeledPoissonMultiBernoulliMixture(
+    _IMMPMBMBase, MSLabeledPoissonMultiBernoulliMixture
+):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
