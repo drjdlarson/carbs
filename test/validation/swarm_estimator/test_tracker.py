@@ -813,6 +813,20 @@ def _update_true_agents_prob(true_agents, tt, dt, b_model, rng):
     return out
 
 
+def _update_true_agents_prob2(true_agents, tt, dt, b_model, rng):
+    out = _prop_true(true_agents, tt, dt)
+
+    p = rng.uniform()
+    for gm, w in b_model:
+        if any(np.abs(tt - np.array([0, 1, 1.5])) < 1e-8):
+            print("birth at {:.2f}".format(tt))
+            x = gm.means[0] + (1 * rng.standard_normal(4)).reshape((4, 1))
+            out.append(x.copy())
+    if np.abs(tt - 3.0) < 1e-8:
+        out.pop(0)
+    return out
+
+
 def _update_true_agents_prob_smc(true_agents, tt, dt, b_model, rng):
     out = []
     doubleInt = gdyn.DoubleIntegrator()
@@ -884,12 +898,17 @@ def _update_true_agents_prob_imm(true_agents, tt, dt, b_model, rng, state_mat):
 
 def _update_true_agents_pmbm(true_agents, tt, dt, b_model, rng):
     out = _prop_true(true_agents, tt, dt)
-    # if any(np.abs(tt - np.array([0, 1])) < 1e-8):
     if any(np.abs(tt - np.array([0, 1, 1.5])) < 1e-8):
-        # if any(np.abs(tt - np.array([0])) < 1e-8):
         for gm in b_model:
             x = gm.means[0] + (rng.standard_normal(4) * np.ones(4)).reshape((4, 1))
             out.append(x.copy())
+    # if np.abs(tt - 4.0) < 1e-8:
+    #     for gm in b_model:
+    #         x = gm.means[0] + (rng.standard_normal(4) * np.ones(4)).reshape((4, 1))
+    #         out.append(x.copy())
+    if np.abs(tt - 3.0) < 1e-8:
+        out.pop(0)
+
     return out
 
 
@@ -1390,7 +1409,8 @@ def test_GLMB():  # noqa
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
-        true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
+        # true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
+        true_agents = _update_true_agents_prob2(true_agents, tt, dt, b_model, rng)
         global_true.append(deepcopy(true_agents))
 
         pred_args = {"state_mat_args": state_mat_args}
@@ -1882,7 +1902,8 @@ def test_JGLMB_high_birth():  # noqa
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
-        true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
+        # true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
+        true_agents = _update_true_agents_prob2(true_agents, tt, dt, b_model, rng)
         global_true.append(deepcopy(true_agents))
 
         pred_args = {"state_mat_args": state_mat_args}
@@ -3810,6 +3831,14 @@ def test_LPMBM():
         pmbm.plot_card_dist()
         pmbm.plot_card_history(time_units="s", time=time)
     print("\tExpecting {} agents".format(len(true_agents)))
+    plt.figure()
+    all_xy = []
+    for ii, time in enumerate(global_true):
+        for agent in global_true[ii]:
+            all_xy.append([agent[0], agent[1]])
+
+    all_xy = np.array(all_xy)
+    plt.plot(all_xy[:, 0], all_xy[:, 1], color="k", marker="o", linestyle="None")
 
     assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
@@ -4120,7 +4149,7 @@ def test_MS_LPMBM():  # noqa
         "req_upd": 800,
         "prune_threshold": 10**-5,
         "exist_threshold": 10**-5,
-        "max_hyps": 1000,
+        "max_hyps": 100,
     }
     pmbm = tracker.MSLabeledPoissonMultiBernoulliMixture(**PMBM_args, **RFS_base_args)
     time = np.arange(t0, t1, dt)
@@ -4128,7 +4157,8 @@ def test_MS_LPMBM():  # noqa
     global_true = []
     print("\tStarting sim")
     for kk, tt in enumerate(time):
-        # if np.mod(kk, 100) == 0:
+        if np.mod(kk, 100) == 0:
+            khjftrja = 1
         if np.mod(kk, 10) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
@@ -4255,11 +4285,10 @@ def test_MS_IMM_LPMBM():  # noqa
     rng = rnd.default_rng(global_seed)
 
     dt = 0.01
-    t0, t1 = 0, 5.5 + dt
+    # t0, t1 = 0, 5.5 + dt
     # t0, t1 = 0, 4 + dt
-    # t0, t1 = 0, 2 + dt
+    t0, t1 = 0, 2 + dt
 
-    # TODO GCI IMM FILT SETUP
     filt = _setup_ct_ktr_gci_imm_kf(dt)
 
     state_mat_args = (dt,)

@@ -4718,7 +4718,7 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
         avg_prob_surv,
         avg_prob_death,
         all_cost_m,
-        num_sens,
+        meas_combs,
     ):
         # Define clutter
         clutter = self.clutter_rate * self.clutter_den
@@ -4753,16 +4753,13 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
         for p_hyp in self._hypotheses:
             ss_w += np.sqrt(p_hyp.assoc_prob)
         for p_hyp in self._hypotheses:
-            #insert loop here
-            # for ind_lst in meas_combs:
-            #     if len(meas_combs) == 1:
-
-            cpreds = len(self._track_tab)
-            num_births = len(self.birth_terms)
-            num_exists = len(p_hyp.track_set)
-            num_tracks = num_births + num_exists
+            cpreds = len(self._track_tab)  # num_pred
+            num_births = len(self.birth_terms)  # num_birth_terms
+            num_exists = len(p_hyp.track_set)  # num_existing_tracks
+            num_tracks = num_births + num_exists  # num_possible_tracks
 
             # Hypothesis index masking
+            # all birth terms and tracks included in p_hyp.track_set
             tindices = np.concatenate(
                 (np.arange(0, num_births), num_births + np.array(p_hyp.track_set))
             ).astype(int)
@@ -4771,62 +4768,92 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
 
             # verify sort works for 3d arrays similar to 2d arrays, may have to do this list-wise
             keys = np.array([np.sort(gate_meas_indices[lselmask])])
-            mindices = self._unique_faster(keys)
+            # meas_indices
+            # mindices = self._unique_faster(keys)
 
-            comb_tind_cpred = np.append(
-                np.append(tindices, cpreds + tindices), [2 * cpreds + mindices]
-            )
+            for ind_lst in meas_combs:
+                mindices = self._unique_faster(keys)
+                if ind_lst is not None:
+                    mindices = mindices[ind_lst]
+                # if len(meas_combs) == 0:
+                #     relevant_meas_inds = []
+                # if len(meas_combs) == 1:
+                #     if p_hyp.num_tracks == 0:  # all clutter
+                #         relevant_meas_inds = np.arange(
+                #             2 * cpreds, 2 * cpreds + num_meas
+                #         ).tolist()
+                #     else:
+                #         relevant_meas_inds = (
+                #             p_hyp.track_set
+                #             + np.arange(2 * cpreds, 2 * cpreds + num_meas).tolist()
+                #         )
+                # else:
+                #     if p_hyp.num_tracks == 0:  # all clutter
+                #         relevant_meas_inds = np.arange(
+                #             2 * cpreds, 2 * cpreds + len(ind_lst)
+                #         ).tolist()
+                #     else:
+                #         relevant_meas_inds = p_hyp.track_set + [
+                #             x + 2 * cpreds for x in ind_lst
+                #         ]
 
-            cost_m = joint_cost[tindices][:, comb_tind_cpred]
+                comb_tind_cpred = np.append(
+                    np.append(tindices, cpreds + tindices), [2 * cpreds + mindices]
+                )
+                # comb_tind_cpred = np.append(
+                #     np.append(tindices, cpreds + tindices), relevant_meas_inds
+                # ).astype(int)
 
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", RuntimeWarning)
-                neg_log = -np.log(cost_m)
+                cost_m = joint_cost[tindices][:, comb_tind_cpred]
 
-            m = np.round(self.req_upd * np.sqrt(p_hyp.assoc_prob) / ss_w)
-            m = int(m.item()) + 1
-
-            # Gibbs Sampler
-            [assigns, costs] = gibbs(neg_log, m, rng=self._rng)
-
-            # Process unique assignments from gibbs sampler
-            assigns[assigns < num_tracks] = -np.inf
-            for ii in range(np.shape(assigns)[0]):
-                if len(np.shape(assigns)) < 2:
-                    if assigns[ii] >= num_tracks and assigns[ii] < 2 * num_tracks:
-                        assigns[ii] = -1
-                else:
-                    for jj in range(np.shape(assigns)[1]):
-                        if (
-                            assigns[ii][jj] >= num_tracks
-                            and assigns[ii][jj] < 2 * num_tracks
-                        ):
-                            assigns[ii][jj] = -1
-            assigns[assigns >= 2 * num_tracks] -= 2 * num_tracks
-            if assigns[assigns >= 0].size != 0:
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore", RuntimeWarning)
-                    assigns[assigns >= 0] = mindices[
-                        assigns.astype(int)[assigns.astype(int) >= 0]
-                    ]
-            # Assign updated hypotheses from gibbs sampler
-            for c, cst in enumerate(costs.flatten()):
-                update_hyp_cmp_temp = assigns[c,]
-                update_hyp_cmp_idx = cpreds * (update_hyp_cmp_temp + 1) + np.append(
-                    np.array([np.arange(0, num_births)]),
-                    num_births + np.array([p_hyp.track_set]),
-                )
-                new_hyp = self._HypothesisHelper()
-                new_hyp.assoc_prob = (
-                    -self.clutter_rate
-                    + num_meas * np.log(clutter)
-                    + np.log(p_hyp.assoc_prob)
-                    - cst
-                )
-                new_hyp.track_set = update_hyp_cmp_idx[update_hyp_cmp_idx >= 0].astype(
-                    int
-                )
-                up_hyp.append(new_hyp)
+                    neg_log = -np.log(cost_m)
+
+                m = np.round(self.req_upd * np.sqrt(p_hyp.assoc_prob) / ss_w)
+                m = int(m.item()) + 1
+
+                # Gibbs Sampler
+                [assigns, costs] = gibbs(neg_log, m, rng=self._rng)
+
+                # Process unique assignments from gibbs sampler
+                assigns[assigns < num_tracks] = -np.inf
+                for ii in range(np.shape(assigns)[0]):
+                    if len(np.shape(assigns)) < 2:
+                        if assigns[ii] >= num_tracks and assigns[ii] < 2 * num_tracks:
+                            assigns[ii] = -1
+                    else:
+                        for jj in range(np.shape(assigns)[1]):
+                            if (
+                                assigns[ii][jj] >= num_tracks
+                                and assigns[ii][jj] < 2 * num_tracks
+                            ):
+                                assigns[ii][jj] = -1
+                assigns[assigns >= 2 * num_tracks] -= 2 * num_tracks
+                if assigns[assigns >= 0].size != 0:
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", RuntimeWarning)
+                        assigns[assigns >= 0] = mindices[
+                            assigns.astype(int)[assigns.astype(int) >= 0]
+                        ]
+                # Assign updated hypotheses from gibbs sampler
+                for c, cst in enumerate(costs.flatten()):
+                    update_hyp_cmp_temp = assigns[c,]
+                    update_hyp_cmp_idx = cpreds * (update_hyp_cmp_temp + 1) + np.append(
+                        np.array([np.arange(0, num_births)]),
+                        num_births + np.array([p_hyp.track_set]),
+                    )
+                    new_hyp = self._HypothesisHelper()
+                    new_hyp.assoc_prob = (
+                        -self.clutter_rate
+                        + num_meas * np.log(clutter)
+                        + np.log(p_hyp.assoc_prob)
+                        - cst
+                    )
+                    new_hyp.track_set = update_hyp_cmp_idx[
+                        update_hyp_cmp_idx >= 0
+                    ].astype(int)
+                    up_hyp.append(new_hyp)
         lse = log_sum_exp([x.assoc_prob for x in up_hyp])
 
         for ii in range(0, len(up_hyp)):
@@ -4834,7 +4861,7 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
         return up_hyp
 
     def correct(self, timestep, meas, filt_args={}):
-        """Correction step of the JGLMB filter.
+        """Correction step of the MS-JGLMB filter.
 
         This corrects the hypotheses based on the measurements and gates the
         measurements according to the class settings. It also updates the
@@ -4880,8 +4907,41 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
             self._meas_tab.append(deepcopy(meas))
         # all_combs = list(itertools.product(*meas))
 
+        num_meas_per_sens = [len(x) for x in meas]
         num_meas = len(all_combs)
         num_sens = len(meas)
+        mnmps = min(num_meas_per_sens)
+
+        comb_inds = list(itertools.product(*list(np.arange(0, len(x)) for x in meas)))
+        comb_inds = [list(ele) for ele in comb_inds]
+
+        all_meas_combs = list(itertools.combinations(comb_inds, mnmps))
+        all_meas_combs = [list(ele) for ele in all_meas_combs]
+
+        poss_meas_combs = []
+
+        for ii in range(0, len(all_meas_combs)):
+            break_flag = False
+            cur_comb = []
+            for jj, lst1 in enumerate(all_meas_combs[ii]):
+                for kk, lst2 in enumerate(all_meas_combs[ii]):
+                    if jj == kk:
+                        continue
+                    else:
+                        out = (np.array(lst1) == np.array(lst2)).tolist()
+                        if any(out):
+                            break_flag = True
+                            break
+                if break_flag:
+                    break
+            if break_flag:
+                pass
+            else:
+                for lst1 in all_meas_combs[ii]:
+                    for ii, lst2 in enumerate(comb_inds):
+                        if lst1 == lst2:
+                            cur_comb.append(ii)
+                poss_meas_combs.append(cur_comb)
 
         # missed detection tracks
         [up_tab, all_cost_m] = self._gen_cor_tab(
@@ -4895,7 +4955,7 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
             avg_prob_surv,
             avg_prob_death,
             all_cost_m,
-            num_sens,
+            poss_meas_combs,
         )
 
         self._track_tab = up_tab
@@ -5485,11 +5545,18 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
                             for ii, ms in enumerate(a):
                                 if len(p_hyp.track_set) >= ms:
                                     new_track_list.append(
-                                        ms * num_pred + p_hyp.track_set[(ms - 1)]
+                                        (ii + 1) * num_pred + p_hyp.track_set[(ms - 1)]
                                     )
+                                    # new_track_list.append(
+                                    #     (ms - 1) * num_pred + p_hyp.track_set[(ms - 1)]
+                                    # )
+                                    # new_track_list.append(
+                                    #     ms * num_pred + p_hyp.track_set[(ms - 1)]
+                                    # )
                                 elif len(p_hyp.track_set) < ms:
                                     new_track_list.append(
-                                        num_pred * (num_meas + 1) + (ms - num_meas)
+                                        num_pred * (num_meas + 1)
+                                        + (ms - 1 - len(p_hyp.track_set))
                                     )
 
                         # new_track_list = list(np.array(p_hyp.track_set) + num_pred + num_pred * a)# new_track_list = list(num_pred * a + np.array(p_hyp.track_set))
@@ -7159,6 +7226,7 @@ class MSPoissonMultiBernoulliMixture(PoissonMultiBernoulliMixture):
         None
         """
         all_combs = list(itertools.product(*meas))
+        # TODO: Add method for only single measurements to be assoc'd i.e. all_combs needs to include single measurement options
         if self.gating_on:
             warnings.warn("Gating not implemented yet. SKIPPING", RuntimeWarning)
             # means = []
@@ -7170,13 +7238,11 @@ class MSPoissonMultiBernoulliMixture(PoissonMultiBernoulliMixture):
         if self.save_measurements:
             self._meas_tab.append(deepcopy(meas))
 
-        # get matrix of indices in all_combs somehow
+        # get matrix of indices in all_combs
         num_meas_per_sens = [len(x) for x in meas]
         num_meas = len(all_combs)
         num_sens = len(meas)
         mnmps = min(num_meas_per_sens)
-
-        # find a way to make this list of lists not list of tuples
         comb_inds = list(itertools.product(*list(np.arange(0, len(x)) for x in meas)))
         comb_inds = [list(ele) for ele in comb_inds]
         min_meas_in_sens = np.min([len(x) for x in meas])
