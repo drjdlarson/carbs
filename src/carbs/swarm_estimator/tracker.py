@@ -5837,13 +5837,15 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
         new_hyps = []
         for ii, hyp in enumerate(self._hypotheses):
             if len(hyp.track_set) > 0:
-                track_set = [new_inds[ii] for ii in hyp.track_set]
+                track_set = [new_inds[track_ind] for track_ind in hyp.track_set]
                 if None in track_set:
-                    continue
+                    track_set = [item for item in track_set if item != None]
                 hyp.track_set = track_set
             new_hyps.append(hyp)
 
         del_inds = []
+        # TODO: ADD CASE FOR NO MORE TRACKS SO THAT WE DON'T REMOVE ALL HYPOTHESES
+        # AND OR THE HYPOTHESES HAVE AN EMPTY TRACK SET RATHER THAN A TRACK SET OF NONES
 
         for ii in range(0, len(new_hyps)):
             same_inds = []
