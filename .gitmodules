@@ -1,0 +1,3 @@
+[submodule "src/carbs/fangs"]
+	path = src/carbs/fangs
+	url = https://github.com/ahspringer/fangs.git
