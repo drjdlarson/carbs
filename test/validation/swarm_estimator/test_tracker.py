@@ -822,8 +822,8 @@ def _update_true_agents_prob2(true_agents, tt, dt, b_model, rng):
             print("birth at {:.2f}".format(tt))
             x = gm.means[0] + (1 * rng.standard_normal(4)).reshape((4, 1))
             out.append(x.copy())
-    if np.abs(tt - 3.0) < 1e-8:
-        out.pop(0)
+    # if np.abs(tt - 3.0) < 1e-8:
+    #     out.pop(0)
     return out
 
 
@@ -907,8 +907,8 @@ def _update_true_agents_pmbm_lmb_var(true_agents, tt, dt, b_model, rng):
     #     for gm in b_model:
     #         x = gm.means[0] + (rng.standard_normal(4) * np.ones(4)).reshape((4, 1))
     #         out.append(x.copy())
-    if np.abs(tt - 3.0) < 1e-8:
-        out = []
+    # if np.abs(tt - 3.0) < 1e-8:
+    #     out = []
 
     return out
 
@@ -916,6 +916,7 @@ def _update_true_agents_pmbm_lmb_var(true_agents, tt, dt, b_model, rng):
 def _update_true_agents_pmbm(true_agents, tt, dt, b_model, rng):
     out = _prop_true(true_agents, tt, dt)
     if any(np.abs(tt - np.array([0, 1, 1.5, 4.5])) < 1e-8):
+        # if any(np.abs(tt - np.array([0, 1, 1.5])) < 1e-8):
         # if any(np.abs(tt - np.array([2.0, 3.0, 4.5])) < 1e-8):
         for gm in b_model:
             x = gm.means[0] + (rng.standard_normal(4) * np.ones(4)).reshape((4, 1))
@@ -926,6 +927,9 @@ def _update_true_agents_pmbm(true_agents, tt, dt, b_model, rng):
     #         out.append(x.copy())
     if np.abs(tt - 3.0) < 1e-8:
         out = []
+    # if np.abs(tt - 4.6) < 1e-8:
+    #     new_x = np.array([15, 15, 0.1, -0.1]).reshape((4, 1))
+    #     out.append(new_x.copy())
 
     return out
 
@@ -1388,7 +1392,7 @@ def test_GLMB():  # noqa
     rng = rnd.default_rng(global_seed)
 
     dt = 0.01
-    t0, t1 = 0, 4.5 + dt  # 6 + dt
+    t0, t1 = 0, 6 + dt
 
     filt = _setup_double_int_kf(dt)
     state_mat_args = (dt, "test arg")
@@ -1444,22 +1448,23 @@ def test_GLMB():  # noqa
     extract_kwargs = {"update": False, "calc_states": True}
     glmb.extract_states(**extract_kwargs)
 
+    debug_plots = True
     glmb.calculate_ospa(global_true, 2, 1)
     if debug_plots:
         glmb.plot_ospa_history(time=time, time_units="s")
     glmb.calculate_ospa2(global_true, 5, 1, 10)
     if debug_plots:
         glmb.plot_ospa2_history(time=time, time_units="s")
-    glmb.calculate_ospa2(
-        global_true, 5, 1, 10, core_method=SingleObjectDistance.EUCLIDEAN
-    )
-    if debug_plots:
-        glmb.plot_ospa2_history(time=time, time_units="s")
-    glmb.calculate_ospa2(
-        global_true, 5, 1, 10, core_method=SingleObjectDistance.MAHALANOBIS
-    )
-    if debug_plots:
-        glmb.plot_ospa2_history(time=time, time_units="s")
+    # glmb.calculate_ospa2(
+    #     global_true, 5, 1, 10, core_method=SingleObjectDistance.EUCLIDEAN
+    # )
+    # if debug_plots:
+    #     glmb.plot_ospa2_history(time=time, time_units="s")
+    # glmb.calculate_ospa2(
+    #     global_true, 5, 1, 10, core_method=SingleObjectDistance.MAHALANOBIS
+    # )
+    # if debug_plots:
+    #     glmb.plot_ospa2_history(time=time, time_units="s")
     if debug_plots:
         glmb.plot_states_labels([0, 1], true_states=global_true, meas_inds=[0, 1])
         glmb.plot_card_dist()
@@ -1508,21 +1513,32 @@ def test_STM_GLMB():  # noqa
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
-        true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
+        true_agents = _update_true_agents_pmbm_lmb_var(
+            true_agents, tt, dt, b_model, rng
+        )
+        # true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
         global_true.append(deepcopy(true_agents))
 
         pred_args = {"state_mat_args": state_mat_args}
         glmb.predict(tt, filt_args=pred_args)
 
-        meas_in = _gen_meas_stf(
+        meas_in = _gen_meas(
             tt,
             true_agents,
             filt.proc_noise,
-            filt.proc_noise_dof,
             filt.meas_noise,
-            filt.meas_noise_dof,
             rng,
         )
+
+        # meas_in = _gen_meas_stf(
+        #     tt,
+        #     true_agents,
+        #     filt.proc_noise,
+        #     filt.proc_noise_dof,
+        #     filt.meas_noise,
+        #     filt.meas_noise_dof,
+        #     rng,
+        # )
 
         cor_args = {"meas_fun_args": meas_fun_args}
         glmb.correct(tt, meas_in, filt_args=cor_args)
@@ -1558,6 +1574,7 @@ def test_SMC_GLMB():  # noqa
     dyn_fun_params = (dt,)
 
     b_model = _setup_smc_glmb_double_int_birth(num_parts, rng)
+    other_bm = _setup_gm_glmb_double_int_birth()
 
     def compute_prob_detection(part_lst, prob_det):
         if len(part_lst) == 0:
@@ -1602,7 +1619,8 @@ def test_SMC_GLMB():  # noqa
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
-        true_agents = _update_true_agents_prob_smc(true_agents, tt, dt, b_model, rng)
+        true_agents = _update_true_agents(true_agents, tt, dt, other_bm[0], rng)
+        # true_agents = _update_true_agents_prob_smc(true_agents, tt, dt, b_model, rng)
         global_true.append(deepcopy(true_agents))
 
         pred_args = {"dyn_fun_params": dyn_fun_params}
@@ -1862,6 +1880,7 @@ def test_JGLMB():  # noqa
         jglmb.predict(tt, filt_args=pred_args)
 
         meas_in = _gen_meas(tt, true_agents, filt.proc_noise, filt.meas_noise, rng)
+        np.random.shuffle(meas_in)
 
         cor_args = {"meas_fun_args": meas_fun_args}
         jglmb.correct(tt, meas_in, filt_args=cor_args)
@@ -1958,7 +1977,7 @@ def test_STM_JGLMB():  # noqa
     rng = rnd.default_rng(global_seed)
 
     dt = 0.01
-    t0, t1 = 0, 6 + dt
+    t0, t1 = 0, 4 + dt
 
     filt = _setup_double_int_stf(dt)
     state_mat_args = (dt, "test arg")
@@ -1993,21 +2012,32 @@ def test_STM_JGLMB():  # noqa
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
-        true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
+        true_agents = _update_true_agents_pmbm_lmb_var(
+            true_agents, tt, dt, b_model, rng
+        )
+        # true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
         global_true.append(deepcopy(true_agents))
 
         pred_args = {"state_mat_args": state_mat_args}
         jglmb.predict(tt, filt_args=pred_args)
 
-        meas_in = _gen_meas_stf(
+        meas_in = _gen_meas(
             tt,
             true_agents,
             filt.proc_noise,
-            filt.proc_noise_dof,
             filt.meas_noise,
-            filt.meas_noise_dof,
             rng,
         )
+
+        # meas_in = _gen_meas_stf(
+        #     tt,
+        #     true_agents,
+        #     filt.proc_noise,
+        #     filt.proc_noise_dof,
+        #     filt.meas_noise,
+        #     filt.meas_noise_dof,
+        #     rng,
+        # )
 
         cor_args = {"meas_fun_args": meas_fun_args}
         jglmb.correct(tt, meas_in, filt_args=cor_args)
@@ -3774,8 +3804,8 @@ def test_LPMBM():
     rng = rnd.default_rng(global_seed)
 
     dt = 0.01
+    # t0, t1 = 0, 1.5 + dt
     t0, t1 = 0, 6 + dt
-    # t0, t1 = 0, 6 + dt
 
     filt = _setup_double_int_kf(dt)
     state_mat_args = (dt, "test arg")
@@ -3788,8 +3818,8 @@ def test_LPMBM():
         "prob_survive": 0.98,
         "in_filter": filt,
         "birth_terms": b_model,
-        "clutter_den": 1e-2,
-        "clutter_rate": 1e-2,
+        "clutter_den": 1e-1,
+        "clutter_rate": 1e-1,
     }
     PMBM_args = {
         "req_upd": 800,
@@ -3808,14 +3838,15 @@ def test_LPMBM():
     time = np.arange(t0, t1, dt)
     true_agents = []
     global_true = []
+    # in_the_loop_fig, ax0 = plt.subplots(ncols=1, nrows=1, figsize=(5, 5))
     print("\tStarting sim")
     for kk, tt in enumerate(time):
         if np.mod(kk, 100) == 0:
-            print("\t\t{:.2f}".format(tt))
+            print("\t\t{:.2f}, kk: {:.2f}".format(tt, kk))
             sys.stdout.flush()
-        if kk == 300 or kk == 308:
+        if kk == 300 or kk == 308 or kk == 150:
             asdf = 1
-        if kk == 503:
+        if kk == 503 or kk == 100:
             asdfasdf = 1
 
         true_agents = _update_true_agents_pmbm(true_agents, tt, dt, b_model, rng)
@@ -3825,12 +3856,26 @@ def test_LPMBM():
         pmbm.predict(tt, filt_args=pred_args)
 
         meas_in = _gen_meas(tt, true_agents, filt.proc_noise, filt.meas_noise, rng)
+        # if kk % 2 != 0 and 100 < kk < 150:
+        #     temp = meas_in[1].copy()
+        #     meas_in[1] = meas_in[0].copy()
+        #     meas_in[0] = temp
+        np.random.shuffle(meas_in)
+
+        # if kk >= 200 and kk < 250:
+        #     temp_meas = meas_in[2].copy()
+        #     meas_in[2] = meas_in[1].copy()
+        #     meas_in[1] = temp_meas
+        # meas_in.pop(len(meas_in) - 1)
 
         cor_args = {"meas_fun_args": meas_fun_args}
         pmbm.correct(tt, meas_in, filt_args=cor_args)
 
         extract_kwargs = {"update": True, "calc_states": False}
         pmbm.cleanup(extract_kwargs=extract_kwargs)
+        # pmbm.plot_states_labels([0, 1], f_hndl=in_the_loop_fig)
+        # if kk % 50 == 0:
+        #     plt.show()
         # pmbm.cleanup(enable_bern_prune=False, extract_kwargs=extract_kwargs)
 
     extract_kwargs = {"update": False, "calc_states": True}
@@ -3853,7 +3898,8 @@ def test_LPMBM():
     if debug_plots:
         pmbm.plot_ospa2_history(time=time, time_units="s")
     if debug_plots:
-        pmbm.plot_states_labels([0, 1], true_states=global_true, meas_inds=[0, 1])
+        # pmbm.plot_states_labels([0, 1], true_states=global_true, meas_inds=[0, 1])
+        pmbm.plot_states_labels([0, 1], true_states=global_true)
         pmbm.plot_card_dist()
         pmbm.plot_card_history(time_units="s", time=time)
     print("\tExpecting {} agents".format(len(true_agents)))
@@ -4375,8 +4421,9 @@ def test_MS_IMM_LPMBM():  # noqa
         cor_args = {"meas_fun_args": meas_fun_args}
         pmbm.correct(tt, meas_in, filt_args=cor_args)
 
-        extract_kwargs = {"update": True, "calc_states": False}
+        extract_kwargs = {"update": True, "calc_states": True}
         pmbm.cleanup(extract_kwargs=extract_kwargs)
+
     extract_kwargs = {"update": False, "calc_states": True}
     pmbm.extract_states(**extract_kwargs)
 
@@ -4411,7 +4458,6 @@ if __name__ == "__main__":
     # test_IMM_CPHD()
 
     # test_GLMB()
-    # test_STM_GLMB()
     # test_STM_GLMB()
     # test_SMC_GLMB()
     # test_USMC_GLMB()

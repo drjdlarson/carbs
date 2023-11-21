@@ -3628,6 +3628,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
         rng = opts["rng"]
         meas_inds = opts["meas_inds"]
         lgnd_loc = opts["lgnd_loc"]
+        mrkr = opts["marker"]
 
         if rng is None:
             rng = rnd.default_rng(1)
@@ -3723,7 +3724,7 @@ class GeneralizedLabeledMultiBernoulli(RandomFiniteSetBase):
             settings = {
                 "color": color,
                 "markeredgecolor": "k",
-                "marker": ".",
+                "marker": mrkr,
                 "ls": "--",
             }
             if not added_state_lbl:
@@ -5521,7 +5522,10 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
                             for ii, (ms, t) in enumerate(zip(a, p_hyp.track_set)):
                                 if len(p_hyp.track_set) >= ms:
                                     # new_track_list.append(((np.array(t)) * ms + num_pred))
-                                    new_track_list.append((num_pred * ms + np.array(t)))
+                                    # new_track_list.append((num_pred * ms + np.array(t)))
+                                    new_track_list.append(
+                                        (ii + 1) * num_pred + p_hyp.track_set[(ms - 1)]
+                                    )
                                 else:
                                     new_track_list.append(
                                         num_pred * ms - ii * (num_pred - 1)
@@ -5532,8 +5536,11 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
                                     # coiuld be this one, trying -1 first
                                     # new_track_list.append(((np.array(p_hyp.track_set[(ms-ii)]) + num_pred) * ms))
                                     # new_track_list.append(((np.array(p_hyp.track_set[(ms-1)]) + num_pred) * ms + num_meas * ii))
+                                    # new_track_list.append(
+                                    #     (ms + ii) * num_pred + p_hyp.track_set[(ms - 1)]
+                                    # )
                                     new_track_list.append(
-                                        ms * num_pred + p_hyp.track_set[(ms - 1)]
+                                        (ii + 1) * num_pred + p_hyp.track_set[(ms - 1)]
                                     )
                                 elif len(p_hyp.track_set) < ms:
                                     new_track_list.append(
