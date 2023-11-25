@@ -5518,6 +5518,7 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
                     else:
                         # track_inds = np.argwhere(a==1)
                         new_track_list = []
+
                         for ii, ms in enumerate(a):
                             if len(p_hyp.track_set) >= ms:
                                 new_track_list.append(
@@ -5527,10 +5528,73 @@ class PoissonMultiBernoulliMixture(RandomFiniteSetBase):
                                 new_track_list.append(
                                     num_pred * ms - ii * (num_pred - 1)
                                 )
+                            elif len(p_hyp.track_set) < len(a):
+                                new_track_list.append(
+                                    num_pred * (num_meas + 1) + (ms - num_meas)
+                                )
                             else:
                                 new_track_list.append(
-                                    (num_meas + 1) * num_pred + ms - num_meas
+                                    (num_meas + 1) * num_pred
+                                    - (ms - len(p_hyp.track_set) - 1)
                                 )
+                            # if len(p_hyp.track_set) >= ms:
+                            #     new_track_list.append(
+                            #         (ii + 1) * num_pred + p_hyp.track_set[(ms - 1)]
+                            #     )
+                            # else:
+                            #     new_track_list.append(
+                            #         (num_meas + 1) * num_pred + ms - num_meas
+                            #     )
+                        # if len(a) == len(p_hyp.track_set):
+                        #     for ii, (ms, t) in enumerate(zip(a, p_hyp.track_set)):
+                        #         if len(p_hyp.track_set) >= ms:
+                        #             # new_track_list.append(((np.array(t)) * ms + num_pred))
+                        #             # new_track_list.append((num_pred * ms + np.array(t)))
+                        #             new_track_list.append(
+                        #                 (ii + 1) * num_pred + p_hyp.track_set[(ms - 1)]
+                        #             )
+                        #         else:
+                        #             new_track_list.append(
+                        #                 num_pred * ms - ii * (num_pred - 1)
+                        #             )
+                        # elif len(p_hyp.track_set) < len(a):
+                        #     for ii, ms in enumerate(a):
+                        #         if len(p_hyp.track_set) >= ms:
+                        #             # coiuld be this one, trying -1 first
+                        #             # new_track_list.append(((np.array(p_hyp.track_set[(ms-ii)]) + num_pred) * ms))
+                        #             # new_track_list.append(((np.array(p_hyp.track_set[(ms-1)]) + num_pred) * ms + num_meas * ii))
+                        #             # new_track_list.append(
+                        #             #     (ms + ii) * num_pred + p_hyp.track_set[(ms - 1)]
+                        #             # )
+                        #             new_track_list.append(
+                        #                 (ii + 1) * num_pred + p_hyp.track_set[(ms - 1)]
+                        #             )
+                        #         elif len(p_hyp.track_set) < ms:
+                        #             new_track_list.append(
+                        #                 num_pred * (num_meas + 1) + (ms - num_meas)
+                        #             )
+                        #             # new_track_list.append(num_meas * num_pred + ms)
+                        # elif len(p_hyp.track_set) > len(a):
+                        #     # May need to modify this
+                        #     for ii, ms in enumerate(a):
+                        #         if len(p_hyp.track_set) >= ms:
+                        #             new_track_list.append(
+                        #                 (ii + 1) * num_pred + p_hyp.track_set[(ms - 1)]
+                        #             )
+                        #             # new_track_list.append(
+                        #             #     (ms - 1) * num_pred + p_hyp.track_set[(ms - 1)]
+                        #             # )
+                        #             # new_track_list.append(
+                        #             #     ms * num_pred + p_hyp.track_set[(ms - 1)]
+                        #             # )
+                        #         elif len(p_hyp.track_set) < ms:
+                        #             new_track_list.append(
+                        #                 num_pred * (num_meas + 1)
+                        #                 + (ms - 1 - len(p_hyp.track_set))
+                        #             )
+
+                        # new_track_list = list(np.array(p_hyp.track_set) + num_pred + num_pred * a)# new_track_list = list(num_pred * a + np.array(p_hyp.track_set))
+
                     new_hyp.track_set = new_track_list
                     up_hyps.append(new_hyp)
 
