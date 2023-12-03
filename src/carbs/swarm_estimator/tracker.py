@@ -6998,6 +6998,293 @@ class LabeledPoissonMultiBernoulliMixture(PoissonMultiBernoulliMixture):
         return f_hndl
 
 
+class _STMPMBMBase:
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def _init_filt_states(self, distrib):
+        filt_states = [None] * len(distrib.means)
+        states = [m.copy() for m in distrib.means]
+        covs = [None] * len(distrib.means)
+
+        weights = distrib.weights.copy()
+        self._baseFilter.dof = distrib.dof
+        for ii, scale in enumerate(distrib.scalings):
+            self._baseFilter.scale = scale.copy()
+            filt_states[ii] = self._baseFilter.save_filter_state()
+            if self.save_covs:
+                # no need to copy because cov is already a new object for the student's t-fitler
+                covs[ii] = self.filter.cov
+        return filt_states, weights, states, covs
+
+    def _gate_meas(self, meas, means, covs, **kwargs):
+        # TODO: check this implementation
+        if len(meas) == 0:
+            return []
+        scalings = []
+        for ent in self._track_tab:
+            scalings.extend(ent.probDensity.scalings)
+        valid = []
+        for m, p in zip(means, scalings):
+            meas_mat = self.filter.get_meas_mat(m, **kwargs)
+            est = self.filter.get_est_meas(m, **kwargs)
+            factor = (
+                self.filter.meas_noise_dof
+                * (self.filter.dof - 2)
+                / (self.filter.dof * (self.filter.meas_noise_dof - 2))
+            )
+            P_zz = meas_mat @ p @ meas_mat.T + factor * self.filter.meas_noise
+            inv_P = la.inv(P_zz)
+
+            for ii, z in enumerate(meas):
+                if ii in valid:
+                    continue
+                innov = z - est
+                dist = innov.T @ inv_P @ innov
+                if dist < self.inv_chi2_gate:
+                    valid.append(ii)
+        valid.sort()
+        return [meas[ii] for ii in valid]
+
+
+class STMPoissonMultiBernoulliMixture(_STMPMBMBase, PoissonMultiBernoulliMixture):
+    """Implementation of a STM-PMBM filter."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+class STMLabeledPoissonMultiBernoulliMixture(
+    _STMPMBMBase, LabeledPoissonMultiBernoulliMixture
+):
+    """Implementation of a STM-LPMBM filter."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+class _SMCPMBMBase:
+    def __init__(
+        self, compute_prob_detection=None, compute_prob_survive=None, **kwargs
+    ):
+        self.compute_prob_detection = compute_prob_detection
+        self.compute_prob_survive = compute_prob_survive
+
+        # for wrappers for predict/correct function to handle extra args for private functions
+        self._prob_surv_args = ()
+        self._prob_det_args = ()
+
+        super().__init__(**kwargs)
+
+    def _init_filt_states(self, distrib):
+        self._baseFilter.init_from_dist(distrib, make_copy=True)
+        filt_states = [
+            self._baseFilter.save_filter_state(),
+        ]
+        states = [distrib.mean]
+        if self.save_covs:
+            covs = [
+                distrib.covariance,
+            ]
+        else:
+            covs = []
+        weights = [
+            1,
+        ]  # not needed so set to 1
+
+        return filt_states, weights, states, covs
+
+    def _calc_avg_prob_surv_death(self):
+        avg_prob_survive = np.zeros(len(self._track_tab))
+        for tabidx, ent in enumerate(self._track_tab):
+            # TODO: fix hack so not using "private" variable outside class
+            p_surv = self.compute_prob_survive(
+                ent.filt_states[0]["_particleDist"].particles, *self._prob_surv_args
+            )
+            avg_prob_survive[tabidx] = np.sum(
+                np.array(ent.filt_states[0]["_particleDist"].weights) * p_surv
+            )
+        avg_prob_death = 1 - avg_prob_survive
+
+        return avg_prob_survive, avg_prob_death
+
+    def _inner_predict(self, timestep, filt_state, state, filt_args):
+        self.filter.load_filter_state(filt_state)
+        if self.filter._particleDist.num_particles > 0:
+            new_s = self.filter.predict(timestep, **filt_args)
+
+            # manually update weights to account for prob survive
+            # TODO: fix hack so not using "private" variable outside class
+            ps = self.compute_prob_survive(
+                self.filter._particleDist.particles, *self._prob_surv_args
+            )
+            new_weights = [
+                w * ps[ii] for ii, (p, w) in enumerate(self.filter._particleDist)
+            ]
+            tot = sum(new_weights)
+            if np.abs(tot) == np.inf:
+                w_lst = [np.inf] * len(new_weights)
+            else:
+                w_lst = [w / tot for w in new_weights]
+            self.filter._particleDist.update_weights(w_lst)
+
+            new_f_state = self.filter.save_filter_state()
+            if self.save_covs:
+                new_cov = self.filter.cov.copy()
+            else:
+                new_cov = None
+        else:
+            new_f_state = self.filter.save_filter_state()
+            new_s = state
+            new_cov = self.filter.cov
+        return new_f_state, new_s, new_cov
+
+    def predict(self, timestep, prob_surv_args=(), **kwargs):
+        """Prediction step of the SMC-GLMB filter.
+
+        This is a wrapper for the parent class to allow for extra parameters.
+        See :meth:`.tracker.GeneralizedLabeledMultiBernoulli.predict` for
+        additional details.
+
+        Parameters
+        ----------
+        timestep : float
+            Current timestep.
+        prob_surv_args : tuple, optional
+            Additional arguments for the `compute_prob_survive` function.
+            The default is ().
+        **kwargs : dict, optional
+            See :meth:`.tracker.GeneralizedLabeledMultiBernoulli.predict`
+        """
+        self._prob_surv_args = prob_surv_args
+        return super().predict(timestep, **kwargs)
+
+    def _calc_avg_prob_det_mdet(self):
+        avg_prob_detect = np.zeros(len(self._track_tab))
+        for tabidx, ent in enumerate(self._track_tab):
+            # TODO: fix hack so not using "private" variable outside class
+            p_detect = self.compute_prob_detection(
+                ent.filt_states[0]["_particleDist"].particles, *self._prob_det_args
+            )
+            avg_prob_detect[tabidx] = np.sum(
+                np.array(ent.filt_states[0]["_particleDist"].weights) * p_detect
+            )
+        avg_prob_miss_detect = 1 - avg_prob_detect
+
+        return avg_prob_detect, avg_prob_miss_detect
+
+    def _inner_correct(
+        self, timestep, meas, filt_state, distrib_weight, state, filt_args
+    ):
+        self.filter.load_filter_state(filt_state)
+        if self.filter._particleDist.num_particles > 0:
+            cor_state, likely = self.filter.correct(timestep, meas, **filt_args)[0:2]
+
+            # manually update the particle weights to account for probability of detection
+            # TODO: fix hack so not using "private" variable outside class
+            pd = self.compute_prob_detection(
+                self.filter._particleDist.particles, *self._prob_det_args
+            )
+            pd_weight = (
+                pd * np.array(self.filter._particleDist.weights) + np.finfo(float).eps
+            )
+            self.filter._particleDist.update_weights(
+                (pd_weight / np.sum(pd_weight)).tolist()
+            )
+
+            # determine the partial cost, the remainder is calculated later from
+            # the hypothesis
+            new_w = np.sum(likely * pd_weight)  # same as cost in this case
+
+            new_f_state = self.filter.save_filter_state()
+            new_s = cor_state
+            if self.save_covs:
+                new_c = self.filter.cov
+            else:
+                new_c = None
+        else:
+            new_f_state = self.filter.save_filter_state()
+            new_s = state
+            new_c = self.filter.cov
+            new_w = 0
+        return new_f_state, new_s, new_c, new_w
+
+    def correct(self, timestep, meas, prob_det_args=(), **kwargs):
+        """Correction step of the SMC-GLMB filter.
+
+        This is a wrapper for the parent class to allow for extra parameters.
+        See :meth:`.tracker.GeneralizedLabeledMultiBernoulli.correct` for
+        additional details.
+
+        Parameters
+        ----------
+        timestep : float
+            Current timestep.
+        prob_det_args : tuple, optional
+            Additional arguments for the `compute_prob_detection` function.
+            The default is ().
+        **kwargs : dict, optional
+            See :meth:`.tracker.GeneralizedLabeledMultiBernoulli.correct`
+        """
+        self._prob_det_args = prob_det_args
+        return super().correct(timestep, meas, **kwargs)
+
+    def extract_most_prob_states(self, thresh, **kwargs):
+        """Extracts themost probable states.
+
+        .. todo::
+            Implement this function for the SMC-GLMB filter
+
+        Raises
+        ------
+        RuntimeWarning
+            Function must be implemented.
+        """
+        warnings.warn("Not implemented for this class")
+
+
+class SMCPoissonMultiBernoulliMixture(_SMCPMBMBase, PoissonMultiBernoulliMixture):
+    """Implementation of a Sequential Monte Carlo PMBM filter.
+
+    This filter does not account for agents spawned from existing tracks, only agents
+    birthed from the given birth model.
+
+    Attributes
+    ----------
+    compute_prob_detection : callable
+        Function that takes a list of particles as the first argument and `*args`
+        as the next. Returns the probability of detection for each particle as a list.
+    compute_prob_survive : callable
+        Function that takes a list of particles as the first argument and `*args` as
+        the next. Returns the average probability of survival for each particle as a list.
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+class SMCLabeledPoissonMultiBernoulliMixture(
+    _SMCPMBMBase, LabeledPoissonMultiBernoulliMixture
+):
+    """Implementation of a Sequential Monte Carlo LPMBM filter.
+
+    This filter does not account for agents spawned from existing tracks, only agents
+    birthed from the given birth model.
+
+    Attributes
+    ----------
+    compute_prob_detection : callable
+        Function that takes a list of particles as the first argument and `*args`
+        as the next. Returns the probability of detection for each particle as a list.
+    compute_prob_survive : callable
+        Function that takes a list of particles as the first argument and `*args` as
+        the next. Returns the average probability of survival for each particle as a list.
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
 class _IMMPMBMBase:
     def _init_filt_states(self, distrib):
         filt_states = [None] * len(distrib.means)
