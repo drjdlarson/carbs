@@ -4687,7 +4687,7 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def _gen_cor_tab(self, num_meas, meas, timestep, filt_args):
+    def _gen_cor_tab(self, num_meas, meas, timestep, comb_inds, filt_args):
         num_pred = len(self._track_tab)
         num_sens = len(meas)
         # if len(meas) != len(self.filter.meas_model_list):
@@ -4706,7 +4706,7 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
                     z, ent, timestep, filt_args
                 )
                 if up_tab[s_to_ii] is not None:
-                    up_tab[s_to_ii].meas_assoc_hist.append(emm)
+                    up_tab[s_to_ii].meas_assoc_hist.append(comb_inds[emm])
                 all_cost_m[ii, emm] = cost
 
         return up_tab, all_cost_m
@@ -4720,6 +4720,7 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
         avg_prob_death,
         all_cost_m,
         meas_combs,
+        cor_tab=None,
     ):
         # Define clutter
         clutter = self.clutter_rate * self.clutter_den
@@ -4754,49 +4755,28 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
         for p_hyp in self._hypotheses:
             ss_w += np.sqrt(p_hyp.assoc_prob)
         for p_hyp in self._hypotheses:
-            cpreds = len(self._track_tab)  # num_pred
-            num_births = len(self.birth_terms)  # num_birth_terms
-            num_exists = len(p_hyp.track_set)  # num_existing_tracks
-            num_tracks = num_births + num_exists  # num_possible_tracks
-
-            # Hypothesis index masking
-            # all birth terms and tracks included in p_hyp.track_set
-            tindices = np.concatenate(
-                (np.arange(0, num_births), num_births + np.array(p_hyp.track_set))
-            ).astype(int)
-            lselmask = np.zeros((len(self._track_tab), num_meas), dtype="bool")
-            lselmask[tindices,] = gate_meas_indc[tindices,]
-
-            # verify sort works for 3d arrays similar to 2d arrays, may have to do this list-wise
-            keys = np.array([np.sort(gate_meas_indices[lselmask])])
-            # meas_indices
-            # mindices = self._unique_faster(keys)
-
             for ind_lst in meas_combs:
+                cpreds = len(self._track_tab)  # num_pred
+                num_births = len(self.birth_terms)  # num_birth_terms
+                num_exists = len(p_hyp.track_set)  # num_existing_tracks
+                num_tracks = num_births + num_exists  # num_possible_tracks
+
+                # Hypothesis index masking
+                # all birth terms and tracks included in p_hyp.track_set
+                tindices = np.concatenate(
+                    (np.arange(0, num_births), num_births + np.array(p_hyp.track_set))
+                ).astype(int)
+                # lselmask = np.zeros((len(self._track_tab), len(ind_lst)), dtype="bool")
+                lselmask = np.zeros((len(self._track_tab), num_meas), dtype="bool")
+                # lselmask = np.
+                for ii, index in enumerate(ind_lst):
+                    lselmask[tindices, index] = gate_meas_indc[tindices, index]
+
+                # verify sort works for 3d arrays similar to 2d arrays, may have to do this list-wise
+                keys = np.array([np.sort(gate_meas_indices[lselmask])])
+                # keys = np.array([np.sort(gate_meas_indices[:, ind_lst][lselmask])])
+                # meas_indices
                 mindices = self._unique_faster(keys)
-                if ind_lst is not None:
-                    mindices = mindices[ind_lst]
-                # if len(meas_combs) == 0:
-                #     relevant_meas_inds = []
-                # if len(meas_combs) == 1:
-                #     if p_hyp.num_tracks == 0:  # all clutter
-                #         relevant_meas_inds = np.arange(
-                #             2 * cpreds, 2 * cpreds + num_meas
-                #         ).tolist()
-                #     else:
-                #         relevant_meas_inds = (
-                #             p_hyp.track_set
-                #             + np.arange(2 * cpreds, 2 * cpreds + num_meas).tolist()
-                #         )
-                # else:
-                #     if p_hyp.num_tracks == 0:  # all clutter
-                #         relevant_meas_inds = np.arange(
-                #             2 * cpreds, 2 * cpreds + len(ind_lst)
-                #         ).tolist()
-                #     else:
-                #         relevant_meas_inds = p_hyp.track_set + [
-                #             x + 2 * cpreds for x in ind_lst
-                #         ]
 
                 comb_tind_cpred = np.append(
                     np.append(tindices, cpreds + tindices), [2 * cpreds + mindices]
@@ -4889,25 +4869,6 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
         None
         """
         all_combs = list(itertools.product(*meas))
-        # gating by tracks
-        if self.gating_on:
-            RuntimeError("Gating not implemented yet. PLEASE TURN OFF GATING")
-            # for ent in self._track_tab:
-            #     ent.gatemeas = self._gate_meas(meas, ent.probDensity.means,
-            #                                     ent.probDensity.covariances)
-        else:
-            for ent in self._track_tab:
-                ent.gatemeas = np.arange(0, len(all_combs))
-        # Pre-calculation of average survival/death probabilities
-        avg_prob_surv, avg_prob_death = self._calc_avg_prob_surv_death()
-
-        # Pre-calculation of average detection/missed probabilities
-        avg_prob_detect, avg_prob_miss_detect = self._calc_avg_prob_det_mdet()
-
-        if self.save_measurements:
-            self._meas_tab.append(deepcopy(meas))
-        # all_combs = list(itertools.product(*meas))
-
         num_meas_per_sens = [len(x) for x in meas]
         num_meas = len(all_combs)
         num_sens = len(meas)
@@ -4944,9 +4905,29 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
                             cur_comb.append(ii)
                 poss_meas_combs.append(cur_comb)
 
+        # gating by tracks
+        if self.gating_on:
+            RuntimeError("Gating not implemented yet. PLEASE TURN OFF GATING")
+            # for ent in self._track_tab:
+            #     ent.gatemeas = self._gate_meas(meas, ent.probDensity.means,
+            #                                     ent.probDensity.covariances)
+        else:
+            for ent in self._track_tab:
+                ent.gatemeas = np.arange(0, len(all_combs))
+                # ent.gatemeas = np.arange(0, len(poss_meas_combs))
+        # Pre-calculation of average survival/death probabilities
+        avg_prob_surv, avg_prob_death = self._calc_avg_prob_surv_death()
+
+        # Pre-calculation of average detection/missed probabilities
+        avg_prob_detect, avg_prob_miss_detect = self._calc_avg_prob_det_mdet()
+
+        if self.save_measurements:
+            self._meas_tab.append(deepcopy(meas))
+        # all_combs = list(itertools.product(*meas))
+
         # missed detection tracks
         [up_tab, all_cost_m] = self._gen_cor_tab(
-            num_meas, all_combs, timestep, filt_args
+            num_meas, all_combs, timestep, comb_inds, filt_args
         )
 
         up_hyp = self._gen_cor_hyps(
@@ -4957,6 +4938,7 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
             avg_prob_death,
             all_cost_m,
             poss_meas_combs,
+            cor_tab=up_tab,
         )
 
         self._track_tab = up_tab
@@ -7159,9 +7141,9 @@ class _SMCPMBMBase:
         self._prob_surv_args = prob_surv_args
         return super().predict(timestep, **kwargs)
 
-    def _calc_avg_prob_det_mdet(self):
-        avg_prob_detect = np.zeros(len(self._track_tab))
-        for tabidx, ent in enumerate(self._track_tab):
+    def _calc_avg_prob_det_mdet(self, cor_tab):
+        avg_prob_detect = np.zeros(len(cor_tab))
+        for tabidx, ent in enumerate(cor_tab):
             # TODO: fix hack so not using "private" variable outside class
             p_detect = self.compute_prob_detection(
                 ent.filt_states[0]["_particleDist"].particles, *self._prob_det_args

@@ -693,6 +693,31 @@ def _setup_pmbm_double_int_birth():
     return [gm0]
 
 
+def _setup_stm_pmbm_double_int_birth():
+    mu = [np.array([0.0, 0.0, 1, 2]).reshape((4, 1))]
+    scale = [np.diag(np.array([1, 1, 1, 1])) ** 2]
+    stm0 = smodels.StudentsTMixture(means=mu, scalings=scale, weights=[1], dof=3)
+    return [stm0]
+
+
+def _setup_smc_pmbm_double_int_birth(num_parts, rng):
+    means = [np.array([0.0, 0.0, 1.0, 2.0]).reshape((4, 1))]
+    cov = np.diag(np.array([1, 1, 1, 1])) ** 2
+
+    birth_terms = []
+    for m in means:
+        distrib = gdistrib.ParticleDistribution()
+        spread = 2 * np.sqrt(np.diag(cov)).reshape(m.shape)
+        l_bnd = m - spread / 2
+        for ii in range(0, num_parts):
+            part = gdistrib.Particle()
+            part.point = l_bnd + spread * rng.random(m.shape)
+            w = 1 / num_parts
+            distrib.add_particle(part, w)
+        birth_terms.append(distrib)
+    return birth_terms
+
+
 def _setup_imm_pmbm_ct_ktr_birth():
     mu = [np.array([10.0, 0.0, 1, 2, 0.0]).reshape((5, 1))]
     cov = [np.diag(np.array([1, 1, 0.1, 0.1, 3 * np.pi / 180])) ** 2]
@@ -822,8 +847,6 @@ def _update_true_agents_prob2(true_agents, tt, dt, b_model, rng):
             print("birth at {:.2f}".format(tt))
             x = gm.means[0] + (1 * rng.standard_normal(4)).reshape((4, 1))
             out.append(x.copy())
-    # if np.abs(tt - 3.0) < 1e-8:
-    #     out.pop(0)
     return out
 
 
@@ -899,37 +922,20 @@ def _update_true_agents_prob_imm(true_agents, tt, dt, b_model, rng, state_mat):
 def _update_true_agents_pmbm_lmb_var(true_agents, tt, dt, b_model, rng):
     out = _prop_true(true_agents, tt, dt)
     if any(np.abs(tt - np.array([0, 1, 1.5])) < 1e-8):
-        # if any(np.abs(tt - np.array([2.0, 3.0, 4.5])) < 1e-8):
+        # if any(np.abs(tt - np.array([0, 1])) < 1e-8):
         for gm, w in b_model:
             x = gm.means[0] + (rng.standard_normal(4) * np.ones(4)).reshape((4, 1))
             out.append(x.copy())
-    # if np.abs(tt - 4.0) < 1e-8:
-    #     for gm in b_model:
-    #         x = gm.means[0] + (rng.standard_normal(4) * np.ones(4)).reshape((4, 1))
-    #         out.append(x.copy())
-    # if np.abs(tt - 3.0) < 1e-8:
-    #     out = []
 
     return out
 
 
 def _update_true_agents_pmbm(true_agents, tt, dt, b_model, rng):
     out = _prop_true(true_agents, tt, dt)
-    if any(np.abs(tt - np.array([0, 1, 1.5, 4.5])) < 1e-8):
-        # if any(np.abs(tt - np.array([0, 1, 1.5])) < 1e-8):
-        # if any(np.abs(tt - np.array([2.0, 3.0, 4.5])) < 1e-8):
+    if any(np.abs(tt - np.array([0, 1, 1.5])) < 1e-8):
         for gm in b_model:
             x = gm.means[0] + (rng.standard_normal(4) * np.ones(4)).reshape((4, 1))
             out.append(x.copy())
-    # if np.abs(tt - 4.0) < 1e-8:
-    #     for gm in b_model:
-    #         x = gm.means[0] + (rng.standard_normal(4) * np.ones(4)).reshape((4, 1))
-    #         out.append(x.copy())
-    if np.abs(tt - 3.0) < 1e-8:
-        out = []
-    # if np.abs(tt - 4.6) < 1e-8:
-    #     new_x = np.array([15, 15, 0.1, -0.1]).reshape((4, 1))
-    #     out.append(new_x.copy())
 
     return out
 
@@ -1513,32 +1519,32 @@ def test_STM_GLMB():  # noqa
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
-        true_agents = _update_true_agents_pmbm_lmb_var(
-            true_agents, tt, dt, b_model, rng
-        )
-        # true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
+        # true_agents = _update_true_agents_pmbm_lmb_var(
+        #     true_agents, tt, dt, b_model, rng
+        # )
+        true_agents = _update_true_agents_prob2(true_agents, tt, dt, b_model, rng)
         global_true.append(deepcopy(true_agents))
 
         pred_args = {"state_mat_args": state_mat_args}
         glmb.predict(tt, filt_args=pred_args)
 
-        meas_in = _gen_meas(
-            tt,
-            true_agents,
-            filt.proc_noise,
-            filt.meas_noise,
-            rng,
-        )
-
-        # meas_in = _gen_meas_stf(
+        # meas_in = _gen_meas(
         #     tt,
         #     true_agents,
         #     filt.proc_noise,
-        #     filt.proc_noise_dof,
         #     filt.meas_noise,
-        #     filt.meas_noise_dof,
         #     rng,
         # )
+
+        meas_in = _gen_meas_stf(
+            tt,
+            true_agents,
+            filt.proc_noise,
+            filt.proc_noise_dof,
+            filt.meas_noise,
+            filt.meas_noise_dof,
+            rng,
+        )
 
         cor_args = {"meas_fun_args": meas_fun_args}
         glmb.correct(tt, meas_in, filt_args=cor_args)
@@ -3554,7 +3560,8 @@ def test_MS_JGLMB():  # noqa
     rng = rnd.default_rng(global_seed)
 
     dt = 0.01
-    t0, t1 = 0, 5.5 + dt
+    # t0, t1 = 0, 5.5 + dt
+    t0, t1 = 0, 3 + dt
 
     filt = _setup_double_int_gci_kf(dt)
 
@@ -3565,11 +3572,11 @@ def test_MS_JGLMB():  # noqa
 
     RFS_base_args = {
         "prob_detection": 0.99,
-        "prob_survive": 0.98,
+        "prob_survive": 0.97,
         "in_filter": filt,
         "birth_terms": b_model,
-        "clutter_den": 10**-3,
-        "clutter_rate": 10**-3,
+        "clutter_den": 10**-2,
+        "clutter_rate": 10**-2,
     }
     JGLMB_args = {
         "req_births": len(b_model) + 1,
@@ -3589,7 +3596,10 @@ def test_MS_JGLMB():  # noqa
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
-        true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
+        # true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
+        true_agents = _update_true_agents_pmbm_lmb_var(
+            true_agents, tt, dt, b_model, rng
+        )
         global_true.append(deepcopy(true_agents))
 
         pred_args = {"state_mat_args": state_mat_args}
@@ -3844,7 +3854,7 @@ def test_LPMBM():
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}, kk: {:.2f}".format(tt, kk))
             sys.stdout.flush()
-        if kk == 300 or kk == 308 or kk == 150:
+        if kk == 300 or kk == 308:
             asdf = 1
         if kk == 503 or kk == 100:
             asdfasdf = 1
@@ -3911,6 +3921,355 @@ def test_LPMBM():
 
     all_xy = np.array(all_xy)
     plt.plot(all_xy[:, 0], all_xy[:, 1], color="k", marker="o", linestyle="None")
+
+    # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
+
+
+def test_STM_PMBM():
+    print("Test STM-PMBM")
+
+    rng = rnd.default_rng(global_seed)
+
+    dt = 0.01
+    t0, t1 = 0, 6 + dt
+
+    filt = _setup_double_int_stf(dt)
+    state_mat_args = (dt, "test arg")
+    meas_fun_args = ("useless arg",)
+
+    b_model = _setup_stm_pmbm_double_int_birth()
+
+    RFS_base_args = {
+        "prob_detection": 0.99,
+        "prob_survive": 0.99,
+        "in_filter": filt,
+        "birth_terms": b_model,
+        "clutter_den": 1e-7,
+        "clutter_rate": 1e-7,
+    }
+    PMBM_args = {
+        "req_upd": 800,
+        "prune_threshold": 10**-5,
+        "exist_threshold": 10**-15,
+        "max_hyps": 1000,
+    }
+    pmbm = tracker.STMPoissonMultiBernoulliMixture(**PMBM_args, **RFS_base_args)
+    pmbm.save_covs = True
+
+    # test save/load filter
+    filt_state = pmbm.save_filter_state()
+    pmbm = tracker.STMPoissonMultiBernoulliMixture()
+    pmbm.load_filter_state(filt_state)
+
+    time = np.arange(t0, t1, dt)
+    true_agents = []
+    global_true = []
+    print("\tStarting sim")
+    for kk, tt in enumerate(time):
+        if np.mod(kk, 100) == 0:
+            print("\t\t{:.2f}".format(tt))
+            sys.stdout.flush()
+
+        true_agents = _update_true_agents_pmbm(true_agents, tt, dt, b_model, rng)
+        global_true.append(deepcopy(true_agents))
+
+        pred_args = {"state_mat_args": state_mat_args}
+        pmbm.predict(tt, filt_args=pred_args)
+
+        meas_in = _gen_meas_stf(
+            tt,
+            true_agents,
+            filt.proc_noise,
+            filt.proc_noise_dof,
+            filt.meas_noise,
+            filt.meas_noise_dof,
+            rng,
+        )
+
+        cor_args = {"meas_fun_args": meas_fun_args}
+        pmbm.correct(tt, meas_in, filt_args=cor_args)
+
+        extract_kwargs = {"update": True, "calc_states": False}
+        pmbm.cleanup(extract_kwargs=extract_kwargs)
+
+    extract_kwargs = {"update": False, "calc_states": True}
+    pmbm.extract_states(**extract_kwargs)
+
+    if debug_plots:
+        pmbm.plot_states([0, 1], true_states=global_true, meas_inds=[0, 1])
+        pmbm.plot_card_dist()
+        pmbm.plot_card_history(time_units="s", time=time)
+    print("\tExpecting {} agents".format(len(true_agents)))
+
+    # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
+
+
+def test_STM_LPMBM():
+    print("Test STM-LPMBM")
+
+    rng = rnd.default_rng(global_seed)
+
+    dt = 0.01
+    t0, t1 = 0, 6 + dt
+
+    filt = _setup_double_int_stf(dt)
+    state_mat_args = (dt, "test arg")
+    meas_fun_args = ("useless arg",)
+
+    b_model = _setup_stm_pmbm_double_int_birth()
+
+    RFS_base_args = {
+        "prob_detection": 0.99,
+        "prob_survive": 0.99,
+        "in_filter": filt,
+        "birth_terms": b_model,
+        "clutter_den": 1e-7,
+        "clutter_rate": 1e-7,
+    }
+    PMBM_args = {
+        "req_upd": 800,
+        "prune_threshold": 10**-5,
+        "exist_threshold": 10**-15,
+        "max_hyps": 1000,
+    }
+    pmbm = tracker.STMLabeledPoissonMultiBernoulliMixture(**PMBM_args, **RFS_base_args)
+    pmbm.save_covs = True
+
+    # test save/load filter
+
+    time = np.arange(t0, t1, dt)
+    true_agents = []
+    global_true = []
+    print("\tStarting sim")
+    for kk, tt in enumerate(time):
+        if np.mod(kk, 100) == 0:
+            print("\t\t{:.2f}".format(tt))
+            sys.stdout.flush()
+
+        true_agents = _update_true_agents_pmbm(true_agents, tt, dt, b_model, rng)
+        global_true.append(deepcopy(true_agents))
+
+        pred_args = {"state_mat_args": state_mat_args}
+        pmbm.predict(tt, filt_args=pred_args)
+
+        meas_in = _gen_meas_stf(
+            tt,
+            true_agents,
+            filt.proc_noise,
+            filt.proc_noise_dof,
+            filt.meas_noise,
+            filt.meas_noise_dof,
+            rng,
+        )
+
+        cor_args = {"meas_fun_args": meas_fun_args}
+        pmbm.correct(tt, meas_in, filt_args=cor_args)
+
+        extract_kwargs = {"update": True, "calc_states": False}
+        pmbm.cleanup(extract_kwargs=extract_kwargs)
+
+    extract_kwargs = {"update": False, "calc_states": True}
+    pmbm.extract_states(**extract_kwargs)
+
+    if debug_plots:
+        pmbm.plot_states_labels([0, 1], true_states=global_true, meas_inds=[0, 1])
+        pmbm.plot_card_dist()
+    print("\tExpecting {} agents".format(len(true_agents)))
+
+    # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
+
+
+@pytest.mark.slow
+def test_SMC_PMBM():
+    print("Test SMC-PMBM")
+
+    rng = rnd.default_rng(global_seed)
+    filt_rng = rnd.default_rng(global_seed)
+
+    dt = 0.01
+    t0, t1 = 0, 1.2 + dt
+    num_parts = 1000
+    prob_detection = 0.99
+    prob_survive = 0.98
+
+    filt = _setup_double_int_pf(dt, filt_rng)
+    meas_fun_args = ()
+    dyn_fun_params = (dt,)
+
+    b_model = _setup_smc_pmbm_double_int_birth(num_parts, rng)
+    other_bm = _setup_pmbm_double_int_birth()
+
+    def compute_prob_detection(part_lst, prob_det):
+        if len(part_lst) == 0:
+            return np.array([])
+        else:
+            return prob_det * np.ones(len(part_lst))
+
+    def compute_prob_survive(part_lst, prob_survive):
+        if len(part_lst) == 0:
+            return np.array([])
+        else:
+            return prob_survive * np.ones(len(part_lst))
+
+    RFS_base_args = {
+        "prob_detection": prob_detection,
+        "prob_survive": prob_survive,
+        "in_filter": filt,
+        "birth_terms": b_model,
+        "clutter_den": 1e-7,
+        "clutter_rate": 1e-7,
+    }
+    PMBM_args = {
+        "req_upd": 800,
+        "prune_threshold": 10**-5,
+        "exist_threshold": 10**-15,
+        "max_hyps": 1000,
+    }
+    SMC_args = {
+        "compute_prob_detection": compute_prob_detection,
+        "compute_prob_survive": compute_prob_survive,
+    }
+    pmbm = tracker.SMCPoissonMultiBernoulliMixture(
+        **SMC_args, **PMBM_args, **RFS_base_args
+    )
+    pmbm.save_covs = True
+
+    time = np.arange(t0, t1, dt)
+    true_agents = []
+    global_true = []
+    print("\tStarting sim")
+    for kk, tt in enumerate(time):
+        if np.mod(kk, 100) == 0:
+            print("\t\t{:.2f}".format(tt))
+            sys.stdout.flush()
+
+        true_agents = _update_true_agents_pmbm(true_agents, tt, dt, other_bm, rng)
+        global_true.append(deepcopy(true_agents))
+
+        pred_args = {"dyn_fun_params": dyn_fun_params}
+        prob_surv_args = (prob_survive,)
+        pmbm.predict(tt, prob_surv_args, filt_args=pred_args)
+
+        meas_in = _gen_meas(
+            tt,
+            true_agents,
+            filt.proc_noise,
+            filt.meas_noise,
+            rng,
+        )
+
+        cor_args = {"meas_fun_args": meas_fun_args}
+        prob_det_args = (prob_detection,)
+        pmbm.correct(tt, meas_in, prob_det_args=prob_det_args, filt_args=cor_args)
+
+        extract_kwargs = {"update": True, "calc_states": False}
+        pmbm.cleanup(extract_kwargs=extract_kwargs)
+
+    extract_kwargs = {"update": False, "calc_states": True}
+    pmbm.extract_states(**extract_kwargs)
+
+    if debug_plots:
+        pmbm.plot_states([0, 1], true_states=global_true, meas_inds=[0, 1])
+        pmbm.plot_card_dist()
+        pmbm.plot_card_history(time_units="s", time=time)
+    print("\tExpecting {} agents".format(len(true_agents)))
+
+    # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
+
+
+def test_SMC_LPMBM():
+    print("Test SMC-LPMBM")
+
+    rng = rnd.default_rng(global_seed)
+    filt_rng = rnd.default_rng(global_seed)
+
+    dt = 0.01
+    t0, t1 = 0, 1.2 + dt
+    num_parts = 1000
+    prob_detection = 0.99
+    prob_survive = 0.98
+
+    filt = _setup_double_int_pf(dt, filt_rng)
+    meas_fun_args = ()
+    dyn_fun_params = (dt,)
+
+    b_model = _setup_smc_pmbm_double_int_birth(num_parts, rng)
+    other_bm = _setup_pmbm_double_int_birth()
+
+    def compute_prob_detection(part_lst, prob_det):
+        if len(part_lst) == 0:
+            return np.array([])
+        else:
+            return prob_det * np.ones(len(part_lst))
+
+    def compute_prob_survive(part_lst, prob_survive):
+        if len(part_lst) == 0:
+            return np.array([])
+        else:
+            return prob_survive * np.ones(len(part_lst))
+
+    RFS_base_args = {
+        "prob_detection": prob_detection,
+        "prob_survive": prob_survive,
+        "in_filter": filt,
+        "birth_terms": b_model,
+        "clutter_den": 1e-7,
+        "clutter_rate": 1e-7,
+    }
+    PMBM_args = {
+        "req_upd": 800,
+        "prune_threshold": 10**-5,
+        "exist_threshold": 10**-15,
+        "max_hyps": 1000,
+    }
+    SMC_args = {
+        "compute_prob_detection": compute_prob_detection,
+        "compute_prob_survive": compute_prob_survive,
+    }
+    pmbm = tracker.SMCLabeledPoissonMultiBernoulliMixture(
+        **SMC_args, **PMBM_args, **RFS_base_args
+    )
+    pmbm.save_covs = True
+
+    time = np.arange(t0, t1, dt)
+    true_agents = []
+    global_true = []
+    print("\tStarting sim")
+    for kk, tt in enumerate(time):
+        if np.mod(kk, 100) == 0:
+            print("\t\t{:.2f}".format(tt))
+            sys.stdout.flush()
+
+        true_agents = _update_true_agents_pmbm(true_agents, tt, dt, other_bm, rng)
+        global_true.append(deepcopy(true_agents))
+
+        pred_args = {"dyn_fun_params": dyn_fun_params}
+        prob_surv_args = (prob_survive,)
+        pmbm.predict(tt, prob_surv_args, filt_args=pred_args)
+
+        meas_in = _gen_meas(
+            tt,
+            true_agents,
+            filt.proc_noise,
+            filt.meas_noise,
+            rng,
+        )
+
+        cor_args = {"meas_fun_args": meas_fun_args}
+        prob_det_args = (prob_detection,)
+        pmbm.correct(tt, meas_in, prob_det_args=prob_det_args, filt_args=cor_args)
+
+        extract_kwargs = {"update": True, "calc_states": False}
+        pmbm.cleanup(extract_kwargs=extract_kwargs)
+
+    extract_kwargs = {"update": False, "calc_states": True}
+    pmbm.extract_states(**extract_kwargs)
+
+    if debug_plots:
+        pmbm.plot_states_labels([0, 1], true_states=global_true, meas_inds=[0, 1])
+        pmbm.plot_card_dist()
+        pmbm.plot_card_history(time_units="s", time=time)
+    print("\tExpecting {} agents".format(len(true_agents)))
 
     # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
@@ -4358,8 +4717,8 @@ def test_MS_IMM_LPMBM():  # noqa
 
     dt = 0.01
     # t0, t1 = 0, 5.5 + dt
-    # t0, t1 = 0, 4 + dt
-    t0, t1 = 0, 2 + dt
+    t0, t1 = 0, 4 + dt
+    # t0, t1 = 0, 2 + dt
 
     filt = _setup_ct_ktr_gci_imm_kf(dt)
 
@@ -4396,7 +4755,7 @@ def test_MS_IMM_LPMBM():  # noqa
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
-        if tt > 5:
+        if tt > 2:
             state_mat = gdyn.CoordinatedTurnKnown(
                 turn_rate=60 * np.pi / 180
             ).get_state_mat(tt, dt)
@@ -4489,13 +4848,17 @@ if __name__ == "__main__":
     # test_MS_IMM_JGLMB()
 
     # test_PMBM()
-    test_LPMBM()
+    # test_LPMBM()
+    # test_STM_PMBM()
+    # test_STM_LPMBM()
+    # test_SMC_PMBM()
+    # test_SMC_LPMBM()
     # test_IMM_PMBM()
     # test_IMM_LPMBM()
     # test_MS_PMBM()
     # test_MS_LPMBM()
     # test_MS_IMM_PMBM()
-    # test_MS_IMM_LPMBM()
+    test_MS_IMM_LPMBM()
 
     end = timer()
     print("{:.2f} s".format(end - start))
