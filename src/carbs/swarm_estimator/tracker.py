@@ -6795,6 +6795,7 @@ class LabeledPoissonMultiBernoulliMixture(PoissonMultiBernoulliMixture):
         rng = opts["rng"]
         meas_inds = opts["meas_inds"]
         lgnd_loc = opts["lgnd_loc"]
+        mrkr = opts["marker"]
 
         if rng is None:
             rng = rnd.default_rng(1)
@@ -6890,7 +6891,7 @@ class LabeledPoissonMultiBernoulliMixture(PoissonMultiBernoulliMixture):
             settings = {
                 "color": color,
                 "markeredgecolor": "k",
-                "marker": ".",
+                "marker": mrkr,
                 "ls": "--",
             }
             if not added_state_lbl:

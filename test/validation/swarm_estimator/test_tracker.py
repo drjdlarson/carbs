@@ -1897,12 +1897,14 @@ def test_JGLMB():  # noqa
     jglmb.extract_states(**extract_kwargs)
 
     jglmb.calculate_ospa(global_true, 2, 1)
+    jglmb.calculate_ospa2(global_true, 5, 1, 100)
 
     if debug_plots:
         jglmb.plot_states_labels([0, 1], true_states=global_true, meas_inds=[0, 1])
         jglmb.plot_card_dist()
         jglmb.plot_card_history(time_units="s", time=time)
         jglmb.plot_ospa_history()
+        jglmb.plot_ospa2_history()
     print("\tExpecting {} agents".format(len(true_agents)))
 
     assert len(true_agents) == jglmb.cardinality, "Wrong cardinality"
@@ -2053,8 +2055,11 @@ def test_STM_JGLMB():  # noqa
     extract_kwargs = {"update": False, "calc_states": True}
     jglmb.extract_states(**extract_kwargs)
 
+    jglmb.calculate_ospa(global_true, 2, 1)
+
     if debug_plots:
         jglmb.plot_states_labels([0, 1], true_states=global_true, meas_inds=[0, 1])
+        jglmb.plot_ospa_history()
         jglmb.plot_card_dist()
     print("\tExpecting {} agents".format(len(true_agents)))
 
@@ -3848,7 +3853,7 @@ def test_LPMBM():
     time = np.arange(t0, t1, dt)
     true_agents = []
     global_true = []
-    # in_the_loop_fig, ax0 = plt.subplots(ncols=1, nrows=1, figsize=(5, 5))
+    in_the_loop_fig, ax0 = plt.subplots(ncols=1, nrows=1, figsize=(5, 5))
     print("\tStarting sim")
     for kk, tt in enumerate(time):
         if np.mod(kk, 100) == 0:
@@ -3881,12 +3886,12 @@ def test_LPMBM():
         cor_args = {"meas_fun_args": meas_fun_args}
         pmbm.correct(tt, meas_in, filt_args=cor_args)
 
-        extract_kwargs = {"update": True, "calc_states": False}
+        extract_kwargs = {"update": True, "calc_states": True}
         pmbm.cleanup(extract_kwargs=extract_kwargs)
-        # pmbm.plot_states_labels([0, 1], f_hndl=in_the_loop_fig)
-        # if kk % 50 == 0:
-        #     plt.show()
-        # pmbm.cleanup(enable_bern_prune=False, extract_kwargs=extract_kwargs)
+        pmbm.plot_states_labels([0, 1], f_hndl=in_the_loop_fig)
+        if kk % 50 == 0:
+            plt.show()
+        pmbm.cleanup(enable_bern_prune=False, extract_kwargs=extract_kwargs)
 
     extract_kwargs = {"update": False, "calc_states": True}
     pmbm.extract_states(**extract_kwargs)
@@ -4848,7 +4853,7 @@ if __name__ == "__main__":
     # test_MS_IMM_JGLMB()
 
     # test_PMBM()
-    # test_LPMBM()
+    test_LPMBM()
     # test_STM_PMBM()
     # test_STM_LPMBM()
     # test_SMC_PMBM()
@@ -4858,7 +4863,7 @@ if __name__ == "__main__":
     # test_MS_PMBM()
     # test_MS_LPMBM()
     # test_MS_IMM_PMBM()
-    test_MS_IMM_LPMBM()
+    # test_MS_IMM_LPMBM()
 
     end = timer()
     print("{:.2f} s".format(end - start))
