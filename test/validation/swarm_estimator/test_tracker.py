@@ -3270,7 +3270,7 @@ def test_EKF_GSM_GLMB():  # noqa
     assert len(true_agents) == glmb.cardinality, "Wrong cardinality"
 
 
-def test_GLMB_ct_ktr():
+def test_GLMB_ct_ktr(): #noqa
     print("Test GLMB with CT-KTR dynamics")
 
     rng = rnd.default_rng(global_seed)
@@ -3365,12 +3365,7 @@ def test_GLMB_ct_ktr():
 
     assert len(true_agents) == glmb.cardinality, "Wrong cardinality"
 
-
-# TODO: TL;DR Need to figure out what's going on with the weights,
-# IMM weights are really low, which causes low costs, which causes hypotheses to not be accepted.
-# May have something to do with GLMB tuning, may have something to do with IMM tuning
-# Could be something with IMM meas_fit_prob outputs as well.
-def test_IMM_GLMB():
+def test_IMM_GLMB(): #noqa
     print("Test IMM-GLMB")
 
     rng = rnd.default_rng(global_seed)
@@ -3638,7 +3633,7 @@ def test_MS_JGLMB():  # noqa
 
     # assert len(true_agents) == jglmb.cardinality, "Wrong cardinality"
 
-
+@pytest.mark.slow
 def test_MS_IMM_JGLMB():  # noqa
     print("Test MS-IMM-GM-JGLMB")
 
@@ -3725,7 +3720,7 @@ def test_MS_IMM_JGLMB():  # noqa
     print("\tExpecting {} agents".format(len(true_agents)))
 
 
-def test_PMBM():
+def test_PMBM(): #noqa
     print("Test PMBM")
 
     rng = rnd.default_rng(global_seed)
@@ -3813,7 +3808,7 @@ def test_PMBM():
     # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
 
-def test_LPMBM():
+def test_LPMBM(): #noqa
     print("Test Labeled PMBM")
 
     rng = rnd.default_rng(global_seed)
@@ -3871,17 +3866,7 @@ def test_LPMBM():
         pmbm.predict(tt, filt_args=pred_args)
 
         meas_in = _gen_meas(tt, true_agents, filt.proc_noise, filt.meas_noise, rng)
-        # if kk % 2 != 0 and 100 < kk < 150:
-        #     temp = meas_in[1].copy()
-        #     meas_in[1] = meas_in[0].copy()
-        #     meas_in[0] = temp
         np.random.shuffle(meas_in)
-
-        # if kk >= 200 and kk < 250:
-        #     temp_meas = meas_in[2].copy()
-        #     meas_in[2] = meas_in[1].copy()
-        #     meas_in[1] = temp_meas
-        # meas_in.pop(len(meas_in) - 1)
 
         cor_args = {"meas_fun_args": meas_fun_args}
         pmbm.correct(tt, meas_in, filt_args=cor_args)
@@ -3930,7 +3915,7 @@ def test_LPMBM():
     # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
 
-def test_STM_PMBM():
+def test_STM_PMBM(): #noqa
     print("Test STM-PMBM")
 
     rng = rnd.default_rng(global_seed)
@@ -4009,7 +3994,7 @@ def test_STM_PMBM():
     # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
 
-def test_STM_LPMBM():
+def test_STM_LPMBM(): #noqa
     print("Test STM-LPMBM")
 
     rng = rnd.default_rng(global_seed)
@@ -4085,7 +4070,7 @@ def test_STM_LPMBM():
 
 
 @pytest.mark.slow
-def test_SMC_PMBM():
+def test_SMC_PMBM(): #noqa
     print("Test SMC-PMBM")
 
     rng = rnd.default_rng(global_seed)
@@ -4181,8 +4166,8 @@ def test_SMC_PMBM():
 
     # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
-
-def test_SMC_LPMBM():
+@pytest.mark.slow
+def test_SMC_LPMBM(): #noqa
     print("Test SMC-LPMBM")
 
     rng = rnd.default_rng(global_seed)
@@ -4279,7 +4264,7 @@ def test_SMC_LPMBM():
     # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
 
-def test_IMM_PMBM():
+def test_IMM_PMBM(): #noqa
     print("Test IMM-PMBM")
 
     rng = rnd.default_rng(global_seed)
@@ -4380,7 +4365,7 @@ def test_IMM_PMBM():
     assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
 
-def test_IMM_LPMBM():
+def test_IMM_LPMBM(): #noqa
     print("Test IMM-LPMBM")
 
     rng = rnd.default_rng(global_seed)
@@ -4632,7 +4617,7 @@ def test_MS_LPMBM():  # noqa
 
     # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
-
+@pytest.mark.slow
 def test_MS_IMM_PMBM():  # noqa
     print("Test MS-IMM-GM-PMBM")
 
@@ -4714,7 +4699,7 @@ def test_MS_IMM_PMBM():  # noqa
         pmbm.plot_ospa_history()
     print("\tExpecting {} agents".format(len(true_agents)))
 
-
+@pytest.mark.slow
 def test_MS_IMM_LPMBM():  # noqa
     print("Test MS-IMM-GM-LPMBM")
 
@@ -4853,7 +4838,7 @@ if __name__ == "__main__":
     # test_MS_IMM_JGLMB()
 
     # test_PMBM()
-    test_LPMBM()
+    # test_LPMBM()
     # test_STM_PMBM()
     # test_STM_LPMBM()
     # test_SMC_PMBM()
