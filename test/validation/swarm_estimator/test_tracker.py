@@ -4838,7 +4838,7 @@ if __name__ == "__main__":
     # test_MS_IMM_JGLMB()
 
     # test_PMBM()
-    # test_LPMBM()
+    test_LPMBM()
     # test_STM_PMBM()
     # test_STM_LPMBM()
     # test_SMC_PMBM()
