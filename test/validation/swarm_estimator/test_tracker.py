@@ -4834,11 +4834,11 @@ if __name__ == "__main__":
     # test_GLMB_ct_ktr()
     # test_IMM_GLMB()
     # test_IMM_JGLMB()
-    # test_MS_JGLMB()
+    test_MS_JGLMB()
     # test_MS_IMM_JGLMB()
 
     # test_PMBM()
-    test_LPMBM()
+    # test_LPMBM()
     # test_STM_PMBM()
     # test_STM_LPMBM()
     # test_SMC_PMBM()
