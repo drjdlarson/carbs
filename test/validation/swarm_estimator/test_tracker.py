@@ -947,7 +947,7 @@ def _update_true_agents_imm_pmbm(true_agents, tt, dt, b_model, rng, state_mat):
     if any(np.abs(tt - np.array([0, 1.0])) < 1e-8):
         # if any(np.abs(tt - np.array([0])) < 1e-8):
         for gm in b_model:
-            x = gm.means[0] + np.array([1, 1, 0.01, 0.01, 3 * np.pi / 180]).reshape(
+            x = gm.means[0] + np.array([2, 2, 0.01, 0.01, 3 * np.pi / 180]).reshape(
                 (5, 1)
             ) * (rng.standard_normal(5)).reshape((5, 1))
             out.append(x.copy())
@@ -3561,7 +3561,7 @@ def test_MS_JGLMB():  # noqa
 
     dt = 0.01
     # t0, t1 = 0, 5.5 + dt
-    t0, t1 = 0, 1 + dt
+    t0, t1 = 0, 1.2 + dt
 
     filt = _setup_double_int_gci_kf(dt)
 
@@ -3642,7 +3642,7 @@ def test_MS_IMM_JGLMB():  # noqa
     dt = 0.01
     # t0, t1 = 0, 5.5 + dt
     # t0, t1 = 0, 4 + dt
-    t0, t1 = 0, 1 + dt
+    t0, t1 = 0, 4 + dt
 
     # TODO GCI IMM FILT SETUP
     filt = _setup_ct_ktr_gci_imm_kf(dt)
@@ -3681,7 +3681,7 @@ def test_MS_IMM_JGLMB():  # noqa
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
-        if tt > 3:
+        if tt > 3.75:
             state_mat = gdyn.CoordinatedTurnKnown(
                 turn_rate=60 * np.pi / 180
             ).get_state_mat(tt, dt)
@@ -4616,7 +4616,7 @@ def test_MS_IMM_PMBM():  # noqa
 
     dt = 0.01
     # t0, t1 = 0, 5.5 + dt
-    t0, t1 = 0, 1 + dt
+    t0, t1 = 0, 1.2 + dt
 
     # TODO GCI IMM FILT SETUP
     filt = _setup_ct_ktr_gci_imm_kf(dt)
@@ -4651,7 +4651,7 @@ def test_MS_IMM_PMBM():  # noqa
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
-        if tt > 3:  # Error caused here, after it changes, tracker loses all confidence
+        if tt > 0.5:  # Error caused here, after it changes, tracker loses all confidence
             state_mat = gdyn.CoordinatedTurnKnown(
                 turn_rate=60 * np.pi / 180
             ).get_state_mat(tt, dt)
@@ -4698,7 +4698,7 @@ def test_MS_IMM_LPMBM():  # noqa
 
     dt = 0.01
     # t0, t1 = 0, 5.5 + dt
-    t0, t1 = 0, 1 + dt
+    t0, t1 = 0, 1.2 + dt
     # t0, t1 = 0, 2 + dt
 
     filt = _setup_ct_ktr_gci_imm_kf(dt)
@@ -4736,7 +4736,7 @@ def test_MS_IMM_LPMBM():  # noqa
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
-        if tt > 2:
+        if tt > 0.5:
             state_mat = gdyn.CoordinatedTurnKnown(
                 turn_rate=60 * np.pi / 180
             ).get_state_mat(tt, dt)
@@ -4829,7 +4829,7 @@ if __name__ == "__main__":
     # test_MS_IMM_JGLMB()
 
     # test_PMBM()
-    test_LPMBM()
+    # test_LPMBM()
     # test_STM_PMBM()
     # test_STM_LPMBM()
     # test_SMC_PMBM()
@@ -4838,8 +4838,8 @@ if __name__ == "__main__":
     # test_IMM_LPMBM()
     # test_MS_PMBM()
     # test_MS_LPMBM()
-    # test_MS_IMM_PMBM()
-    # test_MS_IMM_LPMBM()
+    test_MS_IMM_PMBM()
+    test_MS_IMM_LPMBM()
 
     end = timer()
     print("{:.2f} s".format(end - start))
