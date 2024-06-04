@@ -1625,8 +1625,8 @@ def test_SMC_GLMB():  # noqa
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
-        true_agents = _update_true_agents(true_agents, tt, dt, other_bm[0], rng)
-        # true_agents = _update_true_agents_prob_smc(true_agents, tt, dt, b_model, rng)
+        # true_agents = _update_true_agents(true_agents, tt, dt, other_bm[0], rng)
+        true_agents = _update_true_agents_prob_smc(true_agents, tt, dt, b_model, rng)
         global_true.append(deepcopy(true_agents))
 
         pred_args = {"dyn_fun_params": dyn_fun_params}
@@ -4799,7 +4799,7 @@ if __name__ == "__main__":
 
     # test_GLMB()
     # test_STM_GLMB()
-    # test_SMC_GLMB()
+    test_SMC_GLMB()
     # test_USMC_GLMB()
     # test_MCMC_USMC_GLMB()
     # test_QKF_GLMB()
@@ -4838,8 +4838,8 @@ if __name__ == "__main__":
     # test_IMM_LPMBM()
     # test_MS_PMBM()
     # test_MS_LPMBM()
-    test_MS_IMM_PMBM()
-    test_MS_IMM_LPMBM()
+    # test_MS_IMM_PMBM()
+    # test_MS_IMM_LPMBM()
 
     end = timer()
     print("{:.2f} s".format(end - start))
