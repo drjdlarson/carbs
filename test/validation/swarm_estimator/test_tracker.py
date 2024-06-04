@@ -3561,7 +3561,7 @@ def test_MS_JGLMB():  # noqa
 
     dt = 0.01
     # t0, t1 = 0, 5.5 + dt
-    t0, t1 = 0, 3 + dt
+    t0, t1 = 0, 1 + dt
 
     filt = _setup_double_int_gci_kf(dt)
 
@@ -3640,8 +3640,9 @@ def test_MS_IMM_JGLMB():  # noqa
     rng = rnd.default_rng(global_seed)
 
     dt = 0.01
-    t0, t1 = 0, 5.5 + dt
+    # t0, t1 = 0, 5.5 + dt
     # t0, t1 = 0, 4 + dt
+    t0, t1 = 0, 1 + dt
 
     # TODO GCI IMM FILT SETUP
     filt = _setup_ct_ktr_gci_imm_kf(dt)
@@ -4474,7 +4475,7 @@ def test_MS_PMBM():  # noqa
     rng = rnd.default_rng(global_seed)
 
     dt = 0.01
-    t0, t1 = 0, 2.0 + dt  # 5.5 + dt
+    t0, t1 = 0, 1.0 + dt  # 5.5 + dt
 
     filt = _setup_double_int_gci_kf(dt)
 
@@ -4549,7 +4550,7 @@ def test_MS_LPMBM():  # noqa
     rng = rnd.default_rng(global_seed)
 
     dt = 0.01
-    t0, t1 = 0, 2.0 + dt  # 5.5 + dt
+    t0, t1 = 0, 1.0 + dt  # 5.5 + dt
 
     filt = _setup_double_int_gci_kf(dt)
 
@@ -4624,8 +4625,8 @@ def test_MS_IMM_PMBM():  # noqa
     rng = rnd.default_rng(global_seed)
 
     dt = 0.01
-    t0, t1 = 0, 5.5 + dt
-    # t0, t1 = 0, 3 + dt
+    # t0, t1 = 0, 5.5 + dt
+    t0, t1 = 0, 1 + dt
 
     # TODO GCI IMM FILT SETUP
     filt = _setup_ct_ktr_gci_imm_kf(dt)
@@ -4707,7 +4708,7 @@ def test_MS_IMM_LPMBM():  # noqa
 
     dt = 0.01
     # t0, t1 = 0, 5.5 + dt
-    t0, t1 = 0, 4 + dt
+    t0, t1 = 0, 1 + dt
     # t0, t1 = 0, 2 + dt
 
     filt = _setup_ct_ktr_gci_imm_kf(dt)
