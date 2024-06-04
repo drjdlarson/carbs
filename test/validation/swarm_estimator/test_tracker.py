@@ -3849,16 +3849,11 @@ def test_LPMBM(): #noqa
     time = np.arange(t0, t1, dt)
     true_agents = []
     global_true = []
-    in_the_loop_fig, ax0 = plt.subplots(ncols=1, nrows=1, figsize=(5, 5))
     print("\tStarting sim")
     for kk, tt in enumerate(time):
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}, kk: {:.2f}".format(tt, kk))
             sys.stdout.flush()
-        if kk == 300 or kk == 308:
-            asdf = 1
-        if kk == 503 or kk == 100:
-            asdfasdf = 1
 
         true_agents = _update_true_agents_pmbm(true_agents, tt, dt, b_model, rng)
         global_true.append(deepcopy(true_agents))
@@ -3872,12 +3867,8 @@ def test_LPMBM(): #noqa
         cor_args = {"meas_fun_args": meas_fun_args}
         pmbm.correct(tt, meas_in, filt_args=cor_args)
 
-        extract_kwargs = {"update": True, "calc_states": True}
+        extract_kwargs = {"update": True, "calc_states": False}
         pmbm.cleanup(extract_kwargs=extract_kwargs)
-        pmbm.plot_states_labels([0, 1], f_hndl=in_the_loop_fig)
-        if kk % 50 == 0:
-            plt.show()
-        pmbm.cleanup(enable_bern_prune=False, extract_kwargs=extract_kwargs)
 
     extract_kwargs = {"update": False, "calc_states": True}
     pmbm.extract_states(**extract_kwargs)
@@ -4440,7 +4431,6 @@ def test_IMM_LPMBM(): #noqa
 
         extract_kwargs = {"update": True, "calc_states": False}
         pmbm.cleanup(extract_kwargs=extract_kwargs)
-        lel = 1
     extract_kwargs = {"update": False, "calc_states": True}
     pmbm.extract_states(**extract_kwargs)
 
@@ -4820,7 +4810,7 @@ if __name__ == "__main__":
     # test_UKF_GSM_GLMB()
     # test_EKF_GSM_GLMB()
 
-    test_JGLMB()
+    # test_JGLMB()
     # test_JGLMB_high_birth()
     # test_STM_JGLMB()
     # test_SMC_JGLMB()
@@ -4839,7 +4829,7 @@ if __name__ == "__main__":
     # test_MS_IMM_JGLMB()
 
     # test_PMBM()
-    # test_LPMBM()
+    test_LPMBM()
     # test_STM_PMBM()
     # test_STM_LPMBM()
     # test_SMC_PMBM()
