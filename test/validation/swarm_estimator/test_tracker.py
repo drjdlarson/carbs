@@ -4819,7 +4819,7 @@ if __name__ == "__main__":
     # test_UKF_GSM_GLMB()
     # test_EKF_GSM_GLMB()
 
-    # test_JGLMB()
+    test_JGLMB()
     # test_JGLMB_high_birth()
     # test_STM_JGLMB()
     # test_SMC_JGLMB()
@@ -4834,7 +4834,7 @@ if __name__ == "__main__":
     # test_GLMB_ct_ktr()
     # test_IMM_GLMB()
     # test_IMM_JGLMB()
-    test_MS_JGLMB()
+    # test_MS_JGLMB()
     # test_MS_IMM_JGLMB()
 
     # test_PMBM()
