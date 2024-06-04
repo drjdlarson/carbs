@@ -11,7 +11,9 @@ RUN apt-get update \
         openssh-client \
         software-properties-common \
         libgl1-mesa-glx \
+        libx11-dev \
         locales \
+        tk \
         python3-pip \
         python-is-python3 \
         python3-dev \
