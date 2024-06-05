@@ -1519,11 +1519,11 @@ def test_STM_GLMB():  # noqa
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
-        true_agents = _update_true_agents_pmbm_lmb_var(
-            true_agents, tt, dt, b_model, rng
-        )
-        # true_agents = _update_true_agents_prob2(true_agents, tt, dt, b_model, rng)
-        # global_true.append(deepcopy(true_agents))
+        # true_agents = _update_true_agents_pmbm_lmb_var(
+        #     true_agents, tt, dt, b_model, rng
+        # )
+        true_agents = _update_true_agents_prob2(true_agents, tt, dt, b_model, rng)
+        global_true.append(deepcopy(true_agents))
 
         pred_args = {"state_mat_args": state_mat_args}
         glmb.predict(tt, filt_args=pred_args)
@@ -4799,8 +4799,8 @@ if __name__ == "__main__":
     # test_IMM_PHD()
     # test_IMM_CPHD()
 
-    test_GLMB()
-    # test_STM_GLMB()
+    # test_GLMB()
+    test_STM_GLMB()
     # test_SMC_GLMB()
     # test_USMC_GLMB()
     # test_MCMC_USMC_GLMB()
@@ -4814,7 +4814,7 @@ if __name__ == "__main__":
 
     # test_JGLMB()
     # test_JGLMB_high_birth()
-    test_STM_JGLMB()
+    # test_STM_JGLMB()
     # test_SMC_JGLMB()
     # test_USMC_JGLMB()
     # test_MCMC_USMC_JGLMB()
