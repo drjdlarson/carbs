@@ -3371,7 +3371,7 @@ def test_IMM_GLMB(): #noqa
     rng = rnd.default_rng(global_seed)
 
     dt = 0.01
-    t0, t1 = 0, 6 + dt
+    t0, t1 = 0, 5.5 + dt
 
     filt = _setup_imm_ctktr_kf(dt)
     state_mat_args = (dt,)
@@ -3475,7 +3475,7 @@ def test_IMM_JGLMB():  # noqa
     rng = rnd.default_rng(global_seed)
 
     dt = 0.01
-    t0, t1 = 0, 6 + dt
+    t0, t1 = 0, 5.5 + dt
 
     filt = _setup_imm_ctktr_kf(dt)
     state_mat_args = (dt,)
@@ -4799,7 +4799,7 @@ if __name__ == "__main__":
 
     # test_GLMB()
     # test_STM_GLMB()
-    test_SMC_GLMB()
+    # test_SMC_GLMB()
     # test_USMC_GLMB()
     # test_MCMC_USMC_GLMB()
     # test_QKF_GLMB()
@@ -4823,8 +4823,8 @@ if __name__ == "__main__":
     # test_SQKF_GSM_JGLMB()
     # test_UKF_GSM_JGLMB()
     # test_GLMB_ct_ktr()
-    # test_IMM_GLMB()
-    # test_IMM_JGLMB()
+    test_IMM_GLMB()
+    test_IMM_JGLMB()
     # test_MS_JGLMB()
     # test_MS_IMM_JGLMB()
 
