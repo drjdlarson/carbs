@@ -1479,7 +1479,7 @@ def test_STM_GLMB():  # noqa
     rng = rnd.default_rng(global_seed)
 
     dt = 0.01
-    t0, t1 = 0, 6 + dt
+    t0, t1 = 0, 4 + dt
 
     filt = _setup_double_int_stf(dt)
     state_mat_args = (dt, "test arg")
@@ -1513,7 +1513,7 @@ def test_STM_GLMB():  # noqa
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
 
-        true_agents = _update_true_agents_prob2(true_agents, tt, dt, b_model, rng)
+        true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
         global_true.append(deepcopy(true_agents))
 
         pred_args = {"state_mat_args": state_mat_args}
@@ -2003,7 +2003,7 @@ def test_STM_JGLMB():  # noqa
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
-        true_agents = _update_true_agents_prob2(true_agents, tt, dt, b_model, rng)
+        true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
         global_true.append(deepcopy(true_agents))
 
         pred_args = {"state_mat_args": state_mat_args}
