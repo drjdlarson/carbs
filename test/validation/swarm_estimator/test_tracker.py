@@ -1454,23 +1454,16 @@ def test_GLMB():  # noqa
     extract_kwargs = {"update": False, "calc_states": True}
     glmb.extract_states(**extract_kwargs)
 
-    debug_plots = True
-    glmb.calculate_ospa(global_true, 2, 1)
-    if debug_plots:
-        glmb.plot_ospa_history(time=time, time_units="s")
-    glmb.calculate_ospa2(global_true, 5, 1, 10)
+    glmb.calculate_ospa2(
+        global_true, 5, 1, 10, core_method=SingleObjectDistance.EUCLIDEAN
+    )
     if debug_plots:
         glmb.plot_ospa2_history(time=time, time_units="s")
-    # glmb.calculate_ospa2(
-    #     global_true, 5, 1, 10, core_method=SingleObjectDistance.EUCLIDEAN
-    # )
-    # if debug_plots:
-    #     glmb.plot_ospa2_history(time=time, time_units="s")
-    # glmb.calculate_ospa2(
-    #     global_true, 5, 1, 10, core_method=SingleObjectDistance.MAHALANOBIS
-    # )
-    # if debug_plots:
-    #     glmb.plot_ospa2_history(time=time, time_units="s")
+    glmb.calculate_ospa2(
+        global_true, 5, 1, 10, core_method=SingleObjectDistance.MAHALANOBIS
+    )
+    if debug_plots:
+        glmb.plot_ospa2_history(time=time, time_units="s")
     if debug_plots:
         glmb.plot_states_labels([0, 1], true_states=global_true, meas_inds=[0, 1])
         glmb.plot_card_dist()
@@ -4799,8 +4792,8 @@ if __name__ == "__main__":
     # test_IMM_PHD()
     # test_IMM_CPHD()
 
-    # test_GLMB()
-    test_STM_GLMB()
+    test_GLMB()
+    # test_STM_GLMB()
     # test_SMC_GLMB()
     # test_USMC_GLMB()
     # test_MCMC_USMC_GLMB()
