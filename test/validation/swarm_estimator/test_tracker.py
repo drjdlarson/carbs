@@ -1437,8 +1437,8 @@ def test_GLMB():  # noqa
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
-        # true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
-        true_agents = _update_true_agents_prob2(true_agents, tt, dt, b_model, rng)
+        true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
+        # true_agents = _update_true_agents_prob2(true_agents, tt, dt, b_model, rng)
         global_true.append(deepcopy(true_agents))
 
         pred_args = {"state_mat_args": state_mat_args}
@@ -1519,11 +1519,11 @@ def test_STM_GLMB():  # noqa
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
-        # true_agents = _update_true_agents_pmbm_lmb_var(
-        #     true_agents, tt, dt, b_model, rng
-        # )
-        true_agents = _update_true_agents_prob2(true_agents, tt, dt, b_model, rng)
-        global_true.append(deepcopy(true_agents))
+        true_agents = _update_true_agents_pmbm_lmb_var(
+            true_agents, tt, dt, b_model, rng
+        )
+        # true_agents = _update_true_agents_prob2(true_agents, tt, dt, b_model, rng)
+        # global_true.append(deepcopy(true_agents))
 
         pred_args = {"state_mat_args": state_mat_args}
         glmb.predict(tt, filt_args=pred_args)
@@ -2020,10 +2020,10 @@ def test_STM_JGLMB():  # noqa
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
-        true_agents = _update_true_agents_pmbm_lmb_var(
-            true_agents, tt, dt, b_model, rng
-        )
-        # true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
+        # true_agents = _update_true_agents_pmbm_lmb_var(
+        #     true_agents, tt, dt, b_model, rng
+        # )
+        true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
         global_true.append(deepcopy(true_agents))
 
         pred_args = {"state_mat_args": state_mat_args}
@@ -3983,7 +3983,7 @@ def test_STM_PMBM(): #noqa
         pmbm.plot_card_history(time_units="s", time=time)
     print("\tExpecting {} agents".format(len(true_agents)))
 
-    # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
+    assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
 
 def test_STM_LPMBM(): #noqa
@@ -4058,7 +4058,7 @@ def test_STM_LPMBM(): #noqa
         pmbm.plot_card_dist()
     print("\tExpecting {} agents".format(len(true_agents)))
 
-    # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
+    assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
 
 @pytest.mark.slow
@@ -4156,7 +4156,7 @@ def test_SMC_PMBM(): #noqa
         pmbm.plot_card_history(time_units="s", time=time)
     print("\tExpecting {} agents".format(len(true_agents)))
 
-    # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
+    assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
 @pytest.mark.slow
 def test_SMC_LPMBM(): #noqa
@@ -4253,7 +4253,7 @@ def test_SMC_LPMBM(): #noqa
         pmbm.plot_card_history(time_units="s", time=time)
     print("\tExpecting {} agents".format(len(true_agents)))
 
-    # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
+    assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
 
 def test_IMM_PMBM(): #noqa
@@ -4531,7 +4531,7 @@ def test_MS_PMBM():  # noqa
         pmbm.plot_ospa_history()
     print("\tExpecting {} agents".format(len(true_agents)))
 
-    # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
+    assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
 @pytest.mark.slow
 def test_MS_LPMBM():  # noqa
@@ -4606,7 +4606,7 @@ def test_MS_LPMBM():  # noqa
         pmbm.plot_ospa_history()
     print("\tExpecting {} agents".format(len(true_agents)))
 
-    # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
+    assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
 @pytest.mark.slow
 def test_MS_IMM_PMBM():  # noqa
@@ -4689,6 +4689,7 @@ def test_MS_IMM_PMBM():  # noqa
         pmbm.plot_card_history(time_units="s", time=time)
         pmbm.plot_ospa_history()
     print("\tExpecting {} agents".format(len(true_agents)))
+    assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
 @pytest.mark.slow
 def test_MS_IMM_LPMBM():  # noqa
@@ -4775,6 +4776,7 @@ def test_MS_IMM_LPMBM():  # noqa
         pmbm.plot_card_history(time_units="s", time=time)
         pmbm.plot_ospa_history()
     print("\tExpecting {} agents".format(len(true_agents)))
+    assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
 
 # %% main
@@ -4797,7 +4799,7 @@ if __name__ == "__main__":
     # test_IMM_PHD()
     # test_IMM_CPHD()
 
-    # test_GLMB()
+    test_GLMB()
     # test_STM_GLMB()
     # test_SMC_GLMB()
     # test_USMC_GLMB()
@@ -4812,7 +4814,7 @@ if __name__ == "__main__":
 
     # test_JGLMB()
     # test_JGLMB_high_birth()
-    # test_STM_JGLMB()
+    test_STM_JGLMB()
     # test_SMC_JGLMB()
     # test_USMC_JGLMB()
     # test_MCMC_USMC_JGLMB()
@@ -4823,8 +4825,8 @@ if __name__ == "__main__":
     # test_SQKF_GSM_JGLMB()
     # test_UKF_GSM_JGLMB()
     # test_GLMB_ct_ktr()
-    test_IMM_GLMB()
-    test_IMM_JGLMB()
+    # test_IMM_GLMB()
+    # test_IMM_JGLMB()
     # test_MS_JGLMB()
     # test_MS_IMM_JGLMB()
 
