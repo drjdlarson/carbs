@@ -1,25 +1,28 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../../../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>tracker &mdash; CARBS 1.0.0 documentation</title>
-      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+  <title>tracker &mdash; CARBS 1.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+
+  
     <link rel="canonical" href="https://drjdlarson.github.io/carbs/_autosummary/carbs/swarm_estimator/carbs.swarm_estimator.tracker.html" />
   <!--[if lt IE 9]>
     <script src="../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../../../_static/jquery.js"></script>
-        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-        <script src="../../../_static/doctools.js"></script>
-        <script src="../../../_static/sphinx_highlight.js"></script>
-        <script src="../../../_static/clipboard.min.js"></script>
-        <script src="../../../_static/copybutton.js"></script>
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=292eb321"></script>
+        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+        <script src="../../../_static/copybutton.js?v=cbcfbdad"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -40,7 +43,7 @@
               <img src="../../../_static/logo.svg" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                1.0.0
+                1.0.1
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
@@ -128,7 +131,7 @@
            <div itemprop="articleBody">
              
   <section id="module-carbs.swarm_estimator.tracker">
-<span id="tracker"></span><h1>tracker<a class="headerlink" href="#module-carbs.swarm_estimator.tracker" title="Permalink to this heading"></a></h1>
+<span id="tracker"></span><h1>tracker<a class="headerlink" href="#module-carbs.swarm_estimator.tracker" title="Link to this heading"></a></h1>
 <p>Implements RFS tracking algorithms.</p>
 <p>This module contains the classes and data structures
 for RFS tracking related algorithms.</p>
@@ -156,14 +159,38 @@ for RFS tracking related algorithms.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="tracker/carbs.swarm_estimator.tracker.IMMJointGeneralizedLabeledMultiBernoulli.html#carbs.swarm_estimator.tracker.IMMJointGeneralizedLabeledMultiBernoulli" title="carbs.swarm_estimator.tracker.IMMJointGeneralizedLabeledMultiBernoulli"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IMMJointGeneralizedLabeledMultiBernoulli</span></code></a></p></td>
 <td><p>Implementation of an IMM-JGLMB filter.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="tracker/carbs.swarm_estimator.tracker.IMMLabeledPoissonMultiBernoulliMixture.html#carbs.swarm_estimator.tracker.IMMLabeledPoissonMultiBernoulliMixture" title="carbs.swarm_estimator.tracker.IMMLabeledPoissonMultiBernoulliMixture"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IMMLabeledPoissonMultiBernoulliMixture</span></code></a></p></td>
+<td><p>An implementation of the IMM-LPMBM algorithm.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="tracker/carbs.swarm_estimator.tracker.IMMPoissonMultiBernoulliMixture.html#carbs.swarm_estimator.tracker.IMMPoissonMultiBernoulliMixture" title="carbs.swarm_estimator.tracker.IMMPoissonMultiBernoulliMixture"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IMMPoissonMultiBernoulliMixture</span></code></a></p></td>
+<td><p>An implementation of the IMM-PMBM algorithm.</p></td>
+</tr>
 <tr class="row-even"><td><p><a class="reference internal" href="tracker/carbs.swarm_estimator.tracker.IMMProbabilityHypothesisDensity.html#carbs.swarm_estimator.tracker.IMMProbabilityHypothesisDensity" title="carbs.swarm_estimator.tracker.IMMProbabilityHypothesisDensity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IMMProbabilityHypothesisDensity</span></code></a></p></td>
 <td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="tracker/carbs.swarm_estimator.tracker.JointGeneralizedLabeledMultiBernoulli.html#carbs.swarm_estimator.tracker.JointGeneralizedLabeledMultiBernoulli" title="carbs.swarm_estimator.tracker.JointGeneralizedLabeledMultiBernoulli"><code class="xref py py-obj docutils literal notranslate"><span class="pre">JointGeneralizedLabeledMultiBernoulli</span></code></a></p></td>
 <td><p>Implements a Joint Generalized Labeled Multi-Bernoulli Filter.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="tracker/carbs.swarm_estimator.tracker.LabeledPoissonMultiBernoulliMixture.html#carbs.swarm_estimator.tracker.LabeledPoissonMultiBernoulliMixture" title="carbs.swarm_estimator.tracker.LabeledPoissonMultiBernoulliMixture"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LabeledPoissonMultiBernoulliMixture</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="tracker/carbs.swarm_estimator.tracker.MSIMMJointGeneralizedLabeledMultiBernoulli.html#carbs.swarm_estimator.tracker.MSIMMJointGeneralizedLabeledMultiBernoulli" title="carbs.swarm_estimator.tracker.MSIMMJointGeneralizedLabeledMultiBernoulli"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MSIMMJointGeneralizedLabeledMultiBernoulli</span></code></a></p></td>
+<td><p>An implementation of the Multi-Sensor IMM-JGLMB algorithm.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="tracker/carbs.swarm_estimator.tracker.MSIMMLabeledPoissonMultiBernoulliMixture.html#carbs.swarm_estimator.tracker.MSIMMLabeledPoissonMultiBernoulliMixture" title="carbs.swarm_estimator.tracker.MSIMMLabeledPoissonMultiBernoulliMixture"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MSIMMLabeledPoissonMultiBernoulliMixture</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="tracker/carbs.swarm_estimator.tracker.MSIMMPoissonMultiBernoulliMixture.html#carbs.swarm_estimator.tracker.MSIMMPoissonMultiBernoulliMixture" title="carbs.swarm_estimator.tracker.MSIMMPoissonMultiBernoulliMixture"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MSIMMPoissonMultiBernoulliMixture</span></code></a></p></td>
+<td><p></p></td>
+</tr>
 <tr class="row-even"><td><p><a class="reference internal" href="tracker/carbs.swarm_estimator.tracker.MSJointGeneralizedLabeledMultiBernoulli.html#carbs.swarm_estimator.tracker.MSJointGeneralizedLabeledMultiBernoulli" title="carbs.swarm_estimator.tracker.MSJointGeneralizedLabeledMultiBernoulli"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MSJointGeneralizedLabeledMultiBernoulli</span></code></a></p></td>
 <td><p>Implementation of the Multiple Sensor JGLMB Filter</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="tracker/carbs.swarm_estimator.tracker.MSLabeledPoissonMultiBernoulliMixture.html#carbs.swarm_estimator.tracker.MSLabeledPoissonMultiBernoulliMixture" title="carbs.swarm_estimator.tracker.MSLabeledPoissonMultiBernoulliMixture"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MSLabeledPoissonMultiBernoulliMixture</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="tracker/carbs.swarm_estimator.tracker.MSPoissonMultiBernoulliMixture.html#carbs.swarm_estimator.tracker.MSPoissonMultiBernoulliMixture" title="carbs.swarm_estimator.tracker.MSPoissonMultiBernoulliMixture"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MSPoissonMultiBernoulliMixture</span></code></a></p></td>
+<td><p>An Implementation of the Multiple Sensor PMBM Filter.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="tracker/carbs.swarm_estimator.tracker.PoissonMultiBernoulliMixture.html#carbs.swarm_estimator.tracker.PoissonMultiBernoulliMixture" title="carbs.swarm_estimator.tracker.PoissonMultiBernoulliMixture"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PoissonMultiBernoulliMixture</span></code></a></p></td>
 <td><p></p></td>
@@ -180,11 +207,23 @@ for RFS tracking related algorithms.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="tracker/carbs.swarm_estimator.tracker.SMCJointGeneralizedLabeledMultiBernoulli.html#carbs.swarm_estimator.tracker.SMCJointGeneralizedLabeledMultiBernoulli" title="carbs.swarm_estimator.tracker.SMCJointGeneralizedLabeledMultiBernoulli"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SMCJointGeneralizedLabeledMultiBernoulli</span></code></a></p></td>
 <td><p>Implementation of a SMC-JGLMB filter.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="tracker/carbs.swarm_estimator.tracker.SMCLabeledPoissonMultiBernoulliMixture.html#carbs.swarm_estimator.tracker.SMCLabeledPoissonMultiBernoulliMixture" title="carbs.swarm_estimator.tracker.SMCLabeledPoissonMultiBernoulliMixture"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SMCLabeledPoissonMultiBernoulliMixture</span></code></a></p></td>
+<td><p>Implementation of a Sequential Monte Carlo LPMBM filter.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="tracker/carbs.swarm_estimator.tracker.SMCPoissonMultiBernoulliMixture.html#carbs.swarm_estimator.tracker.SMCPoissonMultiBernoulliMixture" title="carbs.swarm_estimator.tracker.SMCPoissonMultiBernoulliMixture"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SMCPoissonMultiBernoulliMixture</span></code></a></p></td>
+<td><p>Implementation of a Sequential Monte Carlo PMBM filter.</p></td>
+</tr>
 <tr class="row-even"><td><p><a class="reference internal" href="tracker/carbs.swarm_estimator.tracker.STMGeneralizedLabeledMultiBernoulli.html#carbs.swarm_estimator.tracker.STMGeneralizedLabeledMultiBernoulli" title="carbs.swarm_estimator.tracker.STMGeneralizedLabeledMultiBernoulli"><code class="xref py py-obj docutils literal notranslate"><span class="pre">STMGeneralizedLabeledMultiBernoulli</span></code></a></p></td>
 <td><p>Implementation of a STM-GLMB filter.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="tracker/carbs.swarm_estimator.tracker.STMJointGeneralizedLabeledMultiBernoulli.html#carbs.swarm_estimator.tracker.STMJointGeneralizedLabeledMultiBernoulli" title="carbs.swarm_estimator.tracker.STMJointGeneralizedLabeledMultiBernoulli"><code class="xref py py-obj docutils literal notranslate"><span class="pre">STMJointGeneralizedLabeledMultiBernoulli</span></code></a></p></td>
 <td><p>Implementation of a STM-JGLMB class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="tracker/carbs.swarm_estimator.tracker.STMLabeledPoissonMultiBernoulliMixture.html#carbs.swarm_estimator.tracker.STMLabeledPoissonMultiBernoulliMixture" title="carbs.swarm_estimator.tracker.STMLabeledPoissonMultiBernoulliMixture"><code class="xref py py-obj docutils literal notranslate"><span class="pre">STMLabeledPoissonMultiBernoulliMixture</span></code></a></p></td>
+<td><p>Implementation of a STM-LPMBM filter.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="tracker/carbs.swarm_estimator.tracker.STMPoissonMultiBernoulliMixture.html#carbs.swarm_estimator.tracker.STMPoissonMultiBernoulliMixture" title="carbs.swarm_estimator.tracker.STMPoissonMultiBernoulliMixture"><code class="xref py py-obj docutils literal notranslate"><span class="pre">STMPoissonMultiBernoulliMixture</span></code></a></p></td>
+<td><p>Implementation of a STM-PMBM filter.</p></td>
 </tr>
 </tbody>
 </table>

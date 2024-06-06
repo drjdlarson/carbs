@@ -1,0 +1,54 @@
+MSIMMLabeledPoissonMultiBernoulliMixture
+========================================
+
+.. currentmodule:: carbs.swarm_estimator.tracker
+
+.. autoclass:: MSIMMLabeledPoissonMultiBernoulliMixture
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.__init__
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.calculate_ospa
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.calculate_ospa2
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.cleanup
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.correct
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.extract_states
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.load_filter_state
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.plot_card_dist
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.plot_card_history
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.plot_ospa2_history
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.plot_ospa_history
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.plot_states
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.plot_states_labels
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.predict
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.save_filter_state
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.cardinality
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.covariances
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.filter
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.labels
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.num_birth_terms
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.ospa_method
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.prob_death
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.prob_miss_detection
+      ~MSIMMLabeledPoissonMultiBernoulliMixture.states
+   
+   

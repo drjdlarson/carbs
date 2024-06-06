@@ -27,16 +27,28 @@ tracker
       IMMCardinalizedPHD
       IMMGeneralizedLabeledMultiBernoulli
       IMMJointGeneralizedLabeledMultiBernoulli
+      IMMLabeledPoissonMultiBernoulliMixture
+      IMMPoissonMultiBernoulliMixture
       IMMProbabilityHypothesisDensity
       JointGeneralizedLabeledMultiBernoulli
+      LabeledPoissonMultiBernoulliMixture
+      MSIMMJointGeneralizedLabeledMultiBernoulli
+      MSIMMLabeledPoissonMultiBernoulliMixture
+      MSIMMPoissonMultiBernoulliMixture
       MSJointGeneralizedLabeledMultiBernoulli
+      MSLabeledPoissonMultiBernoulliMixture
+      MSPoissonMultiBernoulliMixture
       PoissonMultiBernoulliMixture
       ProbabilityHypothesisDensity
       RandomFiniteSetBase
       SMCGeneralizedLabeledMultiBernoulli
       SMCJointGeneralizedLabeledMultiBernoulli
+      SMCLabeledPoissonMultiBernoulliMixture
+      SMCPoissonMultiBernoulliMixture
       STMGeneralizedLabeledMultiBernoulli
       STMJointGeneralizedLabeledMultiBernoulli
+      STMLabeledPoissonMultiBernoulliMixture
+      STMPoissonMultiBernoulliMixture
    
    
 

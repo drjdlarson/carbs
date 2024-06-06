@@ -1,25 +1,27 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../../../../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GSMGeneralizedLabeledMultiBernoulli &mdash; CARBS 1.0.0 documentation</title>
-      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
+  <title>GSMGeneralizedLabeledMultiBernoulli &mdash; CARBS 1.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+
+  
     <link rel="canonical" href="https://drjdlarson.github.io/carbs/_autosummary/carbs/swarm_estimator/tracker/carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.html" />
   <!--[if lt IE 9]>
     <script src="../../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../../../../_static/jquery.js"></script>
-        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
-        <script src="../../../../_static/doctools.js"></script>
-        <script src="../../../../_static/sphinx_highlight.js"></script>
-        <script src="../../../../_static/clipboard.min.js"></script>
-        <script src="../../../../_static/copybutton.js"></script>
+        <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../../_static/documentation_options.js?v=292eb321"></script>
+        <script src="../../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+        <script src="../../../../_static/copybutton.js?v=cbcfbdad"></script>
         <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
@@ -41,7 +43,7 @@
               <img src="../../../../_static/logo.svg" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                1.0.0
+                1.0.1
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
@@ -130,10 +132,10 @@
            <div itemprop="articleBody">
              
   <section id="gsmgeneralizedlabeledmultibernoulli">
-<h1>GSMGeneralizedLabeledMultiBernoulli<a class="headerlink" href="#gsmgeneralizedlabeledmultibernoulli" title="Permalink to this heading"></a></h1>
+<h1>GSMGeneralizedLabeledMultiBernoulli<a class="headerlink" href="#gsmgeneralizedlabeledmultibernoulli" title="Link to this heading"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">GSMGeneralizedLabeledMultiBernoulli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/carbs/swarm_estimator/tracker.html#GSMGeneralizedLabeledMultiBernoulli"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">GSMGeneralizedLabeledMultiBernoulli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/carbs/swarm_estimator/tracker.html#GSMGeneralizedLabeledMultiBernoulli"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="carbs.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.html#carbs.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli" title="carbs.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli"><code class="xref py py-class docutils literal notranslate"><span class="pre">GeneralizedLabeledMultiBernoulli</span></code></a></p>
 <p>Implementation of a GSM-GLMB filter.</p>
 <p>The implementation of the GSM-GLMB fitler does not change for different core
@@ -141,7 +143,7 @@ filters (i.e. QKF GSM, SQKF GSM, UKF GSM, etc.) so this class can use any
 of the GSM inner filters from gncpy.filters</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/carbs/swarm_estimator/tracker.html#GSMGeneralizedLabeledMultiBernoulli.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/carbs/swarm_estimator/tracker.html#GSMGeneralizedLabeledMultiBernoulli.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.__init__" title="Link to this definition"></a></dt>
 <dd><p>Initialize an object.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -247,7 +249,7 @@ of the GSM inner filters from gncpy.filters</p>
 </table>
 <dl class="py method">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.calculate_ospa">
-<span class="sig-name descname"><span class="pre">calculate_ospa</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">truth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">core_method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SingleObjectDistance</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_covs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_inds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.calculate_ospa" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">calculate_ospa</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">truth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">core_method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SingleObjectDistance</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_covs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_inds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.calculate_ospa" title="Link to this definition"></a></dt>
 <dd><p>Calculates the OSPA distance between the truth at all timesteps.</p>
 <p>Wrapper for <code class="xref py py-func docutils literal notranslate"><span class="pre">serums.distances.calculate_ospa()</span></code>.</p>
 <dl class="field-list simple">
@@ -277,7 +279,7 @@ used.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.calculate_ospa2">
-<span class="sig-name descname"><span class="pre">calculate_ospa2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">truth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">win_len</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_covs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">core_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">SingleObjectDistance.MANHATTAN</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_inds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.calculate_ospa2" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">calculate_ospa2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">truth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">win_len</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_covs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">core_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">SingleObjectDistance.MANHATTAN</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_inds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.calculate_ospa2" title="Link to this definition"></a></dt>
 <dd><p>Calculates the OSPA(2) distance between the truth at all timesteps.</p>
 <p>Wrapper for <code class="xref py py-func docutils literal notranslate"><span class="pre">serums.distances.calculate_ospa2()</span></code>.</p>
 <dl class="field-list simple">
@@ -308,7 +310,7 @@ used.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.cleanup">
-<span class="sig-name descname"><span class="pre">cleanup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">enable_prune</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_cap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_extract</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extract_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.cleanup" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">cleanup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">enable_prune</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_cap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_extract</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extract_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.cleanup" title="Link to this definition"></a></dt>
 <dd><p>Performs the cleanup step of the filter.</p>
 <p>This can prune, cap, and extract states. It must be called once per
 timestep, even if all three functions are disabled. This is to ensure
@@ -336,7 +338,7 @@ default is None. Only used if extracting states.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.correct">
-<span class="sig-name descname"><span class="pre">correct</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timestep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.correct" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">correct</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timestep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.correct" title="Link to this definition"></a></dt>
 <dd><p>Correction step of the GLMB filter.</p>
 <p class="rubric">Notes</p>
 <p>This corrects the hypotheses based on the measurements and gates the
@@ -360,7 +362,7 @@ The default is {}.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.extract_most_prob_states">
-<span class="sig-name descname"><span class="pre">extract_most_prob_states</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thresh</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.extract_most_prob_states" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">extract_most_prob_states</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thresh</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.extract_most_prob_states" title="Link to this definition"></a></dt>
 <dd><p>Extracts the most probable hypotheses up to a threshold.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -384,7 +386,7 @@ if the covariances are saved.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.extract_states">
-<span class="sig-name descname"><span class="pre">extract_states</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">update</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calc_states</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.extract_states" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">extract_states</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">update</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calc_states</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.extract_states" title="Link to this definition"></a></dt>
 <dd><p>Extracts the best state estimates.</p>
 <p>This extracts the best states from the distribution. It should be
 called once per time step after the correction function. This calls
@@ -414,11 +416,11 @@ default is true.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.load_filter_state">
-<span class="sig-name descname"><span class="pre">load_filter_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filt_state</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.load_filter_state" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">load_filter_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filt_state</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.load_filter_state" title="Link to this definition"></a></dt>
 <dd><p>Initializes filter using saved filter state.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.filt_state">
-<span class="sig-name descname"><span class="pre">filt_state</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.filt_state" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">filt_state</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.filt_state" title="Link to this definition"></a></dt>
 <dd><p>Dictionary generated by <a class="reference internal" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.save_filter_state" title="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.save_filter_state"><code class="xref py py-meth docutils literal notranslate"><span class="pre">save_filter_state()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -431,7 +433,7 @@ default is true.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.plot_card_dist">
-<span class="sig-name descname"><span class="pre">plot_card_dist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ttl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.plot_card_dist" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">plot_card_dist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ttl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.plot_card_dist" title="Link to this definition"></a></dt>
 <dd><p>Plots the current cardinality distribution.</p>
 <p>This assumes that the cardinality distribution has been calculated by
 the class.</p>
@@ -459,7 +461,7 @@ is None.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.plot_card_history">
-<span class="sig-name descname"><span class="pre">plot_card_history</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'index'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ttl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Cardinality</span> <span class="pre">History'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.plot_card_history" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">plot_card_history</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'index'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ttl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Cardinality</span> <span class="pre">History'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.plot_card_history" title="Link to this definition"></a></dt>
 <dd><p>Plots the cardinality history.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -485,7 +487,7 @@ relating to title/axis text formatting.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.plot_ospa2_history">
-<span class="sig-name descname"><span class="pre">plot_ospa2_history</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'index'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">main_opts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sub_opts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_subs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.plot_ospa2_history" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">plot_ospa2_history</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'index'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">main_opts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sub_opts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_subs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.plot_ospa2_history" title="Link to this definition"></a></dt>
 <dd><p>Plots the OSPA2 history.</p>
 <p>This requires that the OSPA2 has been calcualted by the approriate
 function first.</p>
@@ -519,7 +521,7 @@ localization) should also be plotted.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.plot_ospa_history">
-<span class="sig-name descname"><span class="pre">plot_ospa_history</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'index'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">main_opts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sub_opts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_subs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.plot_ospa_history" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">plot_ospa_history</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'index'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">main_opts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sub_opts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_subs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.plot_ospa_history" title="Link to this definition"></a></dt>
 <dd><p>Plots the OSPA history.</p>
 <p>This requires that the OSPA has been calcualted by the approriate
 function first.</p>
@@ -553,7 +555,7 @@ localization) should also be plotted.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.plot_states_labels">
-<span class="sig-name descname"><span class="pre">plot_states_labels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plt_inds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ttl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Labeled</span> <span class="pre">State</span> <span class="pre">Trajectories'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_lbl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_lbl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meas_tx_fnc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.plot_states_labels" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">plot_states_labels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plt_inds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ttl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Labeled</span> <span class="pre">State</span> <span class="pre">Trajectories'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_lbl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_lbl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meas_tx_fnc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.plot_states_labels" title="Link to this definition"></a></dt>
 <dd><p>Plots the best estimate for the states and labels.</p>
 <p>This assumes that the states have been extracted. It’s designed to plot
 two of the state variables (typically x/y position). The error ellipses
@@ -594,7 +596,7 @@ default is None.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.predict">
-<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timestep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.predict" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timestep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.predict" title="Link to this definition"></a></dt>
 <dd><p>Prediction step of the GLMB filter.</p>
 <p>This predicts new hypothesis, and propogates them to the next time
 step. It also updates the cardinality distribution.</p>
@@ -613,7 +615,7 @@ step. It also updates the cardinality distribution.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.save_filter_state">
-<span class="sig-name descname"><span class="pre">save_filter_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.save_filter_state" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">save_filter_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.save_filter_state" title="Link to this definition"></a></dt>
 <dd><p>Saves filter variables so they can be restored later.</p>
 <p>Note that to pickle the resulting dictionary the <code class="code docutils literal notranslate"><span class="pre">dill</span></code> package
 may need to be used due to potential pickling of functions.</p>
@@ -621,13 +623,13 @@ may need to be used due to potential pickling of functions.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.cardinality">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">cardinality</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.cardinality" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">cardinality</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.cardinality" title="Link to this definition"></a></dt>
 <dd><p>Cardinality estimate.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.covariances">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">covariances</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.covariances" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">covariances</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.covariances" title="Link to this definition"></a></dt>
 <dd><p>Read only list of extracted covariances.</p>
 <p>This is a list with 1 element per timestep, and each element is a list
 of the best covariances extracted at that timestep. The order of each
@@ -641,13 +643,13 @@ element corresponds to the state order.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.filter">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">filter</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.filter" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">filter</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.filter" title="Link to this definition"></a></dt>
 <dd><p>Inner filter handling dynamics, must be a gncpy.filters.BayesFilter.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.labels">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">labels</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.labels" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">labels</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.labels" title="Link to this definition"></a></dt>
 <dd><p>Read only list of extracted labels.</p>
 <p>This is a list with 1 element per timestep, and each element is a list
 of the best labels extracted at that timestep. The order of each
@@ -656,31 +658,31 @@ element corresponds to the state order.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.num_birth_terms">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_birth_terms</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.num_birth_terms" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_birth_terms</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.num_birth_terms" title="Link to this definition"></a></dt>
 <dd><p>Number of terms in the birth model.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.ospa_method">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ospa_method</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.ospa_method" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ospa_method</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.ospa_method" title="Link to this definition"></a></dt>
 <dd><p>The distance metric used in the OSPA calculation (read only).</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.prob_death">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">prob_death</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.prob_death" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">prob_death</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.prob_death" title="Link to this definition"></a></dt>
 <dd><p>Compliment of <code class="xref py py-attr docutils literal notranslate"><span class="pre">carbs.swarm_estimator.RandomFinitSetBase.prob_survive</span></code>.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.prob_miss_detection">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">prob_miss_detection</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.prob_miss_detection" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">prob_miss_detection</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.prob_miss_detection" title="Link to this definition"></a></dt>
 <dd><p>Compliment of <code class="xref py py-attr docutils literal notranslate"><span class="pre">swarm_estimator.RandomFiniteSetBase.prob_detection</span></code>.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.states">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">states</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.states" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">states</span></span><a class="headerlink" href="#carbs.swarm_estimator.tracker.GSMGeneralizedLabeledMultiBernoulli.states" title="Link to this definition"></a></dt>
 <dd><p>Read only list of extracted states.</p>
 <p>This is a list with 1 element per timestep, and each element is a list
 of the best states extracted at that timestep. The order of each
