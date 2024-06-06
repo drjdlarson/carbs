@@ -9,7 +9,7 @@ authors:
 - family-names: "Weirens"
   given-names: "Vaughn A."
 title: "CARBS: A Python Package for Command, Control, and Information (C2I) of Autonomous Random Finite Set (RFS) Based Swarms"
-version: 2.0.1
+version: 1.0.1
 doi: 10.5281/zenodo.11509246
 date-released: 2024-06-06
 url: "https://github.com/drjdlarson/gncpy"
