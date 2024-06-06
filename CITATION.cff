@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Larson"
+  given-names: "Jordan Douglas"
+  orcid: "https://orcid.org/0000-0002-5102-1763"
+- family-names: "Thomas"
+  given-names: "Ryan W."
+- family-names: "Weirens"
+  given-names: "Vaughn A."
+title: "CARBS: A Python Package for Command, Control, and Information (C2I) of Autonomous Random Finite Set (RFS) Based Swarms"
+version: 2.0.1
+doi: 10.5281/zenodo.11509246
+date-released: 2024-06-06
+url: "https://github.com/drjdlarson/gncpy"
+preferred-citation:
+  type: software
+  authors:
+  - family-names: "Larson"
+    given-names: "Jordan Douglas"
+    orcid: "https://orcid.org/0000-0002-5102-1763"
+  - family-names: "Thomas"
+    given-names: "Ryan W."
+  - family-names: "Weirens"
+    given-names: "Vaughn A."
+  doi: "10.5281/zenodo.11509246"
+  title: "CARBS: A Python Package for Command, Control, and Information (C2I) of Autonomous Random Finite Set (RFS) Based Swarms"
+  year: 2024
