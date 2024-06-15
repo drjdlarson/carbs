@@ -921,17 +921,17 @@ def _update_true_agents_prob_imm(true_agents, tt, dt, b_model, rng, state_mat):
 
 def _update_true_agents_pmbm_lmb_var(true_agents, tt, dt, b_model, rng):
     out = _prop_true(true_agents, tt, dt)
-    if any(np.abs(tt - np.array([0, 1, 1.5, 2.5, 3])) < 1e-8):
-        # if any(np.abs(tt - np.array([0, 1])) < 1e-8):
+    # if any(np.abs(tt - np.array([0, 1, 1.5, 2.5, 3])) < 1e-8):
+    if any(np.abs(tt - np.array([0, 1])) < 1e-8):
         for gm, w in b_model:
             x = gm.means[0] + (rng.standard_normal(4) * np.ones(4)).reshape((4, 1))
             out.append(x.copy())
     
-    if any(np.abs(tt - np.array([2])) < 1e-8):
-        out.pop(1)
+    # if any(np.abs(tt - np.array([2])) < 1e-8):
+    #     out.pop(1)
 
-    if any(np.abs(tt - np.array([3])) < 1e-8):
-        out.pop(1)
+    # if any(np.abs(tt - np.array([3])) < 1e-8):
+    #     out.pop(1)
 
     return out
 
@@ -1491,7 +1491,7 @@ def test_STM_GLMB():  # noqa
     rng = rnd.default_rng(global_seed)
 
     dt = 0.01
-    t0, t1 = 0, 4 + dt
+    t0, t1 = 0, 6 + dt
 
     filt = _setup_double_int_stf(dt)
     state_mat_args = (dt, "test arg")
@@ -3785,7 +3785,6 @@ def test_PMBM(): #noqa
         pmbm.plot_ospa2_history(time=time, time_units="s")
     if debug_plots:
         pmbm.plot_states([0, 1], true_states=global_true, meas_inds=[0, 1])
-        pmbm.plot_states([0, 1], meas_inds=[0, 1])
         pmbm.plot_card_dist()
         pmbm.plot_card_history(time_units="s", time=time)
     print("\tExpecting {} agents".format(len(true_agents)))
@@ -3916,7 +3915,7 @@ def test_STM_PMBM(): #noqa
     PMBM_args = {
         "req_upd": 800,
         "prune_threshold": 10**-5,
-        "exist_threshold": 10**-15,
+        "exist_threshold": 10**-5,
         "max_hyps": 1000,
     }
     pmbm = tracker.STMPoissonMultiBernoulliMixture(**PMBM_args, **RFS_base_args)
@@ -4813,13 +4812,13 @@ if __name__ == "__main__":
     # test_GLMB_ct_ktr()
     # test_IMM_GLMB()
     # test_IMM_JGLMB()
-    test_MS_JGLMB()
+    # test_MS_JGLMB()
     # test_MS_IMM_JGLMB()
 
     # test_PMBM()
     # test_LPMBM()
-    # test_STM_PMBM()
-    # test_STM_LPMBM()
+    test_STM_PMBM()
+    test_STM_LPMBM()
     # test_SMC_PMBM()
     # test_SMC_LPMBM()
     # test_IMM_PMBM()
