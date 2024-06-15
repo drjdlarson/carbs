@@ -3544,8 +3544,8 @@ def test_MS_JGLMB():  # noqa
     rng = rnd.default_rng(global_seed)
 
     dt = 0.01
-    t0, t1 = 0, 5.0 + dt
-    # t0, t1 = 0, 1.2 + dt
+    # t0, t1 = 0, 5.0 + dt
+    t0, t1 = 0, 4.0 + dt
 
     filt = _setup_double_int_gci_kf(dt)
 
@@ -3580,10 +3580,10 @@ def test_MS_JGLMB():  # noqa
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
-        # true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
-        true_agents = _update_true_agents_pmbm_lmb_var(
-            true_agents, tt, dt, b_model, rng
-        )
+        true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
+        # true_agents = _update_true_agents_pmbm_lmb_var(
+        #     true_agents, tt, dt, b_model, rng
+        # )
         global_true.append(deepcopy(true_agents))
 
         pred_args = {"state_mat_args": state_mat_args}
@@ -4524,7 +4524,7 @@ def test_MS_LPMBM():  # noqa
     rng = rnd.default_rng(global_seed)
 
     dt = 0.01
-    t0, t1 = 0, 1.2 + dt  # 5.5 + dt
+    t0, t1 = 0, 1.0 + dt  # 5.5 + dt
     # t0, t1 = 0, 5.0 + dt
 
     filt = _setup_double_int_gci_kf(dt)
@@ -4813,7 +4813,7 @@ if __name__ == "__main__":
     # test_GLMB_ct_ktr()
     # test_IMM_GLMB()
     # test_IMM_JGLMB()
-    # test_MS_JGLMB()
+    test_MS_JGLMB()
     # test_MS_IMM_JGLMB()
 
     # test_PMBM()
@@ -4825,7 +4825,7 @@ if __name__ == "__main__":
     # test_IMM_PMBM()
     # test_IMM_LPMBM()
     # test_MS_PMBM()
-    test_MS_LPMBM()
+    # test_MS_LPMBM()
     # test_MS_IMM_PMBM()
     # test_MS_IMM_LPMBM()
 
