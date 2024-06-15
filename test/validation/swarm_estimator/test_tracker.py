@@ -4592,7 +4592,7 @@ def test_MS_LPMBM():  # noqa
         pmbm.plot_ospa_history()
     print("\tExpecting {} agents".format(len(true_agents)))
 
-    # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
+    assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
 @pytest.mark.slow
 def test_MS_IMM_PMBM():  # noqa
