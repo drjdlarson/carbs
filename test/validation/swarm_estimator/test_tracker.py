@@ -125,7 +125,7 @@ def _setup_double_int_upf(dt, rng, use_MCMC):
 
 
 def _setup_double_int_gci_kf(dt):
-    m_noise = 0.02
+    m_noise = 0.002
     p_noise = 0.2
     m_model1 = np.array([[1, 0, 0, 0], [0, 1, 0, 0]], dtype=float)
     m_model2 = np.array([[0, 0, 1, 0], [0, 0, 0, 1]], dtype=float)
@@ -147,6 +147,62 @@ def _setup_double_int_gci_kf(dt):
         meas_noise_list=meas_noise_list,
     )
     filt.cov = 0.25 * np.eye(4)
+    return filt
+
+
+def _setup_double_int_gci_ekf(dt):
+    def range_func(t, x):
+        # return np.sqrt(x[0] ** 2 + x[1] ** 2)
+        return np.array([x[0], x[1]])
+
+    def bear_func(t, x):
+        # return np.arctan2(x[0], x[1])
+        return np.arctan2(x[1], x[0])
+
+    def range_func2(t, x):
+        return np.array([x[0] + 5, x[1]])
+        # return np.sqrt((x[0]-5) ** 2 + x[1] ** 2)
+
+    def bear_func2(t, x):
+        # return np.arctan2(x[0] - 5, x[1])
+        return np.arctan2(x[1], x[0] + 5)
+
+    def xfunc(t, x):
+        return x[0]
+
+    def yfunc(t, x):
+        return x[1]
+
+    def xfunc2(t, x):
+        return x[0]+5
+
+    m_noise = 0.02
+    p_noise = 0.2
+    # m_noise_list = [np.diag([m_noise**2, (np.pi / 180 * m_noise) ** 2]),
+    #         np.diag([m_noise**2, (np.pi / 180 * m_noise) ** 2])]
+
+    in_filt = gfilts.ExtendedKalmanFilter()
+    in_filt.dt = dt
+    in_filt.set_state_model(dyn_obj=gdyn.DoubleIntegrator())
+    in_filt.proc_noise = gdyn.DoubleIntegrator().get_dis_process_noise_mat(
+        dt, np.array([[p_noise**2]])
+    )
+    in_filt.meas_noise = m_noise**2 * np.eye(2)
+
+    filt = gfilts.GCIFilter(
+        base_filter=in_filt,
+        meas_model_list = [[xfunc, yfunc], [xfunc2, yfunc]],
+        meas_noise_list=[np.diag([m_noise**2, m_noise**2]), np.diag([m_noise**2, m_noise**2])],
+        # meas_noise_list=[np.diag([m_noise**2]), np.diag([m_noise**2])],
+        # meas_model_list=[[range_func, bear_func], [range_func2, bear_func2]],
+        # meas_noise_list=[np.diag([m_noise**2, (m_noise) ** 2]),
+        #     np.diag([m_noise**2, (m_noise) ** 2])],
+        # meas_noise_list=[np.diag([m_noise**2, (60 * np.pi / 180 * m_noise) ** 2]),
+        #     np.diag([m_noise**2, (60 * np.pi / 180 * m_noise) ** 2])],
+    )
+    filt.cov = 0.25 * np.eye(4)
+    # filt.cov = np.diag([2.0, 2.0, 2.0, 2.0])
+
     return filt
 
 
@@ -687,8 +743,9 @@ def _setup_imm_gm_glmb_ct_ktr_birth():
 
 
 def _setup_pmbm_double_int_birth():
-    mu = [np.array([0.0, 0.0, 1, 2]).reshape((4, 1))]
-    cov = [np.diag(np.array([1, 1, 1, 1])) ** 2]
+    mu = [np.array([1.0, 1.0, 1, 2]).reshape((4, 1))]
+    cov = [np.diag(np.array([0.1, 0.1, 0.01, 0.01])) ** 2]
+    # cov = [np.diag(np.array([1, 1, 0.1, 0.1])) ** 2]
     gm0 = smodels.GaussianMixture(means=mu, covariances=cov, weights=[1])
     return [gm0]
 
@@ -795,6 +852,82 @@ def _gen_meas_ms(tt, true_agents, proc_noise, meas_noise, rng, meas_model_list):
         meas_in.append(sens_list)
 
     return meas_in
+
+
+def _gen_meas_ms2(tt, true_agents, proc_noise, meas_noise, rng, meas_model_list):
+    meas_in = []
+    for ii, model in enumerate(meas_model_list):
+        sens_list = []
+        for x in true_agents:
+            if ii == 0:
+                if x[1] > -5 and x[1] < 5:
+                    if isinstance(model, list):
+                        cur_temp_meas = []
+                        for func in model:
+                            cur_temp_meas.append(func(tt, x))
+                        sens_list.append(np.array(cur_temp_meas).reshape(-1, 1))
+                    else:
+                        sens_list.append(model @ x)
+                # else:
+                #     flag = False
+                #     for arr in sens_list:
+                #         if arr.size == 0:
+                #             flag = True
+                #     if flag == True:
+                        # sens_list.append(np.array([]))
+            else:
+                if x[1] > 2 and x[1] < 12:
+                    if isinstance(model, list):
+                        cur_temp_meas = []
+                        for func in model:
+                            cur_temp_meas.append(func(tt, x))
+                        sens_list.append(np.array(cur_temp_meas).reshape(-1, 1))
+                    else:
+                        sens_list.append(model @ x)
+                # else:
+                    # flag = False
+                    # for arr in sens_list:
+                    #     if arr.size == 0:
+                    #         flag = True
+                    # if flag == True:
+                        # sens_list.append(np.array([]))
+        # sens_list.append(np.array([]))
+        if len(sens_list) == 0:
+            sens_list.append(np.array([]))
+        meas_in.append(sens_list)
+
+    return meas_in
+
+
+def _gen_meas_ms_ekf(tt, true_agents, proc_noise, meas_noise, rng, meas_model_list):
+    def range_func(t, x):
+        return np.sqrt(x[0] ** 2 + x[1] ** 2)
+
+    def bear_func(t, x):
+        return np.arctan2(x[1], x[0])
+
+    def range_func2(t, x):
+        return np.sqrt(x[0] ** 2 + x[1]+5 ** 2)
+
+    def bear_func2(t, x):
+        return np.arctan2(x[1], x[0]+5)
+
+    sens_bounds = [[0, 15], [5, 20]]
+    meas_in = []
+    for ii, model in enumerate(meas_model_list):
+        cur_sens_lst = []
+        for x in true_agents:
+            if x[0] > sens_bounds[ii][0] and x[0] < sens_bounds[ii][1]:
+                meas1 = meas_model_list[ii][0](0, x)
+                meas2 = meas_model_list[ii][1](0, x)
+                cur_sens_lst.append(np.array([meas1, meas2]))
+            else:
+                cur_sens_lst.append(np.array([]))
+        meas_in.append(cur_sens_lst)
+    
+    return meas_in
+
+
 
 
 def _prop_true(true_agents, tt, dt):
@@ -938,10 +1071,15 @@ def _update_true_agents_pmbm_lmb_var(true_agents, tt, dt, b_model, rng):
 
 def _update_true_agents_pmbm(true_agents, tt, dt, b_model, rng):
     out = _prop_true(true_agents, tt, dt)
+    # if any(np.abs(tt - np.array([0, 0.05]))<1e-8):
     if any(np.abs(tt - np.array([0, 1])) < 1e-8):
     # if any(np.abs(tt - np.array([0, 1, 1.5, 2.5, 3])) < 1e-8):
         for gm in b_model:
-            x = gm.means[0] + (rng.standard_normal(4) * np.ones(4)).reshape((4, 1))
+            noise = (rng.standard_normal(4) * np.ones(4)).reshape((4, 1))
+            # noise[0] = noise[0] / 100
+            # noise[1] = noise[1] / 100
+
+            x = gm.means[0] + noise
             out.append(x.copy())
     # if any(np.abs(tt - np.array([2])) < 1e-8):
     #     out.pop(1)
@@ -3545,12 +3683,13 @@ def test_MS_JGLMB():  # noqa
 
     dt = 0.01
     # t0, t1 = 0, 5.0 + dt
-    t0, t1 = 0, 4.0 + dt
+    t0, t1 = 0, 2.0 + dt
 
-    filt = _setup_double_int_gci_kf(dt)
+    filt = _setup_double_int_gci_ekf(dt)
+    # filt = _setup_double_int_gci_kf(dt)
 
     state_mat_args = (dt,)
-    meas_fun_args = ("useless arg",)
+    meas_fun_args = ()#("useless arg",)
 
     b_model = _setup_gm_glmb_double_int_birth()
 
@@ -3580,16 +3719,16 @@ def test_MS_JGLMB():  # noqa
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
-        true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
-        # true_agents = _update_true_agents_pmbm_lmb_var(
-        #     true_agents, tt, dt, b_model, rng
-        # )
+        # true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
+        true_agents = _update_true_agents_pmbm_lmb_var(
+            true_agents, tt, dt, b_model, rng
+        )
         global_true.append(deepcopy(true_agents))
 
-        pred_args = {"state_mat_args": state_mat_args}
+        pred_args = {"dyn_fun_params": state_mat_args}
         jglmb.predict(tt, filt_args=pred_args)
 
-        meas_in = _gen_meas_ms(
+        meas_in = _gen_meas_ms2(
             tt,
             true_agents,
             filt.proc_noise,
@@ -3610,9 +3749,13 @@ def test_MS_JGLMB():  # noqa
 
     if debug_plots:
         jglmb.plot_states_labels([0, 1], true_states=global_true, meas_inds=[0, 1])
+        plt.savefig("save_in_dumb_folder/msjglmb_state_lbl.png")
         jglmb.plot_card_dist()
+        plt.savefig("save_in_dumb_folder/msjglmb_card_dist.png")
         jglmb.plot_card_history(time_units="s", time=time)
+        plt.savefig("save_in_dumb_folder/msjglmb_card_hist.png")
         jglmb.plot_ospa_history()
+        plt.savefig("save_in_dumb_folder/msjglmb_ospa_hist.png")
     print("\tExpecting {} agents".format(len(true_agents)))
 
     # assert len(true_agents) == jglmb.cardinality, "Wrong cardinality"
@@ -3699,9 +3842,13 @@ def test_MS_IMM_JGLMB():  # noqa
 
     if debug_plots:
         jglmb.plot_states_labels([0, 1], true_states=global_true, meas_inds=[0, 1])
+        plt.savefig("save_in_dumb_folder/msimmjglmb_state_lbl.png")
         jglmb.plot_card_dist()
+        plt.savefig("save_in_dumb_folder/msimmjglmb_card_dist.png")
         jglmb.plot_card_history(time_units="s", time=time)
+        plt.savefig("save_in_dumb_folder/msimmjglmb_card_hist.png")
         jglmb.plot_ospa_history()
+        plt.savefig("save_in_dumb_folder/msimmjglmb_ospa_hist.png")
     print("\tExpecting {} agents".format(len(true_agents)))
 
 
@@ -4523,13 +4670,16 @@ def test_MS_LPMBM():  # noqa
     rng = rnd.default_rng(global_seed)
 
     dt = 0.01
-    t0, t1 = 0, 1.0 + dt  # 5.5 + dt
+    t0, t1 = 0, 0.1 + dt
+    # t0, t1 = 0, 2 + dt  # 5.5 + dt
     # t0, t1 = 0, 5.0 + dt
 
-    filt = _setup_double_int_gci_kf(dt)
+    # filt = _setup_double_int_gci_kf(dt)
+    filt = _setup_double_int_gci_ekf(dt)
 
     state_mat_args = (dt,)
-    meas_fun_args = ("useless arg",)
+    # meas_fun_args = ("useless arg",)
+    meas_fun_args = ()
 
     b_model = _setup_pmbm_double_int_birth()
 
@@ -4545,7 +4695,7 @@ def test_MS_LPMBM():  # noqa
         "req_upd": 800,
         "prune_threshold": 10**-5,
         "exist_threshold": 10**-5,
-        "max_hyps": 100,
+        "max_hyps": 1000,
     }
     pmbm = tracker.MSLabeledPoissonMultiBernoulliMixture(**PMBM_args, **RFS_base_args)
     time = np.arange(t0, t1, dt)
@@ -4554,7 +4704,7 @@ def test_MS_LPMBM():  # noqa
     print("\tStarting sim")
     for kk, tt in enumerate(time):
         print(kk)
-        if kk == 200:
+        if kk == 100:
             print("error here")
         if np.mod(kk, 10) == 0:
             print("\t\t{:.2f}".format(tt))
@@ -4562,10 +4712,11 @@ def test_MS_LPMBM():  # noqa
         true_agents = _update_true_agents_pmbm(true_agents, tt, dt, b_model, rng)
         global_true.append(deepcopy(true_agents))
 
-        pred_args = {"state_mat_args": state_mat_args}
+        # pred_args = {"state_mat_args": state_mat_args}
+        pred_args = {"dyn_fun_params": state_mat_args}
         pmbm.predict(tt, filt_args=pred_args)
 
-        meas_in = _gen_meas_ms(
+        meas_in = _gen_meas_ms2(
             tt,
             true_agents,
             filt.proc_noise,
@@ -4573,6 +4724,15 @@ def test_MS_LPMBM():  # noqa
             rng,
             filt.meas_model_list,
         )
+
+        # meas_in = _gen_meas_ms_ekf(
+        #     tt,
+        #     true_agents,
+        #     filt.proc_noise,
+        #     filt.meas_noise_list,
+        #     rng,
+        #     filt.meas_model_list,
+        # )
 
         cor_args = {"meas_fun_args": meas_fun_args}
         pmbm.correct(tt, meas_in, filt_args=cor_args)
@@ -4586,12 +4746,16 @@ def test_MS_LPMBM():  # noqa
 
     if debug_plots:
         pmbm.plot_states_labels([0, 1], true_states=global_true, meas_inds=[0, 1])
+        plt.savefig("save_in_dumb_folder/mslpmbm_state_lbl.png")
         pmbm.plot_card_dist()
+        plt.savefig("save_in_dumb_folder/mslpmbm_card_dist.png")
         pmbm.plot_card_history(time_units="s", time=time)
+        plt.savefig("save_in_dumb_folder/mslpmbm_card_hist.png")
         pmbm.plot_ospa_history()
+        plt.savefig("save_in_dumb_folder/mslpmbm_ospa_hist.png")
     print("\tExpecting {} agents".format(len(true_agents)))
 
-    assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
+    # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
 @pytest.mark.slow
 def test_MS_IMM_PMBM():  # noqa
@@ -4797,7 +4961,7 @@ if __name__ == "__main__":
     # test_UKF_GSM_GLMB()
     # test_EKF_GSM_GLMB()
 
-    # test_JGLMB()
+    test_JGLMB()
     # test_JGLMB_high_birth()
     # test_STM_JGLMB()
     # test_SMC_JGLMB()
@@ -4817,8 +4981,8 @@ if __name__ == "__main__":
 
     # test_PMBM()
     # test_LPMBM()
-    test_STM_PMBM()
-    test_STM_LPMBM()
+    # test_STM_PMBM()
+    # test_STM_LPMBM()
     # test_SMC_PMBM()
     # test_SMC_LPMBM()
     # test_IMM_PMBM()

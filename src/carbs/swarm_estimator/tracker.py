@@ -4549,7 +4549,7 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
             assigns[assigns >= 2 * num_tracks] -= 2 * num_tracks
             if assigns[assigns >= 0].size != 0:
                 assigns[assigns >= 0] = mindices[
-                    assigns.astype(int)[assigns.astype(int) >= 0]
+                    assigns[assigns >= 0].astype(int)[assigns[assigns >= 0].astype(int) >= 0]
                 ]
             # Assign updated hypotheses from gibbs sampler
             for c, cst in enumerate(costs.flatten()):
@@ -4812,11 +4812,9 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
                                 assigns[ii][jj] = -1
                 assigns[assigns >= 2 * num_tracks] -= 2 * num_tracks
                 if assigns[assigns >= 0].size != 0:
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore", RuntimeWarning)
-                        assigns[assigns >= 0] = mindices[
-                            assigns.astype(int)[assigns.astype(int) >= 0]
-                        ]
+                    assigns[assigns >= 0] = mindices[
+                        assigns[assigns >= 0].astype(int)[assigns[assigns >= 0].astype(int) >= 0]
+                    ]
                 # Assign updated hypotheses from gibbs sampler
                 for c, cst in enumerate(costs.flatten()):
                     update_hyp_cmp_temp = assigns[c,]
@@ -7706,8 +7704,10 @@ class MSLabeledPoissonMultiBernoulliMixture(LabeledPoissonMultiBernoulliMixture)
                             )
                         cost_m = all_cost_m[:, inds]
                     else:
+                        #TODO Change this process so it works when we can't just arange through to the end. I think we add num_pred to the indices in ind_lst
                         if p_hyp.num_tracks == 0:  # all clutter
-                            inds = np.arange(num_pred, num_pred + len(ind_lst)).tolist()
+                            # inds = np.arange(num_pred, num_pred + len(ind_lst)).tolist()
+                            inds = list(num_pred + np.array(ind_lst))
                         else:
                             inds = p_hyp.track_set + [x + num_pred for x in ind_lst]
                         tcm = all_cost_m[
@@ -7740,14 +7740,18 @@ class MSLabeledPoissonMultiBernoulliMixture(LabeledPoissonMultiBernoulliMixture)
                             - c
                         )
                         if p_hyp.num_tracks == 0:
-                            new_track_list = list(num_pred * a + num_pred * num_meas)
+                            # new_track_list = list(num_pred * a + num_pred * num_meas)
+                            # new_track_list = list(num_pred * a + num_pred * num_meas)
+                            new_track_list = []
+                            for ii, ms in enumerate(a):
+                                new_track_list.append((ind_lst[ii] * (num_pred + 1) + num_pred * num_meas))
                         else:
                             # track_inds = np.argwhere(a==1)
                             new_track_list = []
                             for ii, ms in enumerate(a):
                                 if len(p_hyp.track_set) >= ms:
                                     new_track_list.append(
-                                        (ind_lst[ii]+ 1) * num_pred + p_hyp.track_set[(ms - 1)]
+                                        (ind_lst[ii] + 1) * num_pred + p_hyp.track_set[(ms - 1)]
                                     )
                                 elif len(p_hyp.track_set) == len(a):
                                     new_track_list.append(
@@ -7838,7 +7842,23 @@ class MSLabeledPoissonMultiBernoulliMixture(LabeledPoissonMultiBernoulliMixture)
         -------
         None
         """
+        # sens_len_lst = []
+        # for sens in meas:
+        #     temp_lst = np.array([len(x) for x in sens])
+        #     if np.all(temp_lst==0):
+        #         sens_len_lst.append(0)
+        #     else:
+        #         sens_len_lst.append(len(sens))
+        #     if len(sens[-1]) != 0:
+        #         sens.append(np.array([]))
         all_combs = list(itertools.product(*meas))
+        # all_combs.pop(-1)
+
+        # for ii, c in enumerate(all_combs):
+        #     if np.all([len(tmplst) == 0 for tmplst in c]):
+        #         all_combs.pop(ii)
+        #     else:
+        #         continue
         if self.gating_on:
             warnings.warn("Gating not implemented yet. SKIPPING", RuntimeWarning)
             # means = []
@@ -7854,17 +7874,32 @@ class MSLabeledPoissonMultiBernoulliMixture(LabeledPoissonMultiBernoulliMixture)
         num_meas_per_sens = [len(x) for x in meas]
         num_meas = len(all_combs)
         num_sens = len(meas)
+        # NEED TO ITERATE THROUGH THIS
+        # SHOULD GO FROM CURR MNMPS AND STOP WHEN IT HITS 0.
+        # THEN WE'LL GET COMBINATIONS OF ALL POSSIBLE MEASUREMENTS FOR ALL POSSIBLE PERMUTATIONS
         mnmps = min(num_meas_per_sens)
 
         # find a way to make this list of lists not list of tuples
         comb_inds = list(itertools.product(*list(np.arange(0, len(x)) for x in meas)))
         comb_inds = [list(ele) for ele in comb_inds]
+        # pop_lst = []
+        # for ii in range(len(comb_inds)):
+        #     for jj in range(len(comb_inds[ii])):
+        #         if comb_inds[ii][jj] >= sens_len_lst[jj]:
+        #             comb_inds[ii][jj] = np.nan
+        #     if np.all(np.isnan(comb_inds[ii])):
+        #         pop_lst.append(ii)
+        # for ind in pop_lst:
+        #     comb_inds.pop(ind)
         min_meas_in_sens = np.min([len(x) for x in meas])
 
         all_meas_combs = list(itertools.combinations(comb_inds, mnmps))
         all_meas_combs = [list(ele) for ele in all_meas_combs]
 
         poss_meas_combs = []
+
+        # for ii in range(len(all_combs)):
+        #     poss_meas_combs.append([ii])
 
         for ii in range(0, len(all_meas_combs)):
             break_flag = False
