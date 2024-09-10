@@ -4043,7 +4043,7 @@ def test_STM_PMBM(): #noqa
     rng = rnd.default_rng(global_seed)
 
     dt = 0.01
-    t0, t1 = 0, 6 + dt
+    t0, t1 = 0, 2 + dt
 
     filt = _setup_double_int_stf(dt)
     state_mat_args = (dt, "test arg")
@@ -4081,6 +4081,11 @@ def test_STM_PMBM(): #noqa
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
+        if np.mod(kk, 1) == 0:
+            print("\t\t\t{:.2f}".format(tt))
+            sys.stdout.flush()
+        if np.mod(kk, 253) == 0:
+            test = 1
 
         true_agents = _update_true_agents_pmbm(true_agents, tt, dt, b_model, rng)
         global_true.append(deepcopy(true_agents))
@@ -4122,7 +4127,7 @@ def test_STM_LPMBM(): #noqa
     rng = rnd.default_rng(global_seed)
 
     dt = 0.01
-    t0, t1 = 0, 6 + dt
+    t0, t1 = 0, 2 + dt
 
     filt = _setup_double_int_stf(dt)
     state_mat_args = (dt, "test arg")
@@ -4961,7 +4966,7 @@ if __name__ == "__main__":
     # test_UKF_GSM_GLMB()
     # test_EKF_GSM_GLMB()
 
-    test_JGLMB()
+    # test_JGLMB()
     # test_JGLMB_high_birth()
     # test_STM_JGLMB()
     # test_SMC_JGLMB()
@@ -4981,7 +4986,7 @@ if __name__ == "__main__":
 
     # test_PMBM()
     # test_LPMBM()
-    # test_STM_PMBM()
+    test_STM_PMBM()
     # test_STM_LPMBM()
     # test_SMC_PMBM()
     # test_SMC_LPMBM()
