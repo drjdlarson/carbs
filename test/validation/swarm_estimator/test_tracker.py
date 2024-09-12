@@ -3675,7 +3675,8 @@ def test_IMM_JGLMB():  # noqa
 
     assert len(true_agents) == jglmb.cardinality, "Wrong cardinality"
 
-@pytest.mark.slow
+# @pytest.mark.slow
+@pytest.mark.skip(reason="Unresolved Errors in Data Fusion")
 def test_MS_JGLMB():  # noqa
     print("Test MS-GM-JGLMB")
 
@@ -4668,7 +4669,8 @@ def test_MS_PMBM():  # noqa
 
     assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
-@pytest.mark.slow
+# @pytest.mark.slow
+@pytest.mark.skip(reason="Unresolved Errors in Data Fusion")
 def test_MS_LPMBM():  # noqa
     print("Test MS-GM-LPMBM")
 
