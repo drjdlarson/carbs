@@ -4968,7 +4968,7 @@ if __name__ == "__main__":
     # test_UKF_GSM_GLMB()
     # test_EKF_GSM_GLMB()
 
-    # test_JGLMB()
+    test_JGLMB()
     # test_JGLMB_high_birth()
     # test_STM_JGLMB()
     # test_SMC_JGLMB()
@@ -4988,7 +4988,7 @@ if __name__ == "__main__":
 
     # test_PMBM()
     # test_LPMBM()
-    test_STM_PMBM()
+    # test_STM_PMBM()
     # test_STM_LPMBM()
     # test_SMC_PMBM()
     # test_SMC_LPMBM()
