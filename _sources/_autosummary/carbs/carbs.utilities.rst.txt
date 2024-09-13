@@ -28,7 +28,7 @@ utilities
    :template: module.rst_t
    :recursive:
 
-   ~carbs.utilities.graphs
-   ~carbs.utilities.graphs_subroutines
-   ~carbs.utilities.sampling
+   ~graphs
+   ~graphs_subroutines
+   ~sampling
 

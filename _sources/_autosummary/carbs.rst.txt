@@ -28,7 +28,7 @@
    :template: module.rst_t
    :recursive:
 
-   ~carbs.guidance
-   ~carbs.swarm_estimator
-   ~carbs.utilities
+   ~guidance
+   ~swarm_estimator
+   ~utilities
 

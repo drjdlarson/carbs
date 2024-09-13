@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>carbs.swarm_estimator.tracker &mdash; CARBS 1.0.1 documentation</title>
+  <title>carbs.swarm_estimator.tracker &mdash; CARBS 1.0.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -16,7 +16,7 @@
   
         <script src="../../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="../../../_static/documentation_options.js?v=292eb321"></script>
+        <script src="../../../_static/documentation_options.js?v=1ed6394b"></script>
         <script src="../../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -39,7 +39,7 @@
               <img src="../../../_static/logo.svg" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                1.0.1
+                1.0.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
@@ -4855,7 +4855,7 @@
             <span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">num_tracks</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">num_tracks</span>
             <span class="k">if</span> <span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">mindices</span><span class="p">[</span>
-                    <span class="n">assigns</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)[</span><span class="n">assigns</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span>
+                    <span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)[</span><span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span>
                 <span class="p">]</span>
             <span class="c1"># Assign updated hypotheses from gibbs sampler</span>
             <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">cst</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">costs</span><span class="o">.</span><span class="n">flatten</span><span class="p">()):</span>
@@ -5151,11 +5151,9 @@
                                 <span class="n">assigns</span><span class="p">[</span><span class="n">ii</span><span class="p">][</span><span class="n">jj</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
                 <span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">num_tracks</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">num_tracks</span>
                 <span class="k">if</span> <span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
-                        <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">)</span>
-                        <span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">mindices</span><span class="p">[</span>
-                            <span class="n">assigns</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)[</span><span class="n">assigns</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span>
-                        <span class="p">]</span>
+                    <span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">mindices</span><span class="p">[</span>
+                        <span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)[</span><span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span>
+                    <span class="p">]</span>
                 <span class="c1"># Assign updated hypotheses from gibbs sampler</span>
                 <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">cst</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">costs</span><span class="o">.</span><span class="n">flatten</span><span class="p">()):</span>
                     <span class="n">update_hyp_cmp_temp</span> <span class="o">=</span> <span class="n">assigns</span><span class="p">[</span><span class="n">c</span><span class="p">,]</span>
@@ -7905,42 +7903,61 @@
                         <span class="k">else</span><span class="p">:</span>
                             <span class="c1"># track_inds = np.argwhere(a==1)</span>
                             <span class="n">new_track_list</span> <span class="o">=</span> <span class="p">[]</span>
-                            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">):</span>
-                                <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="p">(</span><span class="n">ms</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)):</span>
-                                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">ms</span><span class="p">:</span>
-                                        <span class="c1"># new_track_list.append(((np.array(t)) * ms + num_pred))</span>
-                                        <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                                            <span class="p">(</span><span class="n">num_pred</span> <span class="o">*</span> <span class="p">(</span><span class="n">ind_lst</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
-                                        <span class="p">)</span>
-                                        <span class="c1"># new_track_list.append((num_pred * ms + np.array(t)))</span>
-                                    <span class="k">else</span><span class="p">:</span>
-                                        <span class="c1"># new_track_list.append(num_pred * ms - ind_lst[ii] * (num_pred - 1))</span>
-                                        <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                                            <span class="n">num_pred</span> <span class="o">*</span> <span class="p">(</span><span class="n">ind_lst</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-                                            <span class="o">-</span> <span class="n">ii</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_pred</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-                                        <span class="p">)</span>
-                            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
-                                <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">ms</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
-                                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">ms</span><span class="p">:</span>
-                                        <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                                            <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">ind_lst</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span> <span class="o">*</span> <span class="n">num_pred</span>
-                                            <span class="o">+</span> <span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">[(</span><span class="n">ms</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
-                                        <span class="p">)</span>
-                                    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">ms</span><span class="p">:</span>
-                                        <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                                            <span class="n">num_pred</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_meas</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">ind_lst</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span>
-                                        <span class="p">)</span>
-                            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
-                                <span class="c1"># May need to modify this</span>
-                                <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">ms</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
-                                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">ms</span><span class="p">:</span>
-                                        <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                                            <span class="n">ms</span> <span class="o">*</span> <span class="n">num_pred</span> <span class="o">+</span> <span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">[(</span><span class="n">ms</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
-                                        <span class="p">)</span>
-                                    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">ms</span><span class="p">:</span>
-                                        <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                                            <span class="n">num_pred</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_meas</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">ms</span> <span class="o">-</span> <span class="n">num_meas</span><span class="p">)</span>
-                                        <span class="p">)</span>
+
+                            <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">ms</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+                                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">ms</span><span class="p">:</span>
+                                    <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                        <span class="p">(</span><span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_pred</span> <span class="o">+</span> <span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">[(</span><span class="n">ms</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+                                    <span class="p">)</span>
+                                <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+                                    <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                        <span class="n">num_pred</span> <span class="o">*</span> <span class="n">ms</span> <span class="o">-</span> <span class="n">ii</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_pred</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                                    <span class="p">)</span>
+                                <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+                                    <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                        <span class="n">num_pred</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_meas</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">ms</span> <span class="o">-</span> <span class="n">num_meas</span><span class="p">)</span>
+                                    <span class="p">)</span>
+                                <span class="k">else</span><span class="p">:</span>
+                                    <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                        <span class="p">(</span><span class="n">num_meas</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_pred</span>
+                                        <span class="o">-</span> <span class="p">(</span><span class="n">ms</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                                    <span class="p">)</span>
+                            <span class="c1"># if len(a) == len(p_hyp.track_set):</span>
+                            <span class="c1">#     for ii, (ms, t) in enumerate(zip(a, p_hyp.track_set)):</span>
+                            <span class="c1">#         if len(p_hyp.track_set) &gt;= ms:</span>
+                            <span class="c1">#             # new_track_list.append(((np.array(t)) * ms + num_pred))</span>
+                            <span class="c1">#             new_track_list.append(</span>
+                            <span class="c1">#                 (num_pred * (ind_lst[ii] + 1) + np.array(t))</span>
+                            <span class="c1">#             )</span>
+                            <span class="c1">#             # new_track_list.append((num_pred * ms + np.array(t)))</span>
+                            <span class="c1">#         else:</span>
+                            <span class="c1">#             # new_track_list.append(num_pred * ms - ind_lst[ii] * (num_pred - 1))</span>
+                            <span class="c1">#             new_track_list.append(</span>
+                            <span class="c1">#                 num_pred * (ind_lst[ii] + 1)</span>
+                            <span class="c1">#                 - ii * (num_pred - 1)</span>
+                            <span class="c1">#             )</span>
+                            <span class="c1"># elif len(p_hyp.track_set) &lt; len(a):</span>
+                            <span class="c1">#     for ii, ms in enumerate(a):</span>
+                            <span class="c1">#         if len(p_hyp.track_set) &gt;= ms:</span>
+                            <span class="c1">#             new_track_list.append(</span>
+                            <span class="c1">#                 (1 + ind_lst[ii]) * num_pred</span>
+                            <span class="c1">#                 + p_hyp.track_set[(ms - 1)]</span>
+                            <span class="c1">#             )</span>
+                            <span class="c1">#         elif len(p_hyp.track_set) &lt; ms:</span>
+                            <span class="c1">#             new_track_list.append(</span>
+                            <span class="c1">#                 num_pred * (num_meas + 1) + (ind_lst[ii])</span>
+                            <span class="c1">#             )</span>
+                            <span class="c1"># elif len(p_hyp.track_set) &gt; len(a):</span>
+                            <span class="c1">#     # May need to modify this</span>
+                            <span class="c1">#     for ii, ms in enumerate(a):</span>
+                            <span class="c1">#         if len(p_hyp.track_set) &gt;= ms:</span>
+                            <span class="c1">#             new_track_list.append(</span>
+                            <span class="c1">#                 ms * num_pred + p_hyp.track_set[(ms - 1)]</span>
+                            <span class="c1">#             )</span>
+                            <span class="c1">#         elif len(p_hyp.track_set) &lt; ms:</span>
+                            <span class="c1">#             new_track_list.append(</span>
+                            <span class="c1">#                 num_pred * (num_meas + 1) + (ms - num_meas)</span>
+                            <span class="c1">#             )</span>
 
                             <span class="c1"># new_track_list = list(np.array(p_hyp.track_set) + num_pred + num_pred * a)# new_track_list = list(num_pred * a + np.array(p_hyp.track_set))</span>
 
@@ -8140,8 +8157,10 @@
                             <span class="p">)</span>
                         <span class="n">cost_m</span> <span class="o">=</span> <span class="n">all_cost_m</span><span class="p">[:,</span> <span class="n">inds</span><span class="p">]</span>
                     <span class="k">else</span><span class="p">:</span>
+                        <span class="c1">#TODO Change this process so it works when we can&#39;t just arange through to the end. I think we add num_pred to the indices in ind_lst</span>
                         <span class="k">if</span> <span class="n">p_hyp</span><span class="o">.</span><span class="n">num_tracks</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># all clutter</span>
-                            <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_pred</span><span class="p">,</span> <span class="n">num_pred</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">ind_lst</span><span class="p">))</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                            <span class="c1"># inds = np.arange(num_pred, num_pred + len(ind_lst)).tolist()</span>
+                            <span class="n">inds</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">num_pred</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ind_lst</span><span class="p">))</span>
                         <span class="k">else</span><span class="p">:</span>
                             <span class="n">inds</span> <span class="o">=</span> <span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span> <span class="o">+</span> <span class="p">[</span><span class="n">x</span> <span class="o">+</span> <span class="n">num_pred</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ind_lst</span><span class="p">]</span>
                         <span class="n">tcm</span> <span class="o">=</span> <span class="n">all_cost_m</span><span class="p">[</span>
@@ -8174,46 +8193,74 @@
                             <span class="o">-</span> <span class="n">c</span>
                         <span class="p">)</span>
                         <span class="k">if</span> <span class="n">p_hyp</span><span class="o">.</span><span class="n">num_tracks</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                            <span class="n">new_track_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">num_pred</span> <span class="o">*</span> <span class="n">a</span> <span class="o">+</span> <span class="n">num_pred</span> <span class="o">*</span> <span class="n">num_meas</span><span class="p">)</span>
+                            <span class="c1"># new_track_list = list(num_pred * a + num_pred * num_meas)</span>
+                            <span class="c1"># new_track_list = list(num_pred * a + num_pred * num_meas)</span>
+                            <span class="n">new_track_list</span> <span class="o">=</span> <span class="p">[]</span>
+                            <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">ms</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+                                <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">ind_lst</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_pred</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">num_pred</span> <span class="o">*</span> <span class="n">num_meas</span><span class="p">))</span>
                         <span class="k">else</span><span class="p">:</span>
                             <span class="c1"># track_inds = np.argwhere(a==1)</span>
                             <span class="n">new_track_list</span> <span class="o">=</span> <span class="p">[]</span>
-                            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">):</span>
-                                <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="p">(</span><span class="n">ms</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)):</span>
-                                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">ms</span><span class="p">:</span>
-                                        <span class="c1"># new_track_list.append(((np.array(t)) * ms + num_pred))</span>
-                                        <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                                            <span class="p">(</span><span class="n">num_pred</span> <span class="o">*</span> <span class="p">(</span><span class="n">ind_lst</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
-                                        <span class="p">)</span>
-                                        <span class="c1"># new_track_list.append((num_pred * ms + np.array(t)))</span>
-                                    <span class="k">else</span><span class="p">:</span>
-                                        <span class="c1"># new_track_list.append(num_pred * ms - ind_lst[ii] * (num_pred - 1))</span>
-                                        <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                                            <span class="n">num_pred</span> <span class="o">*</span> <span class="p">(</span><span class="n">ind_lst</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-                                            <span class="o">-</span> <span class="n">ii</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_pred</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-                                        <span class="p">)</span>
-                            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
-                                <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">ms</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
-                                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">ms</span><span class="p">:</span>
-                                        <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                                            <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">ind_lst</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span> <span class="o">*</span> <span class="n">num_pred</span>
-                                            <span class="o">+</span> <span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">[(</span><span class="n">ms</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
-                                        <span class="p">)</span>
-                                    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">ms</span><span class="p">:</span>
-                                        <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                                            <span class="n">num_pred</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_meas</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">ind_lst</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span>
-                                        <span class="p">)</span>
-                            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
-                                <span class="c1"># May need to modify this</span>
-                                <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">ms</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
-                                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">ms</span><span class="p">:</span>
-                                        <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                                            <span class="n">ms</span> <span class="o">*</span> <span class="n">num_pred</span> <span class="o">+</span> <span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">[(</span><span class="n">ms</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
-                                        <span class="p">)</span>
-                                    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">ms</span><span class="p">:</span>
-                                        <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                                            <span class="n">num_pred</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_meas</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">ms</span> <span class="o">-</span> <span class="n">num_meas</span><span class="p">)</span>
-                                        <span class="p">)</span>
+                            <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">ms</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+                                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">ms</span><span class="p">:</span>
+                                    <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                        <span class="p">(</span><span class="n">ind_lst</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_pred</span> <span class="o">+</span> <span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">[(</span><span class="n">ms</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+                                    <span class="p">)</span>
+                                <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+                                    <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                        <span class="n">num_pred</span> <span class="o">*</span> <span class="n">ms</span> <span class="o">-</span> <span class="n">ii</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_pred</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                                    <span class="p">)</span>
+                                <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+                                    <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                        <span class="n">num_pred</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_meas</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">ind_lst</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span>
+                                    <span class="p">)</span>
+                                <span class="k">else</span><span class="p">:</span>
+                                    <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                        <span class="n">num_pred</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_meas</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">ms</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                                    <span class="p">)</span>
+
+                            <span class="c1"># if len(a) == len(p_hyp.track_set):</span>
+                            <span class="c1">#     for ii, (ms, t) in enumerate(zip(a, p_hyp.track_set)):</span>
+                            <span class="c1">#         if len(p_hyp.track_set) &gt;= ms:</span>
+                            <span class="c1">#             # new_track_list.append(((np.array(t)) * ms + num_pred))</span>
+                            <span class="c1">#             new_track_list.append(</span>
+                            <span class="c1">#                 (num_pred * (ind_lst[ii] + 1) + np.array(t))</span>
+                            <span class="c1">#             )</span>
+                            <span class="c1">#             # new_track_list.append((num_pred * ms + np.array(t)))</span>
+                            <span class="c1">#         else:</span>
+                            <span class="c1">#             # new_track_list.append(num_pred * ms - ind_lst[ii] * (num_pred - 1))</span>
+                            <span class="c1">#             new_track_list.append(</span>
+                            <span class="c1">#                 num_pred * (ind_lst[ii] + 1) + t + ms</span>
+                            <span class="c1">#                 # num_pred * (ms + 1) + ind_lst[ii]</span>
+                            <span class="c1">#                 # num_pred * (ind_lst[ii] + 1)</span>
+                            <span class="c1">#                 # - ii * (num_pred - 1)</span>
+                            <span class="c1">#             )</span>
+                            <span class="c1"># elif len(p_hyp.track_set) &lt; len(a):</span>
+                            <span class="c1">#     for ii, ms in enumerate(a):</span>
+                            <span class="c1">#         if len(p_hyp.track_set) &gt;= ms:</span>
+                            <span class="c1">#             new_track_list.append(</span>
+                            <span class="c1">#                 (1 + ind_lst[ii]) * num_pred</span>
+                            <span class="c1">#                 + p_hyp.track_set[(ms - 1)]</span>
+                            <span class="c1">#             )</span>
+                            <span class="c1">#         elif len(p_hyp.track_set) &lt; ms:</span>
+                            <span class="c1">#             new_track_list.append(</span>
+                            <span class="c1">#                 num_pred * (num_meas + 1) + (ind_lst[ii])</span>
+                            <span class="c1">#             )</span>
+                            <span class="c1"># elif len(p_hyp.track_set) &gt; len(a):</span>
+                            <span class="c1">#     # May need to modify this</span>
+                            <span class="c1">#     for ii, ms in enumerate(a):</span>
+                            <span class="c1">#         if len(p_hyp.track_set) &gt;= ms:</span>
+                            <span class="c1">#             # new_track_list.append(</span>
+                            <span class="c1">#             #     ms * num_pred + p_hyp.track_set[(ms - 1)]</span>
+                            <span class="c1">#             # )</span>
+                            <span class="c1">#             new_track_list.append(</span>
+                            <span class="c1">#                 (1 + ind_lst[ii]) * num_pred</span>
+                            <span class="c1">#                 + p_hyp.track_set[(ms - 1)]</span>
+                            <span class="c1">#             )</span>
+                            <span class="c1">#         elif len(p_hyp.track_set) &lt; ms:</span>
+                            <span class="c1">#             new_track_list.append(</span>
+                            <span class="c1">#                 num_pred * (num_meas + 1) - (ms - len(p_hyp.track_set) - 1)</span>
+                            <span class="c1">#             )</span>
 
                             <span class="c1"># new_track_list = list(np.array(p_hyp.track_set) + num_pred + num_pred * a)# new_track_list = list(num_pred * a + np.array(p_hyp.track_set))</span>
 
@@ -8250,7 +8297,23 @@
 <span class="sd">        -------</span>
 <span class="sd">        None</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># sens_len_lst = []</span>
+        <span class="c1"># for sens in meas:</span>
+        <span class="c1">#     temp_lst = np.array([len(x) for x in sens])</span>
+        <span class="c1">#     if np.all(temp_lst==0):</span>
+        <span class="c1">#         sens_len_lst.append(0)</span>
+        <span class="c1">#     else:</span>
+        <span class="c1">#         sens_len_lst.append(len(sens))</span>
+        <span class="c1">#     if len(sens[-1]) != 0:</span>
+        <span class="c1">#         sens.append(np.array([]))</span>
         <span class="n">all_combs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">meas</span><span class="p">))</span>
+        <span class="c1"># all_combs.pop(-1)</span>
+
+        <span class="c1"># for ii, c in enumerate(all_combs):</span>
+        <span class="c1">#     if np.all([len(tmplst) == 0 for tmplst in c]):</span>
+        <span class="c1">#         all_combs.pop(ii)</span>
+        <span class="c1">#     else:</span>
+        <span class="c1">#         continue</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gating_on</span><span class="p">:</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Gating not implemented yet. SKIPPING&quot;</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">)</span>
             <span class="c1"># means = []</span>
@@ -8266,17 +8329,32 @@
         <span class="n">num_meas_per_sens</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">meas</span><span class="p">]</span>
         <span class="n">num_meas</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_combs</span><span class="p">)</span>
         <span class="n">num_sens</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">meas</span><span class="p">)</span>
+        <span class="c1"># NEED TO ITERATE THROUGH THIS</span>
+        <span class="c1"># SHOULD GO FROM CURR MNMPS AND STOP WHEN IT HITS 0.</span>
+        <span class="c1"># THEN WE&#39;LL GET COMBINATIONS OF ALL POSSIBLE MEASUREMENTS FOR ALL POSSIBLE PERMUTATIONS</span>
         <span class="n">mnmps</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">num_meas_per_sens</span><span class="p">)</span>
 
         <span class="c1"># find a way to make this list of lists not list of tuples</span>
         <span class="n">comb_inds</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">meas</span><span class="p">)))</span>
         <span class="n">comb_inds</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">ele</span><span class="p">)</span> <span class="k">for</span> <span class="n">ele</span> <span class="ow">in</span> <span class="n">comb_inds</span><span class="p">]</span>
+        <span class="c1"># pop_lst = []</span>
+        <span class="c1"># for ii in range(len(comb_inds)):</span>
+        <span class="c1">#     for jj in range(len(comb_inds[ii])):</span>
+        <span class="c1">#         if comb_inds[ii][jj] &gt;= sens_len_lst[jj]:</span>
+        <span class="c1">#             comb_inds[ii][jj] = np.nan</span>
+        <span class="c1">#     if np.all(np.isnan(comb_inds[ii])):</span>
+        <span class="c1">#         pop_lst.append(ii)</span>
+        <span class="c1"># for ind in pop_lst:</span>
+        <span class="c1">#     comb_inds.pop(ind)</span>
         <span class="n">min_meas_in_sens</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">meas</span><span class="p">])</span>
 
         <span class="n">all_meas_combs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">comb_inds</span><span class="p">,</span> <span class="n">mnmps</span><span class="p">))</span>
         <span class="n">all_meas_combs</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">ele</span><span class="p">)</span> <span class="k">for</span> <span class="n">ele</span> <span class="ow">in</span> <span class="n">all_meas_combs</span><span class="p">]</span>
 
         <span class="n">poss_meas_combs</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># for ii in range(len(all_combs)):</span>
+        <span class="c1">#     poss_meas_combs.append([ii])</span>
 
         <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_meas_combs</span><span class="p">)):</span>
             <span class="n">break_flag</span> <span class="o">=</span> <span class="kc">False</span>

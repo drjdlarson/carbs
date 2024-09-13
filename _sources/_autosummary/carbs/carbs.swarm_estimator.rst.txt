@@ -28,6 +28,6 @@ swarm\_estimator
    :template: module.rst_t
    :recursive:
 
-   ~carbs.swarm_estimator.slam
-   ~carbs.swarm_estimator.tracker
+   ~slam
+   ~tracker
 
