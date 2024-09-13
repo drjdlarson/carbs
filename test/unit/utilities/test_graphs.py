@@ -57,7 +57,7 @@ class TestKShortesst:
         eps = np.finfo(float).eps
         k = 5
         log_cost = np.array(
-            [3.89182029811063, 3.89182029811063, 3.47609868983527, 3.47609868983527]
+            [3.99182029811063, 3.89182029811063, 3.57609868983527, 3.47609868983527]
         )
 
         (paths, costs) = graphs.k_shortest(log_cost, k)
@@ -66,9 +66,9 @@ class TestKShortesst:
         exp_costs = [
             eps,
             3.47609868983527,
-            3.47609868983527,
+            3.57609868983527,
             3.89182029811063,
-            3.89182029811063,
+            3.99182029811063,
         ]
 
         assert len(paths) == len(exp_paths)
@@ -187,3 +187,15 @@ def test_a_star1():
     end = (24, 24)
     # graphs.a_star_search(maze, start, end)
     test.assert_no_warnings(graphs.a_star_search, maze, start, end)
+
+
+if __name__ == "__main__":
+    k_short_tester = TestKShortesst()
+    k_short_tester.test_bfm_shortest_path1()
+    k_short_tester.test_bfm_shortest_path2()
+    k_short_tester.test_k_shortest1()
+    k_short_tester.test_k_shortest2()
+    test_murty_m_best1()
+    test_murty_m_best2()
+    test_murty_m_best3()
+    test_a_star1()
