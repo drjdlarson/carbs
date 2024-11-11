@@ -2031,6 +2031,13 @@ def test_JGLMB():  # noqa
 
     jglmb.calculate_ospa(global_true, 2, 1)
     jglmb.calculate_ospa2(global_true, 5, 1, 100)
+    jglmb.calculate_gospa(global_true, 2, 1, 2)
+
+    true_agents = _update_true_agents_pmbm_lmb_var(
+       true_agents, tt, dt, b_model, rng
+    )
+    # true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
+    global_true.append(deepcopy(true_agents))
 
     if debug_plots:
         jglmb.plot_states_labels([0, 1], true_states=global_true, meas_inds=[0, 1])
@@ -2038,6 +2045,7 @@ def test_JGLMB():  # noqa
         jglmb.plot_card_history(time_units="s", time=time)
         jglmb.plot_ospa_history()
         jglmb.plot_ospa2_history()
+        jglmb.plot_gospa_history()
     print("\tExpecting {} agents".format(len(true_agents)))
 
     assert len(true_agents) == jglmb.cardinality, "Wrong cardinality"

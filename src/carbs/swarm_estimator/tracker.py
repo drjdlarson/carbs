@@ -3,6 +3,7 @@
 This module contains the classes and data structures
 for RFS tracking related algorithms.
 """
+
 import gncpy.filters
 import numpy as np
 import numpy.linalg as la
@@ -30,7 +31,7 @@ import gncpy.errors as gerr
 
 import serums.models as smodels
 from serums.enums import SingleObjectDistance
-from serums.distances import calculate_ospa, calculate_ospa2
+from serums.distances import calculate_ospa, calculate_ospa2, calculate_gospa
 
 
 class RandomFiniteSetBase(metaclass=abc.ABCMeta):
@@ -137,6 +138,7 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
         self.ospa_localization = None
         self.ospa_cardinality = None
         self._ospa_params = {}
+        self._gospa_params = {}
 
         self._states = []  # local copy for internal modification
         self._meas_tab = (
@@ -501,6 +503,99 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
             0:6
         ]
 
+    def calculate_gospa(
+        self,
+        truth: Iterable[Iterable[np.ndarray]],
+        c: float,
+        p: float,
+        a: int,
+        core_method: SingleObjectDistance = None,
+        true_covs: Iterable[Iterable[np.ndarray]] = None,
+        state_inds: Iterable[int] = None,
+    ):
+        """Calculates the OSPA distance between the truth at all timesteps.
+
+        Wrapper for :func:`serums.distances.calculate_ospa`.
+
+        Parameters
+        ----------
+        truth : list
+            Each element represents a timestep and is a list of N x 1 numpy array,
+            one per true agent in the swarm.
+        c : float
+            Distance cutoff for considering a point properly assigned. This
+            influences how cardinality errors are penalized. For :math:`p = 1`
+            it is the penalty given false point estimate.
+        p : int
+            The power of the distance term. Higher values penalize outliers
+            more.
+        a : int
+            The normalization factor of the distance term. Appropriately penalizes missed
+            or false detection of tracks rather than normalizing by the total maximum
+            cardinality.
+        core_method : :class:`serums.enums.SingleObjectDistance`, Optional
+            The main distance measure to use for the localization component.
+            The default value of None implies :attr:`.SingleObjectDistance.EUCLIDEAN`.
+        true_covs : list, Optional
+            Each element represents a timestep and is a list of N x N numpy arrays
+            corresonponding to the uncertainty about the true states. Note the
+            order must be consistent with the truth data given. This is only
+            needed for core methods :attr:`SingleObjectDistance.HELLINGER`. The defautl
+            value is None.
+        state_inds : list, optional
+            Indices in the state vector to use, will be applied to the truth
+            data as well. The default is None which means the full state is
+            used.
+        """
+        # error checking on optional input arguments
+        core_method = self._ospa_input_check(core_method, truth, true_covs)
+
+        # setup data structures
+        if state_inds is None:
+            state_dim = self._ospa_find_s_dim(truth)
+            state_inds = range(state_dim)
+        else:
+            state_dim = len(state_inds)
+        if state_dim is None:
+            warnings.warn("Failed to get state dimension. SKIPPING OSPA calculation")
+
+            nt = len(self._states)
+            self.gospa = np.zeros(nt)
+            self.gospa_localization = np.zeros(nt)
+            self.gospa_cardinality = np.zeros(nt)
+            self._gospa_params["core"] = core_method
+            self._gospa_params["cutoff"] = c
+            self._gospa_params["power"] = p
+            self._gospa_params["normalization"] = a
+            return
+        true_mat, true_cov_mat = self._ospa_setup_tmat(
+            truth, state_dim, true_covs, state_inds
+        )
+        est_mat, est_cov_mat = self._ospa_setup_emat(state_dim, state_inds)
+
+        # find OSPA
+        (
+            self.gospa,
+            self.gospa_localization,
+            self.gospa_cardinality,
+            self._gospa_params["core"],
+            self._gospa_params["cutoff"],
+            self._gospa_params["power"],
+            self._gospa_params["normalization"],
+        ) = calculate_gospa(
+            est_mat,
+            true_mat,
+            c,
+            p,
+            a,
+            use_empty=True,
+            core_method=core_method,
+            true_cov_mat=true_cov_mat,
+            est_cov_mat=est_cov_mat,
+        )[
+            0:7
+        ]
+
     def _plt_ospa_hist(self, y_val, time_units, time, ttl, y_lbl, opts):
         fig = opts["f_hndl"]
 
@@ -618,6 +713,86 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
             y_lbls = ["Localiztion", "Cardinality"]
             figs["OSPA_subs"] = self._plt_ospa_hist_subs(
                 [self.ospa_localization, self.ospa_cardinality],
+                time_units,
+                time,
+                ttl,
+                y_lbls,
+                main_opts,
+            )
+        return figs
+
+    def plot_gospa_history(
+        self,
+        time_units="index",
+        time=None,
+        main_opts=None,
+        sub_opts=None,
+        plot_subs=True,
+    ):
+        """Plots the GOSPA history.
+
+        This requires that the GOSPA has been calcualted by the approriate
+        function first.
+
+        Parameters
+        ----------
+        time_units : string, optional
+            Text representing the units of time in the plot. The default is
+            'index'.
+        time : numpy array, optional
+            Vector to use for the x-axis of the plot. If none is given then
+            vector indices are used. The default is None.
+        main_opts : dict, optional
+            Additional plotting options for :meth:`gncpy.plotting.init_plotting_opts`
+            function. Values implemented here are `f_hndl`, and any values
+            relating to title/axis text formatting. The default of None implies
+            the default options are used for the main plot.
+        sub_opts : dict, optional
+            Additional plotting options for :meth:`gncpy.plotting.init_plotting_opts`
+            function. Values implemented here are `f_hndl`, and any values
+            relating to title/axis text formatting. The default of None implies
+            the default options are used for the sub plot.
+        plot_subs : bool, optional
+            Flag indicating if the component statistics (cardinality and
+            localization) should also be plotted.
+
+        Returns
+        -------
+        figs : dict
+            Dictionary of matplotlib figure objects the data was plotted on.
+        """
+        if self.ospa is None:
+            warnings.warn("GOSPA must be calculated before plotting")
+            return
+        if main_opts is None:
+            main_opts = pltUtil.init_plotting_opts()
+        if sub_opts is None and plot_subs:
+            sub_opts = pltUtil.init_plotting_opts()
+        fmt = "{:s} GOSPA (c = {:.1f}, p = {:d}, a = {:d})"
+        ttl = fmt.format(
+            self._gospa_params["core"],
+            self._gospa_params["cutoff"],
+            self._gospa_params["power"],
+            self._gospa_params["normalization"],
+        )
+        y_lbl = "GOSPA"
+
+        figs = {}
+        figs["GOSPA"] = self._plt_ospa_hist(
+            self.gospa, time_units, time, ttl, y_lbl, main_opts
+        )
+
+        if plot_subs:
+            fmt = "{:s} GOSPA Components (c = {:.1f}, p = {:d}, a = {:d})"
+            ttl = fmt.format(
+                self._gospa_params["core"],
+                self._gospa_params["cutoff"],
+                self._gospa_params["power"],
+                self._gospa_params["normalization"],
+            )
+            y_lbls = ["Localiztion", "Cardinality"]
+            figs["GOSPA_subs"] = self._plt_ospa_hist_subs(
+                [self.gospa_localization, self.gospa_cardinality],
                 time_units,
                 time,
                 ttl,
@@ -4549,7 +4724,9 @@ class JointGeneralizedLabeledMultiBernoulli(GeneralizedLabeledMultiBernoulli):
             assigns[assigns >= 2 * num_tracks] -= 2 * num_tracks
             if assigns[assigns >= 0].size != 0:
                 assigns[assigns >= 0] = mindices[
-                    assigns[assigns >= 0].astype(int)[assigns[assigns >= 0].astype(int) >= 0]
+                    assigns[assigns >= 0].astype(int)[
+                        assigns[assigns >= 0].astype(int) >= 0
+                    ]
                 ]
             # Assign updated hypotheses from gibbs sampler
             for c, cst in enumerate(costs.flatten()):
@@ -4813,7 +4990,9 @@ class MSJointGeneralizedLabeledMultiBernoulli(JointGeneralizedLabeledMultiBernou
                 assigns[assigns >= 2 * num_tracks] -= 2 * num_tracks
                 if assigns[assigns >= 0].size != 0:
                     assigns[assigns >= 0] = mindices[
-                        assigns[assigns >= 0].astype(int)[assigns[assigns >= 0].astype(int) >= 0]
+                        assigns[assigns >= 0].astype(int)[
+                            assigns[assigns >= 0].astype(int) >= 0
+                        ]
                     ]
                 # Assign updated hypotheses from gibbs sampler
                 for c, cst in enumerate(costs.flatten()):
@@ -7704,7 +7883,7 @@ class MSLabeledPoissonMultiBernoulliMixture(LabeledPoissonMultiBernoulliMixture)
                             )
                         cost_m = all_cost_m[:, inds]
                     else:
-                        #TODO Change this process so it works when we can't just arange through to the end. I think we add num_pred to the indices in ind_lst
+                        # TODO Change this process so it works when we can't just arange through to the end. I think we add num_pred to the indices in ind_lst
                         if p_hyp.num_tracks == 0:  # all clutter
                             # inds = np.arange(num_pred, num_pred + len(ind_lst)).tolist()
                             inds = list(num_pred + np.array(ind_lst))
@@ -7744,14 +7923,17 @@ class MSLabeledPoissonMultiBernoulliMixture(LabeledPoissonMultiBernoulliMixture)
                             # new_track_list = list(num_pred * a + num_pred * num_meas)
                             new_track_list = []
                             for ii, ms in enumerate(a):
-                                new_track_list.append((ind_lst[ii] * (num_pred + 1) + num_pred * num_meas))
+                                new_track_list.append(
+                                    (ind_lst[ii] * (num_pred + 1) + num_pred * num_meas)
+                                )
                         else:
                             # track_inds = np.argwhere(a==1)
                             new_track_list = []
                             for ii, ms in enumerate(a):
                                 if len(p_hyp.track_set) >= ms:
                                     new_track_list.append(
-                                        (ind_lst[ii] + 1) * num_pred + p_hyp.track_set[(ms - 1)]
+                                        (ind_lst[ii] + 1) * num_pred
+                                        + p_hyp.track_set[(ms - 1)]
                                     )
                                 elif len(p_hyp.track_set) == len(a):
                                     new_track_list.append(
@@ -7763,7 +7945,8 @@ class MSLabeledPoissonMultiBernoulliMixture(LabeledPoissonMultiBernoulliMixture)
                                     )
                                 else:
                                     new_track_list.append(
-                                        num_pred * (num_meas + 1) - (ms - len(p_hyp.track_set) - 1)
+                                        num_pred * (num_meas + 1)
+                                        - (ms - len(p_hyp.track_set) - 1)
                                     )
 
                             # if len(a) == len(p_hyp.track_set):
