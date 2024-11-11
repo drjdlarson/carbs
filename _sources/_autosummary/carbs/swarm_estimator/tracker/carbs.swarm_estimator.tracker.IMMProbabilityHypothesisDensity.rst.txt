@@ -19,11 +19,13 @@ IMMProbabilityHypothesisDensity
    
       ~IMMProbabilityHypothesisDensity.__init__
       ~IMMProbabilityHypothesisDensity.animate_state_plot
+      ~IMMProbabilityHypothesisDensity.calculate_gospa
       ~IMMProbabilityHypothesisDensity.calculate_ospa
       ~IMMProbabilityHypothesisDensity.cleanup
       ~IMMProbabilityHypothesisDensity.correct
       ~IMMProbabilityHypothesisDensity.extract_states
       ~IMMProbabilityHypothesisDensity.load_filter_state
+      ~IMMProbabilityHypothesisDensity.plot_gospa_history
       ~IMMProbabilityHypothesisDensity.plot_ospa_history
       ~IMMProbabilityHypothesisDensity.plot_states
       ~IMMProbabilityHypothesisDensity.predict

@@ -18,6 +18,7 @@ MSLabeledPoissonMultiBernoulliMixture
       :nosignatures:
    
       ~MSLabeledPoissonMultiBernoulliMixture.__init__
+      ~MSLabeledPoissonMultiBernoulliMixture.calculate_gospa
       ~MSLabeledPoissonMultiBernoulliMixture.calculate_ospa
       ~MSLabeledPoissonMultiBernoulliMixture.calculate_ospa2
       ~MSLabeledPoissonMultiBernoulliMixture.cleanup
@@ -26,6 +27,7 @@ MSLabeledPoissonMultiBernoulliMixture
       ~MSLabeledPoissonMultiBernoulliMixture.load_filter_state
       ~MSLabeledPoissonMultiBernoulliMixture.plot_card_dist
       ~MSLabeledPoissonMultiBernoulliMixture.plot_card_history
+      ~MSLabeledPoissonMultiBernoulliMixture.plot_gospa_history
       ~MSLabeledPoissonMultiBernoulliMixture.plot_ospa2_history
       ~MSLabeledPoissonMultiBernoulliMixture.plot_ospa_history
       ~MSLabeledPoissonMultiBernoulliMixture.plot_states

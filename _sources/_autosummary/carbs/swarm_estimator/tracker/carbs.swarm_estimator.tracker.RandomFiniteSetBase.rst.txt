@@ -18,11 +18,13 @@ RandomFiniteSetBase
       :nosignatures:
    
       ~RandomFiniteSetBase.__init__
+      ~RandomFiniteSetBase.calculate_gospa
       ~RandomFiniteSetBase.calculate_ospa
       ~RandomFiniteSetBase.cleanup
       ~RandomFiniteSetBase.correct
       ~RandomFiniteSetBase.extract_states
       ~RandomFiniteSetBase.load_filter_state
+      ~RandomFiniteSetBase.plot_gospa_history
       ~RandomFiniteSetBase.plot_ospa_history
       ~RandomFiniteSetBase.predict
       ~RandomFiniteSetBase.save_filter_state

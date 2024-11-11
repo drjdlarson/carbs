@@ -19,6 +19,7 @@ CardinalizedPHD
    
       ~CardinalizedPHD.__init__
       ~CardinalizedPHD.animate_state_plot
+      ~CardinalizedPHD.calculate_gospa
       ~CardinalizedPHD.calculate_ospa
       ~CardinalizedPHD.cleanup
       ~CardinalizedPHD.correct
@@ -26,6 +27,7 @@ CardinalizedPHD
       ~CardinalizedPHD.load_filter_state
       ~CardinalizedPHD.plot_card_dist
       ~CardinalizedPHD.plot_card_history
+      ~CardinalizedPHD.plot_gospa_history
       ~CardinalizedPHD.plot_number_states_per_time
       ~CardinalizedPHD.plot_ospa_history
       ~CardinalizedPHD.plot_states

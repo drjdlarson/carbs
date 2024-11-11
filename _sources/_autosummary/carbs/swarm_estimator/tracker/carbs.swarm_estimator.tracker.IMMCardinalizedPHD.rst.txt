@@ -19,6 +19,7 @@ IMMCardinalizedPHD
    
       ~IMMCardinalizedPHD.__init__
       ~IMMCardinalizedPHD.animate_state_plot
+      ~IMMCardinalizedPHD.calculate_gospa
       ~IMMCardinalizedPHD.calculate_ospa
       ~IMMCardinalizedPHD.cleanup
       ~IMMCardinalizedPHD.correct
@@ -26,6 +27,7 @@ IMMCardinalizedPHD
       ~IMMCardinalizedPHD.load_filter_state
       ~IMMCardinalizedPHD.plot_card_dist
       ~IMMCardinalizedPHD.plot_card_history
+      ~IMMCardinalizedPHD.plot_gospa_history
       ~IMMCardinalizedPHD.plot_number_states_per_time
       ~IMMCardinalizedPHD.plot_ospa_history
       ~IMMCardinalizedPHD.plot_states

@@ -1,26 +1,24 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="../../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>carbs.swarm_estimator.tracker &mdash; CARBS 1.0.2 documentation</title>
+  <title>carbs.swarm_estimator.tracker &mdash; CARBS 1.0.3 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
 
   
     <link rel="canonical" href="https://drjdlarson.github.io/carbs/_modules/carbs/swarm_estimator/tracker.html" />
-  <!--[if lt IE 9]>
-    <script src="../../../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
-        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="../../../_static/documentation_options.js?v=1ed6394b"></script>
-        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
-        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
-        <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
-        <script src="../../../_static/copybutton.js?v=cbcfbdad"></script>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=baaebd52"></script>
+      <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=cbcfbdad"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -38,9 +36,6 @@
             CARBS
               <img src="../../../_static/logo.svg" class="logo" alt="Logo"/>
           </a>
-              <div class="version">
-                1.0.2
-              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -130,6 +125,7 @@
 <span class="sd">This module contains the classes and data structures</span>
 <span class="sd">for RFS tracking related algorithms.</span>
 <span class="sd">&quot;&quot;&quot;</span>
+
 <span class="kn">import</span> <span class="nn">gncpy.filters</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">numpy.linalg</span> <span class="k">as</span> <span class="nn">la</span>
@@ -157,7 +153,7 @@
 
 <span class="kn">import</span> <span class="nn">serums.models</span> <span class="k">as</span> <span class="nn">smodels</span>
 <span class="kn">from</span> <span class="nn">serums.enums</span> <span class="kn">import</span> <span class="n">SingleObjectDistance</span>
-<span class="kn">from</span> <span class="nn">serums.distances</span> <span class="kn">import</span> <span class="n">calculate_ospa</span><span class="p">,</span> <span class="n">calculate_ospa2</span>
+<span class="kn">from</span> <span class="nn">serums.distances</span> <span class="kn">import</span> <span class="n">calculate_ospa</span><span class="p">,</span> <span class="n">calculate_ospa2</span><span class="p">,</span> <span class="n">calculate_gospa</span>
 
 
 <div class="viewcode-block" id="RandomFiniteSetBase">
@@ -268,6 +264,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">ospa_localization</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ospa_cardinality</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_ospa_params</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gospa_params</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_states</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># local copy for internal modification</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_meas_tab</span> <span class="o">=</span> <span class="p">(</span>
@@ -654,6 +651,102 @@
         <span class="p">]</span></div>
 
 
+<div class="viewcode-block" id="RandomFiniteSetBase.calculate_gospa">
+<a class="viewcode-back" href="../../../_autosummary/carbs/swarm_estimator/tracker/carbs.swarm_estimator.tracker.RandomFiniteSetBase.html#carbs.swarm_estimator.tracker.RandomFiniteSetBase.calculate_gospa">[docs]</a>
+    <span class="k">def</span> <span class="nf">calculate_gospa</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">truth</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]],</span>
+        <span class="n">c</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">p</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">core_method</span><span class="p">:</span> <span class="n">SingleObjectDistance</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">true_covs</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">state_inds</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculates the OSPA distance between the truth at all timesteps.</span>
+
+<span class="sd">        Wrapper for :func:`serums.distances.calculate_ospa`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        truth : list</span>
+<span class="sd">            Each element represents a timestep and is a list of N x 1 numpy array,</span>
+<span class="sd">            one per true agent in the swarm.</span>
+<span class="sd">        c : float</span>
+<span class="sd">            Distance cutoff for considering a point properly assigned. This</span>
+<span class="sd">            influences how cardinality errors are penalized. For :math:`p = 1`</span>
+<span class="sd">            it is the penalty given false point estimate.</span>
+<span class="sd">        p : int</span>
+<span class="sd">            The power of the distance term. Higher values penalize outliers</span>
+<span class="sd">            more.</span>
+<span class="sd">        a : int</span>
+<span class="sd">            The normalization factor of the distance term. Appropriately penalizes missed</span>
+<span class="sd">            or false detection of tracks rather than normalizing by the total maximum</span>
+<span class="sd">            cardinality.</span>
+<span class="sd">        core_method : :class:`serums.enums.SingleObjectDistance`, Optional</span>
+<span class="sd">            The main distance measure to use for the localization component.</span>
+<span class="sd">            The default value of None implies :attr:`.SingleObjectDistance.EUCLIDEAN`.</span>
+<span class="sd">        true_covs : list, Optional</span>
+<span class="sd">            Each element represents a timestep and is a list of N x N numpy arrays</span>
+<span class="sd">            corresonponding to the uncertainty about the true states. Note the</span>
+<span class="sd">            order must be consistent with the truth data given. This is only</span>
+<span class="sd">            needed for core methods :attr:`SingleObjectDistance.HELLINGER`. The defautl</span>
+<span class="sd">            value is None.</span>
+<span class="sd">        state_inds : list, optional</span>
+<span class="sd">            Indices in the state vector to use, will be applied to the truth</span>
+<span class="sd">            data as well. The default is None which means the full state is</span>
+<span class="sd">            used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># error checking on optional input arguments</span>
+        <span class="n">core_method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ospa_input_check</span><span class="p">(</span><span class="n">core_method</span><span class="p">,</span> <span class="n">truth</span><span class="p">,</span> <span class="n">true_covs</span><span class="p">)</span>
+
+        <span class="c1"># setup data structures</span>
+        <span class="k">if</span> <span class="n">state_inds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">state_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ospa_find_s_dim</span><span class="p">(</span><span class="n">truth</span><span class="p">)</span>
+            <span class="n">state_inds</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">state_dim</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">state_dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">state_inds</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">state_dim</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Failed to get state dimension. SKIPPING OSPA calculation&quot;</span><span class="p">)</span>
+
+            <span class="n">nt</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_states</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gospa</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nt</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gospa_localization</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nt</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gospa_cardinality</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nt</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_gospa_params</span><span class="p">[</span><span class="s2">&quot;core&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">core_method</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_gospa_params</span><span class="p">[</span><span class="s2">&quot;cutoff&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_gospa_params</span><span class="p">[</span><span class="s2">&quot;power&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_gospa_params</span><span class="p">[</span><span class="s2">&quot;normalization&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span>
+            <span class="k">return</span>
+        <span class="n">true_mat</span><span class="p">,</span> <span class="n">true_cov_mat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ospa_setup_tmat</span><span class="p">(</span>
+            <span class="n">truth</span><span class="p">,</span> <span class="n">state_dim</span><span class="p">,</span> <span class="n">true_covs</span><span class="p">,</span> <span class="n">state_inds</span>
+        <span class="p">)</span>
+        <span class="n">est_mat</span><span class="p">,</span> <span class="n">est_cov_mat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ospa_setup_emat</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">state_inds</span><span class="p">)</span>
+
+        <span class="c1"># find OSPA</span>
+        <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gospa</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gospa_localization</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gospa_cardinality</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_gospa_params</span><span class="p">[</span><span class="s2">&quot;core&quot;</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_gospa_params</span><span class="p">[</span><span class="s2">&quot;cutoff&quot;</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_gospa_params</span><span class="p">[</span><span class="s2">&quot;power&quot;</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_gospa_params</span><span class="p">[</span><span class="s2">&quot;normalization&quot;</span><span class="p">],</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">calculate_gospa</span><span class="p">(</span>
+            <span class="n">est_mat</span><span class="p">,</span>
+            <span class="n">true_mat</span><span class="p">,</span>
+            <span class="n">c</span><span class="p">,</span>
+            <span class="n">p</span><span class="p">,</span>
+            <span class="n">a</span><span class="p">,</span>
+            <span class="n">use_empty</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">core_method</span><span class="o">=</span><span class="n">core_method</span><span class="p">,</span>
+            <span class="n">true_cov_mat</span><span class="o">=</span><span class="n">true_cov_mat</span><span class="p">,</span>
+            <span class="n">est_cov_mat</span><span class="o">=</span><span class="n">est_cov_mat</span><span class="p">,</span>
+        <span class="p">)[</span>
+            <span class="mi">0</span><span class="p">:</span><span class="mi">7</span>
+        <span class="p">]</span></div>
+
+
     <span class="k">def</span> <span class="nf">_plt_ospa_hist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_val</span><span class="p">,</span> <span class="n">time_units</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">ttl</span><span class="p">,</span> <span class="n">y_lbl</span><span class="p">,</span> <span class="n">opts</span><span class="p">):</span>
         <span class="n">fig</span> <span class="o">=</span> <span class="n">opts</span><span class="p">[</span><span class="s2">&quot;f_hndl&quot;</span><span class="p">]</span>
 
@@ -773,6 +866,89 @@
             <span class="n">y_lbls</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Localiztion&quot;</span><span class="p">,</span> <span class="s2">&quot;Cardinality&quot;</span><span class="p">]</span>
             <span class="n">figs</span><span class="p">[</span><span class="s2">&quot;OSPA_subs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_plt_ospa_hist_subs</span><span class="p">(</span>
                 <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ospa_localization</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ospa_cardinality</span><span class="p">],</span>
+                <span class="n">time_units</span><span class="p">,</span>
+                <span class="n">time</span><span class="p">,</span>
+                <span class="n">ttl</span><span class="p">,</span>
+                <span class="n">y_lbls</span><span class="p">,</span>
+                <span class="n">main_opts</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">figs</span></div>
+
+
+<div class="viewcode-block" id="RandomFiniteSetBase.plot_gospa_history">
+<a class="viewcode-back" href="../../../_autosummary/carbs/swarm_estimator/tracker/carbs.swarm_estimator.tracker.RandomFiniteSetBase.html#carbs.swarm_estimator.tracker.RandomFiniteSetBase.plot_gospa_history">[docs]</a>
+    <span class="k">def</span> <span class="nf">plot_gospa_history</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">time_units</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">,</span>
+        <span class="n">time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">main_opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">sub_opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">plot_subs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Plots the GOSPA history.</span>
+
+<span class="sd">        This requires that the GOSPA has been calcualted by the approriate</span>
+<span class="sd">        function first.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        time_units : string, optional</span>
+<span class="sd">            Text representing the units of time in the plot. The default is</span>
+<span class="sd">            &#39;index&#39;.</span>
+<span class="sd">        time : numpy array, optional</span>
+<span class="sd">            Vector to use for the x-axis of the plot. If none is given then</span>
+<span class="sd">            vector indices are used. The default is None.</span>
+<span class="sd">        main_opts : dict, optional</span>
+<span class="sd">            Additional plotting options for :meth:`gncpy.plotting.init_plotting_opts`</span>
+<span class="sd">            function. Values implemented here are `f_hndl`, and any values</span>
+<span class="sd">            relating to title/axis text formatting. The default of None implies</span>
+<span class="sd">            the default options are used for the main plot.</span>
+<span class="sd">        sub_opts : dict, optional</span>
+<span class="sd">            Additional plotting options for :meth:`gncpy.plotting.init_plotting_opts`</span>
+<span class="sd">            function. Values implemented here are `f_hndl`, and any values</span>
+<span class="sd">            relating to title/axis text formatting. The default of None implies</span>
+<span class="sd">            the default options are used for the sub plot.</span>
+<span class="sd">        plot_subs : bool, optional</span>
+<span class="sd">            Flag indicating if the component statistics (cardinality and</span>
+<span class="sd">            localization) should also be plotted.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        figs : dict</span>
+<span class="sd">            Dictionary of matplotlib figure objects the data was plotted on.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ospa</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;GOSPA must be calculated before plotting&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">main_opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">main_opts</span> <span class="o">=</span> <span class="n">pltUtil</span><span class="o">.</span><span class="n">init_plotting_opts</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">sub_opts</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">plot_subs</span><span class="p">:</span>
+            <span class="n">sub_opts</span> <span class="o">=</span> <span class="n">pltUtil</span><span class="o">.</span><span class="n">init_plotting_opts</span><span class="p">()</span>
+        <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{:s}</span><span class="s2"> GOSPA (c = </span><span class="si">{:.1f}</span><span class="s2">, p = </span><span class="si">{:d}</span><span class="s2">, a = </span><span class="si">{:d}</span><span class="s2">)&quot;</span>
+        <span class="n">ttl</span> <span class="o">=</span> <span class="n">fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_gospa_params</span><span class="p">[</span><span class="s2">&quot;core&quot;</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_gospa_params</span><span class="p">[</span><span class="s2">&quot;cutoff&quot;</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_gospa_params</span><span class="p">[</span><span class="s2">&quot;power&quot;</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_gospa_params</span><span class="p">[</span><span class="s2">&quot;normalization&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">y_lbl</span> <span class="o">=</span> <span class="s2">&quot;GOSPA&quot;</span>
+
+        <span class="n">figs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">figs</span><span class="p">[</span><span class="s2">&quot;GOSPA&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_plt_ospa_hist</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gospa</span><span class="p">,</span> <span class="n">time_units</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">ttl</span><span class="p">,</span> <span class="n">y_lbl</span><span class="p">,</span> <span class="n">main_opts</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">plot_subs</span><span class="p">:</span>
+            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{:s}</span><span class="s2"> GOSPA Components (c = </span><span class="si">{:.1f}</span><span class="s2">, p = </span><span class="si">{:d}</span><span class="s2">, a = </span><span class="si">{:d}</span><span class="s2">)&quot;</span>
+            <span class="n">ttl</span> <span class="o">=</span> <span class="n">fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_gospa_params</span><span class="p">[</span><span class="s2">&quot;core&quot;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_gospa_params</span><span class="p">[</span><span class="s2">&quot;cutoff&quot;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_gospa_params</span><span class="p">[</span><span class="s2">&quot;power&quot;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_gospa_params</span><span class="p">[</span><span class="s2">&quot;normalization&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">y_lbls</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Localiztion&quot;</span><span class="p">,</span> <span class="s2">&quot;Cardinality&quot;</span><span class="p">]</span>
+            <span class="n">figs</span><span class="p">[</span><span class="s2">&quot;GOSPA_subs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_plt_ospa_hist_subs</span><span class="p">(</span>
+                <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">gospa_localization</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gospa_cardinality</span><span class="p">],</span>
                 <span class="n">time_units</span><span class="p">,</span>
                 <span class="n">time</span><span class="p">,</span>
                 <span class="n">ttl</span><span class="p">,</span>
@@ -4855,7 +5031,9 @@
             <span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">num_tracks</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">num_tracks</span>
             <span class="k">if</span> <span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">mindices</span><span class="p">[</span>
-                    <span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)[</span><span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span>
+                    <span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)[</span>
+                        <span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+                    <span class="p">]</span>
                 <span class="p">]</span>
             <span class="c1"># Assign updated hypotheses from gibbs sampler</span>
             <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">cst</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">costs</span><span class="o">.</span><span class="n">flatten</span><span class="p">()):</span>
@@ -5152,7 +5330,9 @@
                 <span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">num_tracks</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">num_tracks</span>
                 <span class="k">if</span> <span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">mindices</span><span class="p">[</span>
-                        <span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)[</span><span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span>
+                        <span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)[</span>
+                            <span class="n">assigns</span><span class="p">[</span><span class="n">assigns</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+                        <span class="p">]</span>
                     <span class="p">]</span>
                 <span class="c1"># Assign updated hypotheses from gibbs sampler</span>
                 <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">cst</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">costs</span><span class="o">.</span><span class="n">flatten</span><span class="p">()):</span>
@@ -8157,7 +8337,7 @@
                             <span class="p">)</span>
                         <span class="n">cost_m</span> <span class="o">=</span> <span class="n">all_cost_m</span><span class="p">[:,</span> <span class="n">inds</span><span class="p">]</span>
                     <span class="k">else</span><span class="p">:</span>
-                        <span class="c1">#TODO Change this process so it works when we can&#39;t just arange through to the end. I think we add num_pred to the indices in ind_lst</span>
+                        <span class="c1"># TODO Change this process so it works when we can&#39;t just arange through to the end. I think we add num_pred to the indices in ind_lst</span>
                         <span class="k">if</span> <span class="n">p_hyp</span><span class="o">.</span><span class="n">num_tracks</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># all clutter</span>
                             <span class="c1"># inds = np.arange(num_pred, num_pred + len(ind_lst)).tolist()</span>
                             <span class="n">inds</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">num_pred</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ind_lst</span><span class="p">))</span>
@@ -8197,14 +8377,17 @@
                             <span class="c1"># new_track_list = list(num_pred * a + num_pred * num_meas)</span>
                             <span class="n">new_track_list</span> <span class="o">=</span> <span class="p">[]</span>
                             <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">ms</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
-                                <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">ind_lst</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_pred</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">num_pred</span> <span class="o">*</span> <span class="n">num_meas</span><span class="p">))</span>
+                                <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                    <span class="p">(</span><span class="n">ind_lst</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_pred</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">num_pred</span> <span class="o">*</span> <span class="n">num_meas</span><span class="p">)</span>
+                                <span class="p">)</span>
                         <span class="k">else</span><span class="p">:</span>
                             <span class="c1"># track_inds = np.argwhere(a==1)</span>
                             <span class="n">new_track_list</span> <span class="o">=</span> <span class="p">[]</span>
                             <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">ms</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
                                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">ms</span><span class="p">:</span>
                                     <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                                        <span class="p">(</span><span class="n">ind_lst</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_pred</span> <span class="o">+</span> <span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">[(</span><span class="n">ms</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+                                        <span class="p">(</span><span class="n">ind_lst</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_pred</span>
+                                        <span class="o">+</span> <span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">[(</span><span class="n">ms</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
                                     <span class="p">)</span>
                                 <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
                                     <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -8216,7 +8399,8 @@
                                     <span class="p">)</span>
                                 <span class="k">else</span><span class="p">:</span>
                                     <span class="n">new_track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                                        <span class="n">num_pred</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_meas</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">ms</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                                        <span class="n">num_pred</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_meas</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                                        <span class="o">-</span> <span class="p">(</span><span class="n">ms</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_hyp</span><span class="o">.</span><span class="n">track_set</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
                                     <span class="p">)</span>
 
                             <span class="c1"># if len(a) == len(p_hyp.track_set):</span>

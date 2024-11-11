@@ -18,6 +18,7 @@ SMCJointGeneralizedLabeledMultiBernoulli
       :nosignatures:
    
       ~SMCJointGeneralizedLabeledMultiBernoulli.__init__
+      ~SMCJointGeneralizedLabeledMultiBernoulli.calculate_gospa
       ~SMCJointGeneralizedLabeledMultiBernoulli.calculate_ospa
       ~SMCJointGeneralizedLabeledMultiBernoulli.calculate_ospa2
       ~SMCJointGeneralizedLabeledMultiBernoulli.cleanup
@@ -27,6 +28,7 @@ SMCJointGeneralizedLabeledMultiBernoulli
       ~SMCJointGeneralizedLabeledMultiBernoulli.load_filter_state
       ~SMCJointGeneralizedLabeledMultiBernoulli.plot_card_dist
       ~SMCJointGeneralizedLabeledMultiBernoulli.plot_card_history
+      ~SMCJointGeneralizedLabeledMultiBernoulli.plot_gospa_history
       ~SMCJointGeneralizedLabeledMultiBernoulli.plot_ospa2_history
       ~SMCJointGeneralizedLabeledMultiBernoulli.plot_ospa_history
       ~SMCJointGeneralizedLabeledMultiBernoulli.plot_states_labels
