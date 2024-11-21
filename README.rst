@@ -94,9 +94,9 @@ For reference, the prior iteration of this package, named CASER was cited as fol
     @Misc{caser,
         author       = {Jordan D. Larson and Ryan W. Thomas and Vaughn Weirens and Vincent W. Hill},
         howpublished = {Web page},
-        title        = {{CASER}: A {P}ython library for {C}ommand & control of {A}utonomous {S}warms {E}mploying {R}andom finite sets},
+        title        = {{CARBS}: A {P}ython library for {C}ommand, control, communication, computer, cyber, intelligence, surveillance, and reconnaissance of {A}utonomous {R}andom finite sets {B}ased {S}warms,
         year         = {2019},
-        url          = {https://github.com/drjdlarson/caser},
+        url          = {https://github.com/drjdlarson/carbs},
     }
 ..
     END CITE INCLUDE
