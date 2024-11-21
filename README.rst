@@ -91,7 +91,7 @@ For reference, the prior iteration of this package, named CASER was cited as fol
 
 .. code-block:: bibtex
 
-    @Misc{caser,
+    @Misc{carbs,
         author       = {Jordan D. Larson and Ryan W. Thomas and Vaughn Weirens and Vincent W. Hill},
         howpublished = {Web page},
         title        = {{CARBS}: A {P}ython library for {C}ommand, control, communication, computer, cyber, intelligence, surveillance, and reconnaissance of {A}utonomous {R}andom finite sets {B}ased {S}warms,
