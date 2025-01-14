@@ -761,7 +761,7 @@ class RandomFiniteSetBase(metaclass=abc.ABCMeta):
         figs : dict
             Dictionary of matplotlib figure objects the data was plotted on.
         """
-        if self.ospa is None:
+        if self.gospa is None:
             warnings.warn("GOSPA must be calculated before plotting")
             return
         if main_opts is None:

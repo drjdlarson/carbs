@@ -152,20 +152,20 @@ def _setup_double_int_gci_kf(dt):
 
 def _setup_double_int_gci_ekf(dt):
     def range_func(t, x):
-        # return np.sqrt(x[0] ** 2 + x[1] ** 2)
-        return np.array([x[0], x[1]])
+        return np.sqrt(x[0] ** 2 + x[1] ** 2)
+        # return np.array([x[0], x[1]])
 
     def bear_func(t, x):
         # return np.arctan2(x[0], x[1])
         return np.arctan2(x[1], x[0])
 
     def range_func2(t, x):
-        return np.array([x[0] + 5, x[1]])
-        # return np.sqrt((x[0]-5) ** 2 + x[1] ** 2)
+        # return np.array([x[0] + 5, x[1]])
+        return np.sqrt((x[0] - 5) ** 2 + x[1] ** 2)
 
     def bear_func2(t, x):
         # return np.arctan2(x[0] - 5, x[1])
-        return np.arctan2(x[1], x[0] + 5)
+        return np.arctan2(x[1], x[0] - 5)
 
     def xfunc(t, x):
         return x[0]
@@ -174,12 +174,20 @@ def _setup_double_int_gci_ekf(dt):
         return x[1]
 
     def xfunc2(t, x):
-        return x[0]+5
+        return x[0] + 5
 
     m_noise = 0.02
     p_noise = 0.2
-    # m_noise_list = [np.diag([m_noise**2, (np.pi / 180 * m_noise) ** 2]),
-    #         np.diag([m_noise**2, (np.pi / 180 * m_noise) ** 2])]
+    # m_noise_list = [
+    #     np.diag([m_noise**2, (np.pi / 180 * m_noise) ** 2]),
+    #     np.diag([m_noise**2, (np.pi / 180 * m_noise) ** 2]),
+    # ]
+    # m_mdl_lst = [[range_func, bear_func], [range_func2, bear_func2]]
+    m_noise_list = [
+        np.diag([m_noise**2]),
+        np.diag([m_noise**2]),
+    ]
+    m_mdl_lst = [[xfunc, yfunc], [xfunc2, yfunc]]
 
     in_filt = gfilts.ExtendedKalmanFilter()
     in_filt.dt = dt
@@ -187,18 +195,13 @@ def _setup_double_int_gci_ekf(dt):
     in_filt.proc_noise = gdyn.DoubleIntegrator().get_dis_process_noise_mat(
         dt, np.array([[p_noise**2]])
     )
-    in_filt.meas_noise = m_noise**2 * np.eye(2)
+    # in_filt.meas_noise = m_noise**2 * np.eye(2)
+    in_filt.meas_noise = np.diag([m_noise**2, (np.pi / 180 * m_noise) ** 2])
 
     filt = gfilts.GCIFilter(
         base_filter=in_filt,
-        meas_model_list = [[xfunc, yfunc], [xfunc2, yfunc]],
-        meas_noise_list=[np.diag([m_noise**2, m_noise**2]), np.diag([m_noise**2, m_noise**2])],
-        # meas_noise_list=[np.diag([m_noise**2]), np.diag([m_noise**2])],
-        # meas_model_list=[[range_func, bear_func], [range_func2, bear_func2]],
-        # meas_noise_list=[np.diag([m_noise**2, (m_noise) ** 2]),
-        #     np.diag([m_noise**2, (m_noise) ** 2])],
-        # meas_noise_list=[np.diag([m_noise**2, (60 * np.pi / 180 * m_noise) ** 2]),
-        #     np.diag([m_noise**2, (60 * np.pi / 180 * m_noise) ** 2])],
+        meas_model_list=m_mdl_lst,
+        meas_noise_list=m_noise_list,
     )
     filt.cov = 0.25 * np.eye(4)
     # filt.cov = np.diag([2.0, 2.0, 2.0, 2.0])
@@ -860,7 +863,7 @@ def _gen_meas_ms2(tt, true_agents, proc_noise, meas_noise, rng, meas_model_list)
         sens_list = []
         for x in true_agents:
             if ii == 0:
-                if x[1] > -5 and x[1] < 5:
+                if x[0] > -5 and x[0] < 25:
                     if isinstance(model, list):
                         cur_temp_meas = []
                         for func in model:
@@ -874,9 +877,9 @@ def _gen_meas_ms2(tt, true_agents, proc_noise, meas_noise, rng, meas_model_list)
                 #         if arr.size == 0:
                 #             flag = True
                 #     if flag == True:
-                        # sens_list.append(np.array([]))
+                # sens_list.append(np.array([]))
             else:
-                if x[1] > 2 and x[1] < 12:
+                if x[0] > 2 and x[0] < 32:
                     if isinstance(model, list):
                         cur_temp_meas = []
                         for func in model:
@@ -885,15 +888,16 @@ def _gen_meas_ms2(tt, true_agents, proc_noise, meas_noise, rng, meas_model_list)
                     else:
                         sens_list.append(model @ x)
                 # else:
-                    # flag = False
-                    # for arr in sens_list:
-                    #     if arr.size == 0:
-                    #         flag = True
-                    # if flag == True:
-                        # sens_list.append(np.array([]))
+                # flag = False
+                # for arr in sens_list:
+                #     if arr.size == 0:
+                #         flag = True
+                # if flag == True:
+                # sens_list.append(np.array([]))
         # sens_list.append(np.array([]))
         if len(sens_list) == 0:
-            sens_list.append(np.array([]))
+            np.array([])
+        np.random.shuffle(sens_list)
         meas_in.append(sens_list)
 
     return meas_in
@@ -907,10 +911,10 @@ def _gen_meas_ms_ekf(tt, true_agents, proc_noise, meas_noise, rng, meas_model_li
         return np.arctan2(x[1], x[0])
 
     def range_func2(t, x):
-        return np.sqrt(x[0] ** 2 + x[1]+5 ** 2)
+        return np.sqrt(x[0] ** 2 + x[1] + 5**2)
 
     def bear_func2(t, x):
-        return np.arctan2(x[1], x[0]+5)
+        return np.arctan2(x[1], x[0] + 5)
 
     sens_bounds = [[0, 15], [5, 20]]
     meas_in = []
@@ -924,10 +928,8 @@ def _gen_meas_ms_ekf(tt, true_agents, proc_noise, meas_noise, rng, meas_model_li
             else:
                 cur_sens_lst.append(np.array([]))
         meas_in.append(cur_sens_lst)
-    
+
     return meas_in
-
-
 
 
 def _prop_true(true_agents, tt, dt):
@@ -1059,7 +1061,7 @@ def _update_true_agents_pmbm_lmb_var(true_agents, tt, dt, b_model, rng):
         for gm, w in b_model:
             x = gm.means[0] + (rng.standard_normal(4) * np.ones(4)).reshape((4, 1))
             out.append(x.copy())
-    
+
     # if any(np.abs(tt - np.array([2])) < 1e-8):
     #     out.pop(1)
 
@@ -1073,7 +1075,7 @@ def _update_true_agents_pmbm(true_agents, tt, dt, b_model, rng):
     out = _prop_true(true_agents, tt, dt)
     # if any(np.abs(tt - np.array([0, 0.05]))<1e-8):
     if any(np.abs(tt - np.array([0, 1])) < 1e-8):
-    # if any(np.abs(tt - np.array([0, 1, 1.5, 2.5, 3])) < 1e-8):
+        # if any(np.abs(tt - np.array([0, 1, 1.5, 2.5, 3])) < 1e-8):
         for gm in b_model:
             noise = (rng.standard_normal(4) * np.ones(4)).reshape((4, 1))
             # noise[0] = noise[0] / 100
@@ -2033,9 +2035,7 @@ def test_JGLMB():  # noqa
     jglmb.calculate_ospa2(global_true, 5, 1, 100)
     jglmb.calculate_gospa(global_true, 2, 1, 2)
 
-    true_agents = _update_true_agents_pmbm_lmb_var(
-       true_agents, tt, dt, b_model, rng
-    )
+    true_agents = _update_true_agents_pmbm_lmb_var(true_agents, tt, dt, b_model, rng)
     # true_agents = _update_true_agents_prob(true_agents, tt, dt, b_model, rng)
     global_true.append(deepcopy(true_agents))
 
@@ -3400,7 +3400,7 @@ def test_EKF_GSM_GLMB():  # noqa
     assert len(true_agents) == glmb.cardinality, "Wrong cardinality"
 
 
-def test_GLMB_ct_ktr(): #noqa
+def test_GLMB_ct_ktr():  # noqa
     print("Test GLMB with CT-KTR dynamics")
 
     rng = rnd.default_rng(global_seed)
@@ -3495,7 +3495,8 @@ def test_GLMB_ct_ktr(): #noqa
 
     assert len(true_agents) == glmb.cardinality, "Wrong cardinality"
 
-def test_IMM_GLMB(): #noqa
+
+def test_IMM_GLMB():  # noqa
     print("Test IMM-GLMB")
 
     rng = rnd.default_rng(global_seed)
@@ -3683,6 +3684,7 @@ def test_IMM_JGLMB():  # noqa
 
     assert len(true_agents) == jglmb.cardinality, "Wrong cardinality"
 
+
 # @pytest.mark.slow
 @pytest.mark.skip(reason="Unresolved Errors in Data Fusion")
 def test_MS_JGLMB():  # noqa
@@ -3691,14 +3693,14 @@ def test_MS_JGLMB():  # noqa
     rng = rnd.default_rng(global_seed)
 
     dt = 0.01
-    # t0, t1 = 0, 5.0 + dt
-    t0, t1 = 0, 2.0 + dt
+    t0, t1 = 0, 5.0 + dt
+    # t0, t1 = 0, 2.0 + dt
 
     filt = _setup_double_int_gci_ekf(dt)
     # filt = _setup_double_int_gci_kf(dt)
 
     state_mat_args = (dt,)
-    meas_fun_args = ()#("useless arg",)
+    meas_fun_args = ()  # ("useless arg",)
 
     b_model = _setup_gm_glmb_double_int_birth()
 
@@ -3735,9 +3737,11 @@ def test_MS_JGLMB():  # noqa
         global_true.append(deepcopy(true_agents))
 
         pred_args = {"dyn_fun_params": state_mat_args}
+        # pred_args = {"state_mat_args": state_mat_args}
         jglmb.predict(tt, filt_args=pred_args)
 
         meas_in = _gen_meas_ms2(
+            # meas_in = _gen_meas_ms(
             tt,
             true_agents,
             filt.proc_noise,
@@ -3758,16 +3762,17 @@ def test_MS_JGLMB():  # noqa
 
     if debug_plots:
         jglmb.plot_states_labels([0, 1], true_states=global_true, meas_inds=[0, 1])
-        plt.savefig("save_in_dumb_folder/msjglmb_state_lbl.png")
+        # plt.savefig("save_in_dumb_folder/msjglmb_state_lbl.png")
         jglmb.plot_card_dist()
-        plt.savefig("save_in_dumb_folder/msjglmb_card_dist.png")
+        # plt.savefig("save_in_dumb_folder/msjglmb_card_dist.png")
         jglmb.plot_card_history(time_units="s", time=time)
-        plt.savefig("save_in_dumb_folder/msjglmb_card_hist.png")
+        # plt.savefig("save_in_dumb_folder/msjglmb_card_hist.png")
         jglmb.plot_ospa_history()
-        plt.savefig("save_in_dumb_folder/msjglmb_ospa_hist.png")
+        # plt.savefig("save_in_dumb_folder/msjglmb_ospa_hist.png")
     print("\tExpecting {} agents".format(len(true_agents)))
 
     # assert len(true_agents) == jglmb.cardinality, "Wrong cardinality"
+
 
 @pytest.mark.slow
 def test_MS_IMM_JGLMB():  # noqa
@@ -3861,7 +3866,7 @@ def test_MS_IMM_JGLMB():  # noqa
     print("\tExpecting {} agents".format(len(true_agents)))
 
 
-def test_PMBM(): #noqa
+def test_PMBM():  # noqa
     print("Test PMBM")
 
     rng = rnd.default_rng(global_seed)
@@ -3948,7 +3953,7 @@ def test_PMBM(): #noqa
     # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
 
-def test_LPMBM(): #noqa
+def test_LPMBM():  # noqa
     print("Test Labeled PMBM")
 
     rng = rnd.default_rng(global_seed)
@@ -4046,7 +4051,7 @@ def test_LPMBM(): #noqa
     # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
 
-def test_STM_PMBM(): #noqa
+def test_STM_PMBM():  # noqa
     print("Test STM-PMBM")
 
     rng = rnd.default_rng(global_seed)
@@ -4130,7 +4135,7 @@ def test_STM_PMBM(): #noqa
     assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
 
-def test_STM_LPMBM(): #noqa
+def test_STM_LPMBM():  # noqa
     print("Test STM-LPMBM")
 
     rng = rnd.default_rng(global_seed)
@@ -4206,7 +4211,7 @@ def test_STM_LPMBM(): #noqa
 
 
 @pytest.mark.slow
-def test_SMC_PMBM(): #noqa
+def test_SMC_PMBM():  # noqa
     print("Test SMC-PMBM")
 
     rng = rnd.default_rng(global_seed)
@@ -4302,8 +4307,9 @@ def test_SMC_PMBM(): #noqa
 
     assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
+
 @pytest.mark.slow
-def test_SMC_LPMBM(): #noqa
+def test_SMC_LPMBM():  # noqa
     print("Test SMC-LPMBM")
 
     rng = rnd.default_rng(global_seed)
@@ -4400,7 +4406,7 @@ def test_SMC_LPMBM(): #noqa
     assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
 
-def test_IMM_PMBM(): #noqa
+def test_IMM_PMBM():  # noqa
     print("Test IMM-PMBM")
 
     rng = rnd.default_rng(global_seed)
@@ -4501,7 +4507,7 @@ def test_IMM_PMBM(): #noqa
     assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
 
-def test_IMM_LPMBM(): #noqa
+def test_IMM_LPMBM():  # noqa
     print("Test IMM-LPMBM")
 
     rng = rnd.default_rng(global_seed)
@@ -4602,6 +4608,7 @@ def test_IMM_LPMBM(): #noqa
 
     assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
+
 @pytest.mark.slow
 def test_MS_PMBM():  # noqa
     print("Test MS-GM-PMBM")
@@ -4676,6 +4683,7 @@ def test_MS_PMBM():  # noqa
     print("\tExpecting {} agents".format(len(true_agents)))
 
     assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
+
 
 # @pytest.mark.slow
 @pytest.mark.skip(reason="Unresolved Errors in Data Fusion")
@@ -4772,6 +4780,7 @@ def test_MS_LPMBM():  # noqa
 
     # assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
+
 @pytest.mark.slow
 def test_MS_IMM_PMBM():  # noqa
     print("Test MS-IMM-GM-PMBM")
@@ -4815,7 +4824,9 @@ def test_MS_IMM_PMBM():  # noqa
         if np.mod(kk, 100) == 0:
             print("\t\t{:.2f}".format(tt))
             sys.stdout.flush()
-        if tt > 0.5:  # Error caused here, after it changes, tracker loses all confidence
+        if (
+            tt > 0.5
+        ):  # Error caused here, after it changes, tracker loses all confidence
             state_mat = gdyn.CoordinatedTurnKnown(
                 turn_rate=60 * np.pi / 180
             ).get_state_mat(tt, dt)
@@ -4854,6 +4865,7 @@ def test_MS_IMM_PMBM():  # noqa
         pmbm.plot_ospa_history()
     print("\tExpecting {} agents".format(len(true_agents)))
     assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
+
 
 @pytest.mark.slow
 def test_MS_IMM_LPMBM():  # noqa
@@ -4963,7 +4975,7 @@ if __name__ == "__main__":
     # test_IMM_PHD()
     # test_IMM_CPHD()
 
-    # test_GLMB()
+    test_GLMB()
     # test_STM_GLMB()
     # test_SMC_GLMB()
     # test_USMC_GLMB()
@@ -4976,7 +4988,7 @@ if __name__ == "__main__":
     # test_UKF_GSM_GLMB()
     # test_EKF_GSM_GLMB()
 
-    test_JGLMB()
+    # test_JGLMB()
     # test_JGLMB_high_birth()
     # test_STM_JGLMB()
     # test_SMC_JGLMB()
