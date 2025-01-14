@@ -12,7 +12,8 @@ jobs:
 
   upload_test_pypi:
     name: Upload to Test PyPI
-    runs-on: ubuntu-latest
+    # runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [build_package]
     if: github.event.action != 'published'
     steps:
