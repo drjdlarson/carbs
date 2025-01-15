@@ -5,8 +5,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>carbs.guidance &mdash; CARBS 1.0.3 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+  <title>carbs.guidance &mdash; CARBS 1.0.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
 
@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://drjdlarson.github.io/carbs/_modules/carbs/guidance.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=baaebd52"></script>
+      <script src="../../_static/documentation_options.js?v=71272d9f"></script>
       <script src="../../_static/doctools.js?v=9a2dae69"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -125,25 +125,25 @@
 <span class="sd">This module contains the classes and data structures</span>
 <span class="sd">for RFS guidance related algorithms.</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">import</span> <span class="nn">io</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">scipy.linalg</span> <span class="k">as</span> <span class="nn">la</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span>
-<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
-<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">linear_sum_assignment</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipy.linalg</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">la</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">warn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">linear_sum_assignment</span>
 
-<span class="kn">import</span> <span class="nn">gncpy.control</span> <span class="k">as</span> <span class="nn">gcontrol</span>
-<span class="kn">import</span> <span class="nn">gncpy.plotting</span> <span class="k">as</span> <span class="nn">gplot</span>
-<span class="kn">import</span> <span class="nn">serums.models</span> <span class="k">as</span> <span class="nn">smodels</span>
-<span class="kn">from</span> <span class="nn">serums.distances</span> <span class="kn">import</span> <span class="n">calculate_ospa</span>
-<span class="kn">from</span> <span class="nn">serums.enums</span> <span class="kn">import</span> <span class="n">SingleObjectDistance</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gncpy.control</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gcontrol</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gncpy.plotting</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gplot</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">serums.models</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">smodels</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">serums.distances</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_ospa</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">serums.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleObjectDistance</span>
 
 
 <div class="viewcode-block" id="gaussian_density_cost">
 <a class="viewcode-back" href="../../_autosummary/carbs/guidance/carbs.guidance.gaussian_density_cost.html#carbs.guidance.gaussian_density_cost">[docs]</a>
-<span class="k">def</span> <span class="nf">gaussian_density_cost</span><span class="p">(</span><span class="n">state_dist</span><span class="p">,</span> <span class="n">goal_dist</span><span class="p">,</span> <span class="n">safety_factor</span><span class="p">,</span> <span class="n">y_ref</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">gaussian_density_cost</span><span class="p">(</span><span class="n">state_dist</span><span class="p">,</span> <span class="n">goal_dist</span><span class="p">,</span> <span class="n">safety_factor</span><span class="p">,</span> <span class="n">y_ref</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Implements a GM density based cost function.</span>
 
 <span class="sd">    Notes</span>
@@ -259,7 +259,7 @@
 
 <div class="viewcode-block" id="ELQR">
 <a class="viewcode-back" href="../../_autosummary/carbs/guidance/carbs.guidance.ELQR.html#carbs.guidance.ELQR">[docs]</a>
-<span class="k">class</span> <span class="nc">ELQR</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ELQR</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the ELQR algorithm for swarms.</span>
 
 <span class="sd">    Notes</span>
@@ -276,7 +276,7 @@
 
 <div class="viewcode-block" id="ELQR.__init__">
 <a class="viewcode-back" href="../../_autosummary/carbs/guidance/carbs.guidance.ELQR.html#carbs.guidance.ELQR.__init__">[docs]</a>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_iters</span><span class="o">=</span><span class="mf">1e3</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_iters</span><span class="o">=</span><span class="mf">1e3</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize an object.</span>
 
 <span class="sd">        Parameters</span>
@@ -307,7 +307,7 @@
 
 <div class="viewcode-block" id="ELQR.get_state_dist">
 <a class="viewcode-back" href="../../_autosummary/carbs/guidance/carbs.guidance.ELQR.html#carbs.guidance.ELQR.get_state_dist">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_state_dist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tt</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_state_dist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tt</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculates the current state distribution.</span>
 
 <span class="sd">        Parameters</span>
@@ -333,7 +333,7 @@
 
 <div class="viewcode-block" id="ELQR.non_quad_fun_factory">
 <a class="viewcode-back" href="../../_autosummary/carbs/guidance/carbs.guidance.ELQR.html#carbs.guidance.ELQR.non_quad_fun_factory">[docs]</a>
-    <span class="k">def</span> <span class="nf">non_quad_fun_factory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">non_quad_fun_factory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Factory for creating the non-quadratic cost function.</span>
 
 <span class="sd">        This should generate a function of the same form needed by the single</span>
@@ -349,7 +349,7 @@
 <span class="sd">            function to calculate cost.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">def</span> <span class="nf">non_quadratic_fun</span><span class="p">(</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">non_quadratic_fun</span><span class="p">(</span>
             <span class="n">tt</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">ctrl_input</span><span class="p">,</span> <span class="n">end_state</span><span class="p">,</span> <span class="n">is_initial</span><span class="p">,</span> <span class="n">is_final</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span>
         <span class="p">):</span>
             <span class="n">state_dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_state_dist</span><span class="p">(</span><span class="n">tt</span><span class="p">)</span>
@@ -375,7 +375,7 @@
 
 <div class="viewcode-block" id="ELQR.set_cost_model">
 <a class="viewcode-back" href="../../_autosummary/carbs/guidance/carbs.guidance.ELQR.html#carbs.guidance.ELQR.set_cost_model">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_cost_model</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_cost_model</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">safety_factor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">y_ref</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -431,7 +431,7 @@
 
 <div class="viewcode-block" id="ELQR.set_control_model">
 <a class="viewcode-back" href="../../_autosummary/carbs/guidance/carbs.guidance.ELQR.html#carbs.guidance.ELQR.set_control_model">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_control_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">singleELQR</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_control_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">singleELQR</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the single agent control model used.</span>
 
 <span class="sd">        Parameters</span>
@@ -447,7 +447,7 @@
 
 <div class="viewcode-block" id="ELQR.find_end_state">
 <a class="viewcode-back" href="../../_autosummary/carbs/guidance/carbs.guidance.ELQR.html#carbs.guidance.ELQR.find_end_state">[docs]</a>
-    <span class="k">def</span> <span class="nf">find_end_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tt</span><span class="p">,</span> <span class="n">cur_ind</span><span class="p">,</span> <span class="n">cur_state</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">find_end_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tt</span><span class="p">,</span> <span class="n">cur_ind</span><span class="p">,</span> <span class="n">cur_state</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Finds the ending state for the given current state.</span>
 
 <span class="sd">        Parameters</span>
@@ -473,7 +473,7 @@
 
 <div class="viewcode-block" id="ELQR.init_elqr_lst">
 <a class="viewcode-back" href="../../_autosummary/carbs/guidance/carbs.guidance.ELQR.html#carbs.guidance.ELQR.init_elqr_lst">[docs]</a>
-    <span class="k">def</span> <span class="nf">init_elqr_lst</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tt</span><span class="p">,</span> <span class="n">start_dist</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_elqr_lst</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tt</span><span class="p">,</span> <span class="n">start_dist</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the list of single agent ELQR controllers.</span>
 
 <span class="sd">        Parameters</span>
@@ -508,7 +508,7 @@
 
 <div class="viewcode-block" id="ELQR.targets_to_wayareas">
 <a class="viewcode-back" href="../../_autosummary/carbs/guidance/carbs.guidance.ELQR.html#carbs.guidance.ELQR.targets_to_wayareas">[docs]</a>
-    <span class="k">def</span> <span class="nf">targets_to_wayareas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">end_states</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">targets_to_wayareas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">end_states</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Converts target locations to wayareas with automatic scaling.</span>
 
 <span class="sd">        Performs a Principal Component Analysis (PCA) on the ending state</span>
@@ -525,7 +525,7 @@
 <span class="sd">            Ending state distribution.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">def</span> <span class="nf">find_principal_components</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">find_principal_components</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
             <span class="n">num_samps</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">num_feats</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
@@ -541,7 +541,7 @@
             <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">w</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
             <span class="k">return</span> <span class="n">comps</span><span class="p">[:,</span> <span class="n">inds</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>
 
-        <span class="k">def</span> <span class="nf">find_largest_proj_dist</span><span class="p">(</span><span class="n">new_dirs</span><span class="p">,</span> <span class="n">old_dirs</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">find_largest_proj_dist</span><span class="p">(</span><span class="n">new_dirs</span><span class="p">,</span> <span class="n">old_dirs</span><span class="p">):</span>
             <span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">new_dirs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
             <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">new_dirs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
                 <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">old_dirs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
@@ -579,7 +579,7 @@
 
 <div class="viewcode-block" id="ELQR.gen_final_traj">
 <a class="viewcode-back" href="../../_autosummary/carbs/guidance/carbs.guidance.ELQR.html#carbs.guidance.ELQR.gen_final_traj">[docs]</a>
-    <span class="k">def</span> <span class="nf">gen_final_traj</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gen_final_traj</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">num_timesteps</span><span class="p">,</span>
         <span class="n">start</span><span class="p">,</span>
@@ -664,7 +664,7 @@
         <span class="k">return</span> <span class="n">state_traj</span><span class="p">,</span> <span class="n">ctrl_signal</span><span class="p">,</span> <span class="n">cost</span></div>
 
 
-    <span class="k">def</span> <span class="nf">draw_init_states</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">draw_init_states</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">states</span><span class="p">,</span> <span class="n">plt_inds</span><span class="p">,</span> <span class="n">marker</span><span class="p">,</span> <span class="n">zorder</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">):</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">marker</span><span class="o">=</span><span class="n">marker</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="n">zorder</span><span class="p">,)</span>
@@ -677,7 +677,7 @@
                 <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cmap</span><span class="p">(</span><span class="n">c_ind</span><span class="p">)</span>
             <span class="n">fig</span><span class="o">.</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">plt_inds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="n">plt_inds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">save_animation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">fig_h</span><span class="p">,</span> <span class="n">fig_w</span><span class="p">,</span> <span class="n">frame_list</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_animation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">fig_h</span><span class="p">,</span> <span class="n">fig_w</span><span class="p">,</span> <span class="n">frame_list</span><span class="p">):</span>
         <span class="k">with</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span> <span class="k">as</span> <span class="n">buff</span><span class="p">:</span>
             <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;raw&quot;</span><span class="p">)</span>
             <span class="n">buff</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -686,7 +686,7 @@
             <span class="p">)</span>
         <span class="n">frame_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">img</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">init_plot</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_plot</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">show_animation</span><span class="p">,</span>
         <span class="n">save_animation</span><span class="p">,</span>
@@ -738,11 +738,11 @@
 
         <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">fig_h</span><span class="p">,</span> <span class="n">fig_w</span><span class="p">,</span> <span class="n">frame_list</span><span class="p">,</span> <span class="n">cmap</span>
 
-    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_dist</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_dist</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_start_covs</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">start_dist</span><span class="o">.</span><span class="n">covariances</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_start_weights</span> <span class="o">=</span> <span class="p">[</span><span class="n">w</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">start_dist</span><span class="o">.</span><span class="n">weights</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">output_helper</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">output_helper</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">c_ind</span><span class="p">,</span>
         <span class="n">num_timesteps</span><span class="p">,</span>
@@ -788,7 +788,7 @@
             <span class="p">)</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">pause</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">create_outputs</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_outputs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">start_dist</span><span class="p">,</span>
         <span class="n">num_timesteps</span><span class="p">,</span>
@@ -829,7 +829,7 @@
 
 <div class="viewcode-block" id="ELQR.plan">
 <a class="viewcode-back" href="../../_autosummary/carbs/guidance/carbs.guidance.ELQR.html#carbs.guidance.ELQR.plan">[docs]</a>
-    <span class="k">def</span> <span class="nf">plan</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plan</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">tt</span><span class="p">,</span>
         <span class="n">start_dist</span><span class="p">,</span>
@@ -1164,10 +1164,10 @@
 
 <div class="viewcode-block" id="ELQROSPA">
 <a class="viewcode-back" href="../../_autosummary/carbs/guidance/carbs.guidance.ELQROSPA.html#carbs.guidance.ELQROSPA">[docs]</a>
-<span class="k">class</span> <span class="nc">ELQROSPA</span><span class="p">(</span><span class="n">ELQR</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ELQROSPA</span><span class="p">(</span><span class="n">ELQR</span><span class="p">):</span>
 <div class="viewcode-block" id="ELQROSPA.__init__">
 <a class="viewcode-back" href="../../_autosummary/carbs/guidance/carbs.guidance.ELQROSPA.html#carbs.guidance.ELQROSPA.__init__">[docs]</a>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">end_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
@@ -1181,7 +1181,7 @@
 
 <div class="viewcode-block" id="ELQROSPA.get_state_dist">
 <a class="viewcode-back" href="../../_autosummary/carbs/guidance/carbs.guidance.ELQROSPA.html#carbs.guidance.ELQROSPA.get_state_dist">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_state_dist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tt</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_state_dist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tt</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculates the current state distribution.</span>
 
 <span class="sd">        Parameters</span>
@@ -1200,7 +1200,7 @@
 
 <div class="viewcode-block" id="ELQROSPA.non_quad_fun_factory">
 <a class="viewcode-back" href="../../_autosummary/carbs/guidance/carbs.guidance.ELQROSPA.html#carbs.guidance.ELQROSPA.non_quad_fun_factory">[docs]</a>
-    <span class="k">def</span> <span class="nf">non_quad_fun_factory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">non_quad_fun_factory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Factory for creating the non-quadratic cost function.</span>
 
 <span class="sd">        This should generate a function of the same form needed by the single</span>
@@ -1216,7 +1216,7 @@
 <span class="sd">            function to calculate cost.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">def</span> <span class="nf">non_quadratic_fun</span><span class="p">(</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">non_quadratic_fun</span><span class="p">(</span>
             <span class="n">tt</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">ctrl_input</span><span class="p">,</span> <span class="n">end_state</span><span class="p">,</span> <span class="n">is_initial</span><span class="p">,</span> <span class="n">is_final</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span>
         <span class="p">):</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__ospa_inds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1251,7 +1251,7 @@
 
 <div class="viewcode-block" id="ELQROSPA.set_cost_model">
 <a class="viewcode-back" href="../../_autosummary/carbs/guidance/carbs.guidance.ELQROSPA.html#carbs.guidance.ELQROSPA.set_cost_model">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_cost_model</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_cost_model</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">ospa_inds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">ospa_cutoff</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -1304,7 +1304,7 @@
 
 <div class="viewcode-block" id="ELQROSPA.find_end_state">
 <a class="viewcode-back" href="../../_autosummary/carbs/guidance/carbs.guidance.ELQROSPA.html#carbs.guidance.ELQROSPA.find_end_state">[docs]</a>
-    <span class="k">def</span> <span class="nf">find_end_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tt</span><span class="p">,</span> <span class="n">cur_ind</span><span class="p">,</span> <span class="n">cur_state</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">find_end_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tt</span><span class="p">,</span> <span class="n">cur_ind</span><span class="p">,</span> <span class="n">cur_state</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Finds the ending state for the given current state.</span>
 
 <span class="sd">        Parameters</span>
@@ -1381,7 +1381,7 @@
 
 <div class="viewcode-block" id="ELQROSPA.init_elqr_lst">
 <a class="viewcode-back" href="../../_autosummary/carbs/guidance/carbs.guidance.ELQROSPA.html#carbs.guidance.ELQROSPA.init_elqr_lst">[docs]</a>
-    <span class="k">def</span> <span class="nf">init_elqr_lst</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tt</span><span class="p">,</span> <span class="n">start_dist</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_elqr_lst</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tt</span><span class="p">,</span> <span class="n">start_dist</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the list of single agent ELQR controllers.</span>
 
 <span class="sd">        Parameters</span>
@@ -1417,12 +1417,12 @@
 
 <div class="viewcode-block" id="ELQROSPA.targets_to_wayareas">
 <a class="viewcode-back" href="../../_autosummary/carbs/guidance/carbs.guidance.ELQROSPA.html#carbs.guidance.ELQROSPA.targets_to_wayareas">[docs]</a>
-    <span class="k">def</span> <span class="nf">targets_to_wayareas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">end_states</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">targets_to_wayareas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">end_states</span><span class="p">):</span>
         <span class="n">warn</span><span class="p">(</span><span class="s2">&quot;targets_to_wayareas not used by ELQROSPA&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">None</span></div>
 
 
-    <span class="k">def</span> <span class="nf">draw_init_states</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">draw_init_states</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">states</span><span class="p">,</span> <span class="n">plt_inds</span><span class="p">,</span> <span class="n">marker</span><span class="p">,</span> <span class="n">zorder</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">):</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">marker</span><span class="o">=</span><span class="n">marker</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="n">zorder</span><span class="p">,)</span>
@@ -1434,10 +1434,10 @@
                 <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cmap</span><span class="p">(</span><span class="n">c_ind</span><span class="p">)</span>
             <span class="n">fig</span><span class="o">.</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">plt_inds</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">s</span><span class="p">[</span><span class="n">plt_inds</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_dist</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_dist</span><span class="p">):</span>
         <span class="k">pass</span>
 
-    <span class="k">def</span> <span class="nf">create_outputs</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_outputs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">start_dist</span><span class="p">,</span>
         <span class="n">num_timesteps</span><span class="p">,</span>
@@ -1478,7 +1478,7 @@
 
 <div class="viewcode-block" id="ELQROSPA.plan">
 <a class="viewcode-back" href="../../_autosummary/carbs/guidance/carbs.guidance.ELQROSPA.html#carbs.guidance.ELQROSPA.plan">[docs]</a>
-    <span class="k">def</span> <span class="nf">plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tt</span><span class="p">,</span> <span class="n">start_dist</span><span class="p">,</span> <span class="n">end_dist</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tt</span><span class="p">,</span> <span class="n">start_dist</span><span class="p">,</span> <span class="n">end_dist</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="n">tt</span><span class="p">,</span> <span class="n">start_dist</span><span class="p">,</span> <span class="n">end_dist</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 </div>
 

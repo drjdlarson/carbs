@@ -6,8 +6,8 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ELQR Examples &mdash; CARBS 1.0.3 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+  <title>ELQR Examples &mdash; CARBS 1.0.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
 
@@ -15,7 +15,7 @@
     <link rel="canonical" href="https://drjdlarson.github.io/carbs/usage/elqr.html" />
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=baaebd52"></script>
+      <script src="../_static/documentation_options.js?v=71272d9f"></script>
       <script src="../_static/doctools.js?v=9a2dae69"></script>
       <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -137,13 +137,13 @@
 <p>The multi-agent ELQR algorithm can be run for a finite horizon with non-linear
 dynamics and a use a Gaussian Mixture agent and target density with the following.
 This leverages the single agent ELQR formulation from GNCPy.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span> <span class="nf">modify_quadratize</span><span class="p">():</span>
-<span class="linenos"> 2</span>    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">modify_quadratize</span><span class="p">():</span>
+<span class="linenos"> 2</span>    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="linenos"> 3</span>
-<span class="linenos"> 4</span>    <span class="kn">import</span> <span class="nn">serums.models</span> <span class="k">as</span> <span class="nn">smodels</span>
-<span class="linenos"> 5</span>    <span class="kn">import</span> <span class="nn">gncpy.control</span> <span class="k">as</span> <span class="nn">gcontrol</span>
-<span class="linenos"> 6</span>    <span class="kn">from</span> <span class="nn">gncpy.dynamics.basic</span> <span class="kn">import</span> <span class="n">IRobotCreate</span>
-<span class="linenos"> 7</span>    <span class="kn">from</span> <span class="nn">carbs.guidance</span> <span class="kn">import</span> <span class="n">ELQR</span>
+<span class="linenos"> 4</span>    <span class="kn">import</span><span class="w"> </span><span class="nn">serums.models</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">smodels</span>
+<span class="linenos"> 5</span>    <span class="kn">import</span><span class="w"> </span><span class="nn">gncpy.control</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gcontrol</span>
+<span class="linenos"> 6</span>    <span class="kn">from</span><span class="w"> </span><span class="nn">gncpy.dynamics.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">IRobotCreate</span>
+<span class="linenos"> 7</span>    <span class="kn">from</span><span class="w"> </span><span class="nn">carbs.guidance</span><span class="w"> </span><span class="kn">import</span> <span class="n">ELQR</span>
 <span class="linenos"> 8</span>
 <span class="linenos"> 9</span>    <span class="n">d2r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span>
 <span class="linenos">10</span>
@@ -182,7 +182,7 @@ This leverages the single agent ELQR formulation from GNCPy.</p>
 <span class="linenos">43</span>    <span class="n">R</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">u_nom</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
 <span class="linenos">44</span>
 <span class="linenos">45</span>    <span class="c1"># define modifications for quadratizing the cost function</span>
-<span class="linenos">46</span>    <span class="k">def</span> <span class="nf">quad_modifier</span><span class="p">(</span><span class="n">itr</span><span class="p">,</span> <span class="n">tt</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+<span class="linenos">46</span>    <span class="k">def</span><span class="w"> </span><span class="nf">quad_modifier</span><span class="p">(</span><span class="n">itr</span><span class="p">,</span> <span class="n">tt</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
 <span class="linenos">47</span>        <span class="n">rot_cost</span> <span class="o">=</span> <span class="mf">0.4</span>
 <span class="linenos">48</span>        <span class="c1"># only modify if within the first 4 iterations</span>
 <span class="linenos">49</span>        <span class="k">if</span> <span class="n">itr</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
@@ -241,14 +241,14 @@ This leverages the single agent ELQR formulation from GNCPy.</p>
 <p>The multi-agent ELQR algorithm can be run for a finite horizon with non-linear
 dynamics and a use an OSPA based non-quadratic cost with the following.
 This leverages the single agent ELQR formulation from GNCPy.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span> <span class="nf">elqr_ospa</span><span class="p">():</span>
-<span class="linenos"> 2</span>    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">elqr_ospa</span><span class="p">():</span>
+<span class="linenos"> 2</span>    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="linenos"> 3</span>
-<span class="linenos"> 4</span>    <span class="kn">import</span> <span class="nn">serums.models</span> <span class="k">as</span> <span class="nn">smodels</span>
-<span class="linenos"> 5</span>    <span class="kn">import</span> <span class="nn">gncpy.control</span> <span class="k">as</span> <span class="nn">gcontrol</span>
-<span class="linenos"> 6</span>    <span class="kn">from</span> <span class="nn">gncpy.dynamics.basic</span> <span class="kn">import</span> <span class="n">IRobotCreate</span>
-<span class="linenos"> 7</span>    <span class="kn">from</span> <span class="nn">carbs.guidance</span> <span class="kn">import</span> <span class="n">ELQROSPA</span>
-<span class="linenos"> 8</span>    <span class="kn">from</span> <span class="nn">serums.distances</span> <span class="kn">import</span> <span class="n">SingleObjectDistance</span>
+<span class="linenos"> 4</span>    <span class="kn">import</span><span class="w"> </span><span class="nn">serums.models</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">smodels</span>
+<span class="linenos"> 5</span>    <span class="kn">import</span><span class="w"> </span><span class="nn">gncpy.control</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gcontrol</span>
+<span class="linenos"> 6</span>    <span class="kn">from</span><span class="w"> </span><span class="nn">gncpy.dynamics.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">IRobotCreate</span>
+<span class="linenos"> 7</span>    <span class="kn">from</span><span class="w"> </span><span class="nn">carbs.guidance</span><span class="w"> </span><span class="kn">import</span> <span class="n">ELQROSPA</span>
+<span class="linenos"> 8</span>    <span class="kn">from</span><span class="w"> </span><span class="nn">serums.distances</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleObjectDistance</span>
 <span class="linenos"> 9</span>
 <span class="linenos">10</span>    <span class="n">d2r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span>
 <span class="linenos">11</span>
@@ -273,7 +273,7 @@ This leverages the single agent ELQR formulation from GNCPy.</p>
 <span class="linenos">30</span>    <span class="n">R</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">u_nom</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
 <span class="linenos">31</span>
 <span class="linenos">32</span>    <span class="c1"># define modifications for quadratizing the cost function</span>
-<span class="linenos">33</span>    <span class="k">def</span> <span class="nf">quad_modifier</span><span class="p">(</span><span class="n">itr</span><span class="p">,</span> <span class="n">tt</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+<span class="linenos">33</span>    <span class="k">def</span><span class="w"> </span><span class="nf">quad_modifier</span><span class="p">(</span><span class="n">itr</span><span class="p">,</span> <span class="n">tt</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
 <span class="linenos">34</span>        <span class="n">rot_cost</span> <span class="o">=</span> <span class="mf">0.4</span>
 <span class="linenos">35</span>        <span class="c1"># only modify if within the first 4 iterations</span>
 <span class="linenos">36</span>        <span class="k">if</span> <span class="n">itr</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
@@ -331,16 +331,16 @@ This leverages the single agent ELQR formulation from GNCPy.</p>
 dynamics and a use an OSPA based non-quadratic cost plus an additional cost
 to avoid obstacles with the following. This leverages the single agent ELQR
 formulation from GNCPy.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="linenos">  1</span><span class="k">def</span> <span class="nf">elqr_ospa_obstacles</span><span class="p">():</span>
-<span class="linenos">  2</span>    <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="linenos">  3</span>    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="linenos">  4</span>    <span class="kn">from</span> <span class="nn">matplotlib.patches</span> <span class="kn">import</span> <span class="n">Circle</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="linenos">  1</span><span class="k">def</span><span class="w"> </span><span class="nf">elqr_ospa_obstacles</span><span class="p">():</span>
+<span class="linenos">  2</span>    <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="linenos">  3</span>    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="linenos">  4</span>    <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.patches</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circle</span>
 <span class="linenos">  5</span>
-<span class="linenos">  6</span>    <span class="kn">import</span> <span class="nn">gncpy.control</span> <span class="k">as</span> <span class="nn">gcontrol</span>
-<span class="linenos">  7</span>    <span class="kn">import</span> <span class="nn">gncpy.plotting</span> <span class="k">as</span> <span class="nn">gplot</span>
-<span class="linenos">  8</span>    <span class="kn">from</span> <span class="nn">gncpy.dynamics.basic</span> <span class="kn">import</span> <span class="n">IRobotCreate</span>
-<span class="linenos">  9</span>    <span class="kn">from</span> <span class="nn">carbs.guidance</span> <span class="kn">import</span> <span class="n">ELQROSPA</span>
-<span class="linenos"> 10</span>    <span class="kn">from</span> <span class="nn">serums.distances</span> <span class="kn">import</span> <span class="n">SingleObjectDistance</span>
+<span class="linenos">  6</span>    <span class="kn">import</span><span class="w"> </span><span class="nn">gncpy.control</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gcontrol</span>
+<span class="linenos">  7</span>    <span class="kn">import</span><span class="w"> </span><span class="nn">gncpy.plotting</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gplot</span>
+<span class="linenos">  8</span>    <span class="kn">from</span><span class="w"> </span><span class="nn">gncpy.dynamics.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">IRobotCreate</span>
+<span class="linenos">  9</span>    <span class="kn">from</span><span class="w"> </span><span class="nn">carbs.guidance</span><span class="w"> </span><span class="kn">import</span> <span class="n">ELQROSPA</span>
+<span class="linenos"> 10</span>    <span class="kn">from</span><span class="w"> </span><span class="nn">serums.distances</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleObjectDistance</span>
 <span class="linenos"> 11</span>
 <span class="linenos"> 12</span>    <span class="n">d2r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span>
 <span class="linenos"> 13</span>
@@ -367,7 +367,7 @@ formulation from GNCPy.</p>
 <span class="linenos"> 34</span>    <span class="n">R</span> <span class="o">=</span> <span class="mf">0.4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">u_nom</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
 <span class="linenos"> 35</span>
 <span class="linenos"> 36</span>    <span class="c1"># define modifications for quadratizing the cost function</span>
-<span class="linenos"> 37</span>    <span class="k">def</span> <span class="nf">quad_modifier</span><span class="p">(</span><span class="n">itr</span><span class="p">,</span> <span class="n">tt</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+<span class="linenos"> 37</span>    <span class="k">def</span><span class="w"> </span><span class="nf">quad_modifier</span><span class="p">(</span><span class="n">itr</span><span class="p">,</span> <span class="n">tt</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
 <span class="linenos"> 38</span>        <span class="n">rot_cost</span> <span class="o">=</span> <span class="mf">0.4</span>
 <span class="linenos"> 39</span>        <span class="c1"># only modify if within the first 2 iterations</span>
 <span class="linenos"> 40</span>        <span class="k">if</span> <span class="n">itr</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
@@ -408,7 +408,7 @@ formulation from GNCPy.</p>
 <span class="linenos"> 75</span>    <span class="n">scale_factor</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="linenos"> 76</span>    <span class="n">cost_args</span> <span class="o">=</span> <span class="p">(</span><span class="n">obstacles</span><span class="p">,</span> <span class="n">obs_factor</span><span class="p">,</span> <span class="n">scale_factor</span><span class="p">,</span> <span class="n">bottom_left</span><span class="p">,</span> <span class="n">top_right</span><span class="p">)</span>
 <span class="linenos"> 77</span>
-<span class="linenos"> 78</span>    <span class="k">def</span> <span class="nf">non_quadratic_cost</span><span class="p">(</span>
+<span class="linenos"> 78</span>    <span class="k">def</span><span class="w"> </span><span class="nf">non_quadratic_cost</span><span class="p">(</span>
 <span class="linenos"> 79</span>        <span class="n">tt</span><span class="p">,</span>
 <span class="linenos"> 80</span>        <span class="n">state</span><span class="p">,</span>
 <span class="linenos"> 81</span>        <span class="n">ctrl_input</span><span class="p">,</span>

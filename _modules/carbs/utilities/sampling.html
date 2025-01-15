@@ -5,8 +5,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>carbs.utilities.sampling &mdash; CARBS 1.0.3 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+  <title>carbs.utilities.sampling &mdash; CARBS 1.0.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
 
@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://drjdlarson.github.io/carbs/_modules/carbs/utilities/sampling.html" />
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=baaebd52"></script>
+      <script src="../../../_static/documentation_options.js?v=71272d9f"></script>
       <script src="../../../_static/doctools.js?v=9a2dae69"></script>
       <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -121,12 +121,12 @@
              
   <h1>Source code for carbs.utilities.sampling</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Implements general sampling methods.&quot;&quot;&quot;</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 
 <div class="viewcode-block" id="gibbs">
 <a class="viewcode-back" href="../../../_autosummary/carbs/utilities/sampling/carbs.utilities.sampling.gibbs.html#carbs.utilities.sampling.gibbs">[docs]</a>
-<span class="k">def</span> <span class="nf">gibbs</span><span class="p">(</span><span class="n">in_costs</span><span class="p">,</span> <span class="n">num_iters</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">gibbs</span><span class="p">(</span><span class="n">in_costs</span><span class="p">,</span> <span class="n">num_iters</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements a Gibbs sampler.</span>
 
 <span class="sd">    Notes</span>
@@ -202,7 +202,7 @@
 <span class="c1"># TODO: Multisensor Gibbs potentially</span>
 <div class="viewcode-block" id="mm_gibbs">
 <a class="viewcode-back" href="../../../_autosummary/carbs/utilities/sampling/carbs.utilities.sampling.mm_gibbs.html#carbs.utilities.sampling.mm_gibbs">[docs]</a>
-<span class="k">def</span> <span class="nf">mm_gibbs</span><span class="p">(</span><span class="n">in_costs</span><span class="p">,</span> <span class="n">num_iters</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">mm_gibbs</span><span class="p">(</span><span class="n">in_costs</span><span class="p">,</span> <span class="n">num_iters</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements a minimally-Markovian Gibbs sampler.</span>
 
 <span class="sd">        Notes</span>
