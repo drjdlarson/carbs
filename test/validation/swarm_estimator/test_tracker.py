@@ -10,7 +10,8 @@ import scipy.stats as stats
 import gncpy.filters as gfilts
 import gncpy.dynamics.basic as gdyn
 import gncpy.distributions as gdistrib
-import carbs.swarm_estimator.tracker as tracker
+#import carbs.swarm_estimator.tracker as tracker
+from ....src.carbs.swarm_estimator import tracker as tracker
 import serums.models as smodels
 from serums.enums import GSMTypes, SingleObjectDistance
 
@@ -4954,9 +4955,7 @@ def test_MS_IMM_LPMBM():  # noqa
     print("\tExpecting {} agents".format(len(true_agents)))
     assert len(true_agents) == pmbm.cardinality, "Wrong cardinality"
 
-
-# %% main
-if __name__ == "__main__":
+def main():
     from timeit import default_timer as timer
     import matplotlib
 
@@ -5023,3 +5022,7 @@ if __name__ == "__main__":
     print("{:.2f} s".format(end - start))
     print("Close all plots to exit")
     plt.show()
+
+# %% main
+if __name__ == "__main__":
+    main()
