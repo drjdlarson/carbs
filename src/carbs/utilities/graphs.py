@@ -5,8 +5,8 @@ This module contains the functions for graph search algorithms.
 import numpy as np
 from warnings import warn
 
-#improt carbs.utilities.graphs_subroutines as subs
-from ...carbs.utilities import graphs_subroutines as subs
+import carbs.utilities.graphs_subroutines as subs
+#from ...carbs.utilities import graphs_subroutines as subs
 
 
 def k_shortest(log_cost_in, k):

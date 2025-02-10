@@ -10,8 +10,8 @@ import scipy.stats as stats
 import gncpy.filters as gfilts
 import gncpy.dynamics.basic as gdyn
 import gncpy.distributions as gdistrib
-#import carbs.swarm_estimator.tracker as tracker
-from ....src.carbs.swarm_estimator import tracker as tracker
+import carbs.swarm_estimator.tracker as tracker
+#from ....src.carbs.swarm_estimator import tracker as tracker
 import serums.models as smodels
 from serums.enums import GSMTypes, SingleObjectDistance
 
