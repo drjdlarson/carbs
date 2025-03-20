@@ -155,8 +155,8 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
         next_alpha = cur_alpha / self.forgetting_factor
         next_beta = cur_beta / self.forgetting_factor
 
-        next_IWdof = 2 * GGIW_obj.d + 2 + np.exp(-timestep / self.tau) * (cur_IWdof - 2 * GGIW_obj.d - 2)
-        next_IWshape = cur_IWshape
+        next_IWdof = 2 * GGIW_obj.d + 2 + np.exp(-dt / self.tau) * (cur_IWdof - 2 * GGIW_obj.d - 2)
+        next_IWshape = (next_IWdof - 2 * GGIW_obj.d - 2)/(cur_IWdof - 2 * GGIW_obj.d - 2) * cur_IWshape
 
         next_dist = GGIW(alpha=next_alpha, beta=next_beta, mean=next_state, covariance=next_cov, IWdof=next_IWdof, IWshape=next_IWshape)
 
@@ -184,14 +184,6 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
 
         W = np.size(meas, axis=1)
 
-        # self._init_model()
-
-        # if self.__model is not None:
-        #     # self.__corrParams.measParams = self._measObj.args_to_params(meas_fun_args)
-        #     out = self.__model.correct(timestep, meas)
-        #     return out[0].reshape((-1, 1)), out[1]
-
-        # else:
         est_meas, meas_mat = self._est_meas(
             timestep, cur_state, np.size(meas, axis=0), meas_fun_args
         )
@@ -199,48 +191,62 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
         mean_meas = np.mean(meas, axis=1)
         mean_meas = mean_meas.reshape((np.size(meas,axis=0)),1)
 
-        Z = 0
-        for kk in range(0,W,1):
-            diff_Z = meas[:,kk] - mean_meas
-            Z += diff_Z @ diff_Z.T            # Essentiall the scatter
+        diff_Z = meas - mean_meas
+        Z = diff_Z @ diff_Z.T            # Essentially the scatter
 
         X_hat = cur_IWshape * (cur_IWdof - 2 * GGIW_obj.d - 2)**(-1)
+        X_hat = (X_hat + X_hat.T)*0.5
 
         epsilon = mean_meas - meas_mat @ cur_state
 
         N = epsilon @ epsilon.T
 
-        ### get the Kalman gain (updated for GGIW) ###
-        # cov_meas_T = cur_cov @ meas_mat.T
-        # inov_cov = meas_mat @ cov_meas_T
-        inov_cov = meas_mat @ cur_cov @ meas_mat.T + X_hat / W 
+        # ### get the Kalman gain (updated for GGIW) ###
+        # # cov_meas_T = cur_cov @ meas_mat.T
+        # # inov_cov = meas_mat @ cov_meas_T
+        # inov_cov = meas_mat @ cur_cov @ meas_mat.T + X_hat / W 
 
-        # estimate the measurement noise online if applicable
-        if self._est_meas_noise_fnc is not None:
-            self.meas_noise = self._est_meas_noise_fnc(est_meas, inov_cov)
+        # # estimate the measurement noise online if applicable
+        # if self._est_meas_noise_fnc is not None:
+        #     self.meas_noise = self._est_meas_noise_fnc(est_meas, inov_cov)
 
-        inov_cov += self.meas_noise   # I'm keeping meas_noise just to see its effects (might make trajectories more smooth?) 
+        # inov_cov += self.meas_noise   # I'm keeping meas_noise just to see its effects (might make trajectories more smooth?) 
 
-        inov_cov = (inov_cov + inov_cov.T) * 0.5            # To support numerical stability / positive definiteness 
+        # inov_cov = (inov_cov + inov_cov.T) * 0.5            # To support numerical stability / positive definiteness 
 
-        if self.use_cholesky_inverse:
-            sqrt_inv_inov_cov = la.inv(la.cholesky(inov_cov))
-            inv_inov_cov = sqrt_inv_inov_cov.T @ sqrt_inv_inov_cov
-        else:
-            inv_inov_cov = la.inv(inov_cov)
+        # if self.use_cholesky_inverse:
+        #     sqrt_inv_inov_cov = la.inv(la.cholesky(inov_cov))
+        #     inv_inov_cov = sqrt_inv_inov_cov.T @ sqrt_inv_inov_cov
+        # else:
+        #     inv_inov_cov = la.inv(inov_cov)
 
-        kalman_gain = cur_cov @ meas_mat.T @ inv_inov_cov    # Kalman gain finally
+        # kalman_gain = cur_cov @ meas_mat.T @ inv_inov_cov    # Kalman gain finally
 
-        X_hat_power = sla.sqrtm(X_hat)
+        # X_hat_power = sla.sqrtm(X_hat)
 
-        inov_cov_power = -sla.sqrtm(inov_cov)
+        # inov_cov_power = -sla.sqrtm(inov_cov)
 
-        N_hat = X_hat_power @ inov_cov_power @ N @ X_hat_power.T @ inov_cov_power.T 
+        # N_hat = X_hat_power @ inov_cov_power @ N @ X_hat_power.T @ inov_cov_power.T 
+
+        S = meas_mat @ cur_cov @ meas_mat.T + X_hat / W 
+        S = (S + S.T) * 0.5
+
+        Vs = la.cholesky(S)
+        det_S = la.det(Vs)
+        inv_sqrt_S = la.inv(Vs)
+        iS = inv_sqrt_S * inv_sqrt_S.T 
+
+        K = cur_cov @ meas_mat.T @ iS 
+        
+        X_sqrt = sla.sqrtm(X_hat)
+        S_sqrt_inv = sla.sqrtm(iS)
+
+        N_hat = X_sqrt @ S_sqrt_inv @ N @ S_sqrt_inv.T @ X_sqrt.T
 
         next_alpha = cur_alpha + W
         next_beta = cur_beta + 1
-        next_state = cur_state + kalman_gain @ epsilon 
-        next_cov = cur_cov - kalman_gain @ meas_mat @ cur_cov
+        next_state = cur_state + K @ epsilon 
+        next_cov = cur_cov - K @ meas_mat @ cur_cov
         next_IWdof = cur_IWdof + W
         next_IWshape = cur_IWshape + N_hat + Z 
 
@@ -255,29 +261,29 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
         # cur_cov = (np.eye(n_states) - kalman_gain @ meas_mat) @ cur_cov
 
         # calculate the measurement fit probability assuming Gaussian 
-        meas_fit_prob = self._calc_meas_fit(meas,GGIW_obj,next_dist,X_hat,inov_cov) # meas, est_meas, inov_cov) 
+        meas_fit_prob = self._calc_meas_fit() # meas,GGIW_obj,next_dist,X_hat,inov_cov) # meas, est_meas, inov_cov) 
 
         return (next_dist, meas_fit_prob)
 
-    def _calc_meas_fit(self, meas, GGIW_pred, GGIW_upd, X_hat, inov_cov):
+    def _calc_meas_fit(self): #, meas, GGIW_pred, GGIW_upd, X_hat, inov_cov):
         
-        W = np.size(meas, axis=1) 
+        # W = np.size(meas, axis=1) 
 
-        d = GGIW_pred.IWshape.ndim
+        # d = GGIW_pred.IWshape.ndim
 
-        pred_alpha = GGIW_pred.alpha
-        pred_beta = GGIW_pred.beta
-        pred_state = GGIW_pred.mean
-        pred_cov = GGIW_pred.covariance
-        pred_IWdof = GGIW_pred.IWdof
-        pred_IWshape = GGIW_pred.IWshape 
+        # pred_alpha = GGIW_pred.alpha
+        # pred_beta = GGIW_pred.beta
+        # pred_state = GGIW_pred.mean
+        # pred_cov = GGIW_pred.covariance
+        # pred_IWdof = GGIW_pred.IWdof
+        # pred_IWshape = GGIW_pred.IWshape 
 
-        upd_alpha = GGIW_upd.alpha
-        upd_beta = GGIW_upd.beta
-        upd_state = GGIW_upd.mean
-        upd_cov = GGIW_upd.covariance
-        upd_IWdof = GGIW_upd.IWdof
-        upd_IWshape = GGIW_upd.IWshape 
+        # upd_alpha = GGIW_upd.alpha
+        # upd_beta = GGIW_upd.beta
+        # upd_state = GGIW_upd.mean
+        # upd_cov = GGIW_upd.covariance
+        # upd_IWdof = GGIW_upd.IWdof
+        # upd_IWshape = GGIW_upd.IWshape 
 
         L = 1
 
