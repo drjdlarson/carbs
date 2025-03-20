@@ -208,7 +208,7 @@ class GGIW_PHD(RandomFiniteSetBase):
         weights = [self.prob_survive * x for x in probDensity.weights.copy()]
         n_terms = len(weights)
         NewMixture = GGIWMixture() 
-        for ii in enumerate(probDensity._distributions):
+        for ii, _ in enumerate(probDensity._distributions):
 
             cur_probDensity = probDensity.get_distribution(ii)
 
@@ -264,7 +264,7 @@ class GGIW_PHD(RandomFiniteSetBase):
                     # Check every other measurement
                     for j in range(n):
                         if not visited[j]:
-                            if np.sqrt(meas[current_idx]**2 + meas[j]**2) <= threshold:
+                            if np.linalg.norm(meas[current_idx] - meas[j]) <= threshold:
                                 visited[j] = True
                                 partition.append(meas[j])
                                 stack.append(j)
@@ -318,51 +318,50 @@ class GGIW_PHD(RandomFiniteSetBase):
     def _merge(self):
         """Merges nearby hypotheses."""
 
-        print("Merging not implemented yet. ")
-        # loop_inds = set(range(0, len(self._Mixture.means)))
+        loop_inds = set(range(0, len(self._Mixture.means)))
 
-        # w_lst = []
-        # m_lst = []
-        # p_lst = []
-        # while len(loop_inds) > 0:
-        #     jj = int(np.argmax(self._Mixture.weights))
-        #     comp_inds = []
-        #     inv_cov = la.inv(self._Mixture.covariances[jj])
-        #     for ii in loop_inds:
-        #         diff = self._Mixture.means[ii] - self._Mixture.means[jj]
-        #         val = diff.T @ inv_cov @ diff
-        #         if val <= self.merge_threshold:
-        #             comp_inds.append(ii)
-        #     w_new = sum([self._Mixture.weights[ii] for ii in comp_inds])
-        #     m_new = (
-        #         sum(
-        #             [
-        #                 self._Mixture.weights[ii] * self._Mixture.means[ii]
-        #                 for ii in comp_inds
-        #             ]
-        #         )
-        #         / w_new
-        #     )
-        #     p_new = (
-        #         sum(
-        #             [
-        #                 self._Mixture.weights[ii] * self._Mixture.covariances[ii]
-        #                 for ii in comp_inds
-        #             ]
-        #         )
-        #         / w_new
-        #     )
+        w_lst = []
+        m_lst = []
+        p_lst = []
+        while len(loop_inds) > 0:
+            jj = int(np.argmax(self._Mixture.weights))
+            comp_inds = []
+            inv_cov = la.inv(self._Mixture.covariances[jj])
+            for ii in loop_inds:
+                diff = self._Mixture.means[ii] - self._Mixture.means[jj]
+                val = diff.T @ inv_cov @ diff
+                if val <= self.merge_threshold:
+                    comp_inds.append(ii)
+            w_new = sum([self._Mixture.weights[ii] for ii in comp_inds])
+            m_new = (
+                sum(
+                    [
+                        self._Mixture.weights[ii] * self._Mixture.means[ii]
+                        for ii in comp_inds
+                    ]
+                )
+                / w_new
+            )
+            p_new = (
+                sum(
+                    [
+                        self._Mixture.weights[ii] * self._Mixture.covariances[ii]
+                        for ii in comp_inds
+                    ]
+                )
+                / w_new
+            )
 
-        #     w_lst.append(w_new)
-        #     m_lst.append(m_new)
-        #     p_lst.append(p_new)
+            w_lst.append(w_new)
+            m_lst.append(m_new)
+            p_lst.append(p_new)
 
-        #     loop_inds = loop_inds.symmetric_difference(comp_inds)
-        #     for ii in comp_inds:
-        #         self._Mixture.weights[ii] = -1
-        # self._Mixture = smodels.GaussianMixture(
-        #     means=m_lst, covariances=p_lst, weights=w_lst
-        # )
+            loop_inds = loop_inds.symmetric_difference(comp_inds)
+            for ii in comp_inds:
+                self._Mixture.weights[ii] = -1
+        self._Mixture = smodels.GaussianMixture(
+            means=m_lst, covariances=p_lst, weights=w_lst
+        )
 
     def _cap(self):
         """Removes least likely hypotheses until a maximum number is reached.
