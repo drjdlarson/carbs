@@ -212,7 +212,7 @@ class GGIW_PHD(RandomFiniteSetBase):
 
             cur_probDensity = probDensity.get_distribution(ii)
 
-            pred_probDensity = self.filter.predict(timestep,cur_probDensity)
+            pred_probDensity = self.filter.predict(timestep,cur_probDensity, filt_args)
 
             NewMixture.add_components(pred_probDensity.alpha, pred_probDensity.beta, pred_probDensity.mean, pred_probDensity.covariance, pred_probDensity.IWdof, pred_probDensity.IWshape, weights=weights[ii])            
             
