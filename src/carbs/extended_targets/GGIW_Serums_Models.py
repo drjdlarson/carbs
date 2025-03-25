@@ -48,14 +48,14 @@ class GGIW(BaseSingleModel):
         The focus of this development is for extended target multi-target tracking, so the sampling / pdf aspects are not developed quite just yet. 
 
         """
-        self.alpha = alpha 
-        self.beta = beta
-        self.mean = mean
-        self.covariance = covariance
-        self.IWdof = IWdof
-        self.IWshape = IWshape 
+        self._alpha = alpha 
+        self._beta = beta
+        self._mean = mean
+        self._cov = covariance
+        self._IWdof = IWdof
+        self._IWshape = IWshape 
         if IWshape is not None:
-            self.d = IWshape.ndim
+            self._d = IWshape.ndim
 
     @property
     def mean(self):
@@ -65,11 +65,11 @@ class GGIW(BaseSingleModel):
         -------
         N x 1 numpy array.
         """
-        return self.location
+        return self._mean
 
     @mean.setter
     def mean(self, val:np.ndarray):
-        self.location = val
+        self._mean = val
 
     @property
     def covariance(self):
@@ -79,11 +79,11 @@ class GGIW(BaseSingleModel):
         -------
         N x N numpy array.
         """
-        return self.cov
+        return self._cov
 
     @covariance.setter
     def covariance(self, val:np.ndarray):
-        self.cov = val
+        self._cov = val
 
     @property
     def alpha(self):
@@ -93,11 +93,11 @@ class GGIW(BaseSingleModel):
         -------
         1 x 1 float.
         """
-        return self.a
+        return self._alpha
 
     @alpha.setter
     def alpha(self, val):
-        self.a = val
+        self._alpha = val
 
     @property
     def beta(self):
@@ -107,11 +107,11 @@ class GGIW(BaseSingleModel):
         -------
         1 x 1 float.
         """
-        return self.b
+        return self._beta
 
     @beta.setter
     def beta(self, val):
-        self.b = val
+        self._beta = val
 
     @property
     def IWdof(self):
@@ -121,11 +121,11 @@ class GGIW(BaseSingleModel):
         -------
         1 x 1 float.
         """
-        return self.dof
+        return self._IWdof
 
     @IWdof.setter
     def IWdof(self, val:float):
-        self.dof = val
+        self._IWdof = val
 
     @property
     def IWshape(self):
@@ -135,43 +135,48 @@ class GGIW(BaseSingleModel):
         -------
         d x d numpy array.
         """
-        return self.shape
+        return self._IWshape
 
     @IWshape.setter
     def IWshape(self, val:np.ndarray):
-        self.shape = val 
+        self._IWshape = val 
+
+    @property
+    def d(self):
+        return self._d
+
 
     def __str__(self):
         # Build Gamma block (3 lines)
         gamma_lines = []
         gamma_lines.append("Gamma Distribution:")
-        gamma_lines.append("  Gamma Shape (alpha): {:>12.4e}".format(self.alpha))
-        gamma_lines.append("  Gamma Rate  (beta):  {:>12.4e}".format(self.beta))
+        gamma_lines.append("  Gamma Shape (alpha): {:>12.4e}".format(self._alpha))
+        gamma_lines.append("  Gamma Rate  (beta):  {:>12.4e}".format(self._beta))
         
         # Build Gaussian block with column headers for Mean and Covariance.
         gaussian_lines = []
         gaussian_lines.append("Gaussian Distribution:")
         gaussian_lines.append("  {:<30s}\t   {}".format("Mean", "Covariance"))
         
-        dim = self.mean.size
+        dim = self._mean.size
         mean_parts = []
         cov_parts = []
         
         for i in range(dim):
             # Format mean element with appropriate bracket style.
             if dim == 1:
-                mean_str = "[{:>12.4e}]".format(self.mean.ravel()[i])
+                mean_str = "[{:>12.4e}]".format(self._mean.ravel()[i])
             else:
                 if i == 0:
-                    mean_str = "\u2308{:>12.4e}\u2309".format(self.mean.ravel()[i])
+                    mean_str = "\u2308{:>12.4e}\u2309".format(self._mean.ravel()[i])
                 elif i == dim - 1:
-                    mean_str = "\u230A{:>12.4e}\u230B".format(self.mean.ravel()[i])
+                    mean_str = "\u230A{:>12.4e}\u230B".format(self._mean.ravel()[i])
                 else:
-                    mean_str = "|{:>12.4e}|".format(self.mean.ravel()[i])
+                    mean_str = "|{:>12.4e}|".format(self._mean.ravel()[i])
             mean_parts.append(mean_str)
             
             # Format covariance row with matching Unicode bounds.
-            cov_row = self.covariance[i, :].tolist()
+            cov_row = self._cov[i, :].tolist()
             if dim == 1:
                 cov_str = "[{:>12.4e}]".format(cov_row[0])
             else:
@@ -195,11 +200,11 @@ class GGIW(BaseSingleModel):
         # Build Inverse Wishart block.
         iw_lines = []
         iw_lines.append("Inverse Wishart Distribution:")
-        iw_lines.append("  Degrees of Freedom: {:>12.4e}".format(self.IWdof))
+        iw_lines.append("  Degrees of Freedom: {:>12.4e}".format(self._IWdof))
         iw_lines.append("  Shape Matrix:")
-        dim_iw = self.IWshape.shape[0]
+        dim_iw = self._IWshape.shape[0]
         for i in range(dim_iw):
-            row_str = "    [ " + " ".join("{:>12.4e}".format(x) for x in self.IWshape[i, :].tolist()) + " ]"
+            row_str = "    [ " + " ".join("{:>12.4e}".format(x) for x in self._IWshape[i, :].tolist()) + " ]"
             iw_lines.append(row_str)
         
         # Combine the three blocks side by side.
@@ -242,20 +247,20 @@ class GGIW(BaseSingleModel):
             rng = np.random.default_rng(random_state)
 
         # (1) Mean number of measurements = alpha / beta
-        lam = self.alpha / self.beta
+        lam = self._alpha / self._beta
         N = stats.poisson(lam).rvs(random_state=rng)
 
         # (2) Target center is assumed to be the mean for this purpose, since sampling is for truth targets
-        center = self.mean[xy_inds]
+        center = self._mean[xy_inds]
 
         # (3) Sample the extent from an Inverse Wishart
-        extent = stats.invwishart.rvs(df=self.IWdof, scale=self.IWshape, random_state=rng)
+        extent = stats.invwishart.rvs(df=self._IWdof, scale=self._IWshape, random_state=rng)
 
         # (4) Sample each measurement from N(center, extent)
         if N > 0:
             measurements = rng.multivariate_normal(center.flatten(), extent, size=N)
         else:
-            measurements = np.empty((0, self.d))
+            measurements = np.empty((0, self._d))
 
         return measurements.T
 
@@ -281,12 +286,12 @@ class GGIW(BaseSingleModel):
             raise ValueError("plot_distribution() only supports 2D for this example.")
 
         # The ellipse center = Gaussian mean
-        center = self.mean
+        center = self._mean
 
         # Mean of Inverse Wishart(V, v) = V / (v - d - 1)  if v > d+1
-        if self.IWdof <= self.d + 1:
+        if self._IWdof <= self._d + 1:
             raise ValueError("Degrees of freedom must exceed d+1 for valid mean of IW.")
-        mean_extent = self.IWshape / (self.IWdof - self.d - 1)
+        mean_extent = self._IWshape / (self._IWdof - self._d - 1)
 
         # Decompose mean_extent to get ellipse axes
         eigvals, eigvecs = np.linalg.eigh(mean_extent)
@@ -313,7 +318,7 @@ class GGIW(BaseSingleModel):
 
         if plot_covs:
             # Extract the 2x2 sub-block of self.cov to match plt_inds (x,y, for example)
-            cov_2d = self.cov[np.ix_(plt_inds, plt_inds)]
+            cov_2d = self._cov[np.ix_(plt_inds, plt_inds)]
 
             eigvals_c, eigvecs_c = np.linalg.eigh(cov_2d)
             order_c = np.argsort(eigvals_c)
