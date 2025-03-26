@@ -55,7 +55,7 @@ class GGIW(BaseSingleModel):
         self._IWdof = IWdof
         self._IWshape = IWshape 
         if IWshape is not None:
-            self._d = IWshape.ndim
+            self._d = IWshape.shape[0]
 
     @property
     def mean(self):
