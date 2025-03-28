@@ -225,7 +225,7 @@ class GGIW(BaseSingleModel):
             combined_lines.append("{:<{gw}}   {:<{gw2}}   {}".format(
                 g_line, ga_line, iw_line, gw=gamma_width, gw2=gaussian_width))
         
-        return "\n" + "\n".join(combined_lines) + "\n"
+        return "\n".join(combined_lines) + "\n"
     
     def sample_measurements(self, xy_inds=[0,1], random_state=None):
         """
@@ -264,7 +264,7 @@ class GGIW(BaseSingleModel):
 
         return measurements.T
 
-    def plot_distribution(self, plt_inds=[0,1], ax=None, num_std=2.0, plot_covs=True, **kwargs):
+    def plot_distribution(self, plt_inds=[0,1], ax=None, cov_std = 1.0, num_std=2.0, plot_covs=True, **kwargs):
         """
         Plot the GGIW in 2D:
           - draws an ellipse for the *mean* of the Inverse Wishart,
@@ -325,7 +325,7 @@ class GGIW(BaseSingleModel):
             eigvals_c = eigvals_c[order_c]
             eigvecs_c = eigvecs_c[:, order_c]
 
-            r1_c, r2_c = num_std * np.sqrt(eigvals_c)
+            r1_c, r2_c = cov_std * np.sqrt(eigvals_c)
             angle_c = np.degrees(np.arctan2(eigvecs_c[1, 1], eigvecs_c[0, 1]))
 
             cov_ellipse = Ellipse(
@@ -342,7 +342,7 @@ class GGIW(BaseSingleModel):
             ax.add_patch(cov_ellipse)
 
         # Plot the center (Gaussian mean)
-        ax.plot(center[0], center[1], 'o', label='GGIW mean')
+        ax.plot(center[plt_inds[0]], center[plt_inds[1]], 'o', label='GGIW mean')
         ax.set_aspect('equal', 'box')
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
@@ -355,20 +355,20 @@ class GGIW(BaseSingleModel):
 class GGIWMixture(BaseMixtureModel):
     """Gamma Gaussian Inverse Wishart Mixture object."""
     
-    def __init__(self, alphas:float=None, betas:float=None, means:np.ndarray=None, covariances =None, IWdofs =None, IWshapes = None, weights = None,**kwargs):
+    def __init__(self, alphas=None, betas=None, means=None, covariances =None, IWdofs =None, IWshapes = None,**kwargs):
         """Initialize a Mixture object. """
 
-        if means is not None and covariances is not None and alphas is not None and betas is not None and IWdofs is not None and IWshapes is not None and weights is not None:
+        if means is not None and covariances is not None and alphas is not None and betas is not None and IWdofs is not None and IWshapes is not None:
             kwargs["distributions"] = [
                 GGIW(alpha=a, beta=b, mean=m, covariance=c, IWdof=v, IWshape=V) for a, b, m, c, v, V in zip(alphas, betas, means, covariances, IWdofs, IWshapes)
-            ]
-            self.weights = weights
+            ] 
+            kwargs["weights"] = [1 / len(alphas) for _ in range(len(alphas))]
         super().__init__(**kwargs)
 
     @property
     def means(self):
         """List of Gaussian means for the GGIW components (each is an N x 1 numpy array). Recommended to be read only."""
-        return _DistListWrapper(self._distributions, "location")
+        return _DistListWrapper(self._distributions, "_mean")
 
     @means.setter
     def means(self, val):
@@ -385,7 +385,7 @@ class GGIWMixture(BaseMixtureModel):
     @property
     def covariances(self):
         """List of Gaussian covariances for the GGIW components (each is an N x N numpy array). Recommended to be read only."""
-        return _DistListWrapper(self._distributions, "scale")
+        return _DistListWrapper(self._distributions, "_covariance")
 
     @covariances.setter
     def covariances(self, val):
@@ -402,7 +402,7 @@ class GGIWMixture(BaseMixtureModel):
     @property
     def alphas(self):
         """List of Gamma alpha parameters for the GGIW mixture components. Recommended to be read only."""
-        return _DistListWrapper(self._distributions, "a")
+        return _DistListWrapper(self._distributions, "_alpha")
 
     @alphas.setter
     def alphas(self, val):
@@ -414,12 +414,12 @@ class GGIWMixture(BaseMixtureModel):
             self.weights = [1 / len(val) for _ in range(len(val))]
             self._distributions = [GGIW() for _ in range(len(val))]
         for ii, v in enumerate(val):
-            self._distributions[ii].a = v
+            self._distributions[ii].alpha = v
 
     @property
     def betas(self):
         """List of Gamma beta parameters for the GGIW mixture components. Recommended to be read only."""
-        return _DistListWrapper(self._distributions, "b")
+        return _DistListWrapper(self._distributions, "_beta")
 
     @betas.setter
     def betas(self, val):
@@ -431,12 +431,12 @@ class GGIWMixture(BaseMixtureModel):
             self.weights = [1 / len(val) for _ in range(len(val))]
             self._distributions = [GGIW() for _ in range(len(val))]
         for ii, v in enumerate(val):
-            self._distributions[ii].b = v
+            self._distributions[ii].beta = v
 
     @property
     def IWdofs(self):
         """List of Inverse Wishart degrees of freedom for the GGIW mixture components. Recommended to be read only."""
-        return _DistListWrapper(self._distributions, "v")
+        return _DistListWrapper(self._distributions, "_IWdof")
 
     @IWdofs.setter
     def IWdofs(self, val):
@@ -448,12 +448,12 @@ class GGIWMixture(BaseMixtureModel):
             self.weights = [1 / len(val) for _ in range(len(val))]
             self._distributions = [GGIW() for _ in range(len(val))]
         for ii, v in enumerate(val):
-            self._distributions[ii].v = v
+            self._distributions[ii].IWdof = v
 
     @property
     def IWshapes(self):
         """List of Inverse Wishart shape matrices for the GGIW mixture components. Recommended to be read only."""
-        return _DistListWrapper(self._distributions, "V")
+        return _DistListWrapper(self._distributions, "_IWshape")
 
     @IWshapes.setter
     def IWshapes(self, val):
@@ -465,7 +465,7 @@ class GGIWMixture(BaseMixtureModel):
             self.weights = [1 / len(val) for _ in range(len(val))]
             self._distributions = [GGIW() for _ in range(len(val))]
         for ii, v in enumerate(val):
-            self._distributions[ii].V = v
+            self._distributions[ii].IWshape = v
     
     def add_components(self, alphas, betas, means, covariances, IWdofs, IWshapes, weights):
         """Add GGGIW distributions to the mixture."""
@@ -505,7 +505,16 @@ class GGIWMixture(BaseMixtureModel):
         )
         self.weights.extend(weights)
 
-    def get_distribution(self, ii):
-        if ii >= len(self._distributions):
-            raise IndexError(f"Index {ii} out of range for GGIWMixture.")
-        return self._distributions[ii]
+    def __str__(self):
+        s = ""
+        for ii in range(len(self._distributions)):
+            s += f"Term {ii+1}: (weight = {self.weights[ii]})\n"
+            s += str(self._distributions[ii])
+        return s
+
+    def plot_distributions(self,plt_inds=[0,1], ax=None, cov_std=1.0, num_std=2.0, plot_covs=True, **kwargs):
+        if ax is None:
+            ax = plt.gca()
+        for ii in range(len(self._distributions)):
+            cur_dist = self._distributions[ii]
+            cur_dist.plot_distribution(plt_inds, ax, cov_std, num_std, plot_covs, **kwargs)

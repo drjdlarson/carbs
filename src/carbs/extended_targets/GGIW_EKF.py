@@ -89,8 +89,8 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
         self,
         timestep,
         GGIW_obj,
-        cur_input=None,
         dyn_fun_params=None,
+        cur_input=None, 
         control_fun_params=None,
     ):
         
@@ -201,33 +201,6 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
 
         N = epsilon @ epsilon.T
 
-        # ### get the Kalman gain (updated for GGIW) ###
-        # # cov_meas_T = cur_cov @ meas_mat.T
-        # # inov_cov = meas_mat @ cov_meas_T
-        # inov_cov = meas_mat @ cur_cov @ meas_mat.T + X_hat / W 
-
-        # # estimate the measurement noise online if applicable
-        # if self._est_meas_noise_fnc is not None:
-        #     self.meas_noise = self._est_meas_noise_fnc(est_meas, inov_cov)
-
-        # inov_cov += self.meas_noise   # I'm keeping meas_noise just to see its effects (might make trajectories more smooth?) 
-
-        # inov_cov = (inov_cov + inov_cov.T) * 0.5            # To support numerical stability / positive definiteness 
-
-        # if self.use_cholesky_inverse:
-        #     sqrt_inv_inov_cov = la.inv(la.cholesky(inov_cov))
-        #     inv_inov_cov = sqrt_inv_inov_cov.T @ sqrt_inv_inov_cov
-        # else:
-        #     inv_inov_cov = la.inv(inov_cov)
-
-        # kalman_gain = cur_cov @ meas_mat.T @ inv_inov_cov    # Kalman gain finally
-
-        # X_hat_power = sla.sqrtm(X_hat)
-
-        # inov_cov_power = -sla.sqrtm(inov_cov)
-
-        # N_hat = X_hat_power @ inov_cov_power @ N @ X_hat_power.T @ inov_cov_power.T 
-
         S = meas_mat @ cur_cov @ meas_mat.T + X_hat / W 
         S = (S + S.T) * 0.5
 
@@ -252,16 +225,27 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
 
         next_dist = GGIW(alpha=next_alpha, beta=next_beta, mean=next_state, covariance=next_cov, IWdof=next_IWdof, IWshape=next_IWshape)
 
-        # # update the state with measurement
-        # inov = meas - est_meas
-        # next_state = cur_state + kalman_gain @ inov
+        gam = next_alpha / next_beta
 
-        # # update the covariance
-        # n_states = cur_state.shape[0]
-        # cur_cov = (np.eye(n_states) - kalman_gain @ meas_mat) @ cur_cov
+        
+        # Compute each term
+        term1  = (cur_IWdof - GGIW_obj.d - 1)/2 * np.log(np.linalg.det(cur_IWshape))
+        term2  = - (next_IWdof - GGIW_obj.d - 1)/2 * np.log(np.linalg.det(next_IWshape))
+        term3  = special.gammaln((next_IWdof - GGIW_obj.d - 1)/2)
+        term4  = - special.gammaln((cur_IWdof - GGIW_obj.d - 1)/2)
+        term5  = 0.5 * np.log(np.linalg.det(X_hat))
+        term6  = -0.5 * np.log(det_S)
+        term7  = special.gammaln(next_alpha)
+        term8  = -special.gammaln(cur_alpha)
+        term9  = cur_alpha * np.log(cur_beta)
+        term10 = - next_alpha * np.log(next_beta)
+        term11 = - ((W * np.log(np.pi) + np.log(W)) * GGIW_obj.d / 2)
 
-        # calculate the measurement fit probability assuming Gaussian 
-        meas_fit_prob = self._calc_meas_fit() # meas,GGIW_obj,next_dist,X_hat,inov_cov) # meas, est_meas, inov_cov) 
+        # Sum them up
+        meas_fit_prob = (
+            term1 + term2 + term3 + term4 + term5 + term6 + 
+            term7 + term8 + term9 + term10 + term11
+        )
 
         return (next_dist, meas_fit_prob)
 
