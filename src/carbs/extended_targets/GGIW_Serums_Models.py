@@ -342,14 +342,8 @@ class GGIW(BaseSingleModel):
             ax.add_patch(cov_ellipse)
 
         # Plot the center (Gaussian mean)
-        ax.plot(center[plt_inds[0]], center[plt_inds[1]], 'o', label='GGIW mean')
-        ax.set_aspect('equal', 'box')
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_title("GGIW Distribution (2D)")
-
-
-
+        ax.plot(center[plt_inds[0]], center[plt_inds[1]], 'o')
+        ax.set_aspect('equal', 'box') 
 
 
 class GGIWMixture(BaseMixtureModel):
@@ -364,6 +358,9 @@ class GGIWMixture(BaseMixtureModel):
             ] 
             kwargs["weights"] = [1 / len(alphas) for _ in range(len(alphas))]
         super().__init__(**kwargs)
+
+    def __getitem__(self,idx):
+        return GGIW(self.alphas[idx], self.betas[idx], self.means[idx], self.covariances[idx], self.IWdofs[idx], self.IWshapes[idx])
 
     @property
     def means(self):
@@ -385,7 +382,7 @@ class GGIWMixture(BaseMixtureModel):
     @property
     def covariances(self):
         """List of Gaussian covariances for the GGIW components (each is an N x N numpy array). Recommended to be read only."""
-        return _DistListWrapper(self._distributions, "_covariance")
+        return _DistListWrapper(self._distributions, "_cov")
 
     @covariances.setter
     def covariances(self, val):
