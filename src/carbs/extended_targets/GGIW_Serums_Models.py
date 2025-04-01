@@ -227,7 +227,7 @@ class GGIW(BaseSingleModel):
         
         return "\n".join(combined_lines) + "\n"
     
-    def sample_measurements(self, xy_inds=[0,1], random_extent=True, random_state=None):
+    def sample_measurements(self, xy_inds=[0,1], random_extent=False, random_state=None):
         """
         Simulate a set of measurements from this GGIW distribution:
           1) Number of points N ~ Poisson(alpha / beta),
@@ -353,7 +353,7 @@ class GGIW(BaseSingleModel):
         ax.plot(center[plt_inds[0]], center[plt_inds[1]], 'o')
         ax.set_aspect('equal', 'box') 
 
-    def plot_confidence_extents(self, h_min=0.05, h_max=0.95, plt_inds=[0, 1], ax=None, **kwargs):
+    def plot_confidence_extents(self, h=0.95, plt_inds=[0, 1], ax=None, plot_mean=True, **kwargs):
         """
         Plot two dashed ellipses for the Inverse Wishart (IW) 'extent' using
         the given confidence values h_min, h_max. 
@@ -394,10 +394,10 @@ class GGIW(BaseSingleModel):
         angle = np.degrees(np.arctan2(eigvecs[1, 1], eigvecs[0, 1]))
 
         # scale by sqrt(chi2.ppf(h, df=2)) since d_k|k follows a chi2 distribution
-        scale = np.sqrt(stats.chi2.ppf(h_min, df=2))
+        scale = np.sqrt(stats.chi2.ppf(h, df=2))
         r1 = scale * np.sqrt(eigvals[0]) 
         r2 = scale * np.sqrt(eigvals[1]) 
-        e_min = Ellipse(
+        confidence_e = Ellipse(
             xy=center[plt_inds],
             width=2*r2,
             height=2*r1,
@@ -407,33 +407,20 @@ class GGIW(BaseSingleModel):
             **kwargs
         )
 
-        r1 = np.sqrt(eigvals[0]) 
-        r2 = np.sqrt(eigvals[1]) 
-        e = Ellipse(
-            xy=center[plt_inds],
-            width=2*r2,
-            height=2*r1,
-            angle=angle,
-            fill=False, 
-            **kwargs
-        )
+        ax.add_patch(confidence_e)
 
-        scale = np.sqrt(stats.chi2.ppf(h_max, df=2))
-        r1 = scale * np.sqrt(eigvals[0]) 
-        r2 = scale * np.sqrt(eigvals[1]) 
-        e_max = Ellipse(
-            xy=center[plt_inds],
-            width=2*r2,
-            height=2*r1,
-            angle=angle,
-            fill=False,
-            linestyle='--',
-            **kwargs
-        )
-
-        ax.add_patch(e_min)
-        ax.add_patch(e)
-        ax.add_patch(e_max)
+        if plot_mean:
+            r1 = np.sqrt(eigvals[0]) 
+            r2 = np.sqrt(eigvals[1]) 
+            e = Ellipse(
+                xy=center[plt_inds],
+                width=2*r2,
+                height=2*r1,
+                angle=angle,
+                fill=False, 
+                **kwargs
+            ) 
+            ax.add_patch(e)
 
         ax.set_aspect('equal', 'box')
 
@@ -599,12 +586,12 @@ class GGIWMixture(BaseMixtureModel):
             s += str(self._distributions[ii])
         return s
     
-    def plot_confidence_extents(self, h_min=0.05, h_max=0.95, plt_inds=[0, 1], ax=None, **kwargs):
+    def plot_confidence_extents(self, h=0.95, plt_inds=[0, 1], ax=None, plot_mean=True, **kwargs):
         if ax is None:
             ax = plt.gca()
         for ii in range(len(self._distributions)):
             cur_dist = self._distributions[ii]
-            cur_dist.plot_confidence_extents(h_min=h_min,h_max=h_max,plt_inds=plt_inds,ax=ax,**kwargs)
+            cur_dist.plot_confidence_extents(h=h,plt_inds=plt_inds,ax=ax,plot_mean=plot_mean,**kwargs)
 
     def plot_distributions(self,plt_inds=[0,1], ax=None, cov_std=1.0, num_std=2.0, plot_covs=True, **kwargs):
         if ax is None:

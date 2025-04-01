@@ -182,21 +182,26 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
         cur_IWdof = GGIW_obj.IWdof
         cur_IWshape = GGIW_obj.IWshape
 
+        num_meas = len(meas) 
+        
+        meas_d = meas[0].shape[0]
+        meas_arr = np.array(meas).reshape(num_meas, meas_d)
+
         try: 
-            W = np.size(meas,axis=1)
+            W = np.size(meas_arr,axis=1)
         except:
             W = None
 
         if W is not None: 
 
             est_meas, meas_mat = self._est_meas(
-                timestep, cur_state, np.size(meas, axis=0), meas_fun_args
+                timestep, cur_state, np.size(meas_arr, axis=0), meas_fun_args
             )
 
-            mean_meas = np.mean(meas, axis=1)
-            mean_meas = mean_meas.reshape((np.size(meas,axis=0)),1)
+            mean_meas = np.mean(meas_arr, axis=1)
+            mean_meas = mean_meas.reshape((np.size(meas_arr,axis=0)),1)
 
-            diff_Z = meas - mean_meas
+            diff_Z = meas_arr - mean_meas
             Z = diff_Z @ diff_Z.T            # Essentially the scatter
 
             cur_IWshape = 0.5*(cur_IWshape+cur_IWshape.T)
