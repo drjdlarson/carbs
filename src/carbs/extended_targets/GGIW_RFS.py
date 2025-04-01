@@ -250,41 +250,50 @@ class GGIW_PHD(RandomFiniteSetBase):
         Mix.weights = [self.prob_miss_detection * x for x in Mix.weights]
 
         UpdMix = self._correct_prob_density(timestep, parted_meas, self._Mixture, filt_args) 
-        UpdMix.add_components(Mix.alphas, Mix.betas, Mix.means, Mix.covariances, Mix.IWdofs, Mix.IWshapes, Mix.weights) # change for GGIW 
+        UpdMix.add_components(Mix.alphas, Mix.betas, Mix.means, Mix.covariances, Mix.IWdofs, Mix.IWshapes, Mix.weights) 
 
         self._Mixture = UpdMix
 
     def _correct_prob_density(self, timestep, parted_meas, probDensity, filt_args):
         # means = []
         # covariances = []
-        weights = []
 
-        Mix_temp = GGIWMixture()
+        if parted_meas:
 
-        det_weights = [self.prob_detection * x for x in probDensity.weights]
+            weights = []
 
-        for z in parted_meas: 
-            # Condition the measurement set from list of len N of Dx1 arrays to 
-            # an DxN array 
-            num_meas = len(z)
-            meas_d = z[0].shape[0]
-            z_array = np.array(z).reshape((num_meas, meas_d)).transpose()
+            Mix_temp = GGIWMixture()
 
-            for jj in range(0, len(probDensity)):
-                cur_dist = probDensity[jj] 
-                (upd_dist, qz) = self.filter.correct(timestep, z_array, cur_dist, **filt_args) 
-                w = qz * det_weights[jj]
+            det_weights = [self.prob_detection * x for x in probDensity.weights]
 
-                Mix_temp.add_components(upd_dist.alpha, upd_dist.beta, upd_dist.mean, upd_dist.covariance, upd_dist.IWdof, upd_dist.IWshape, w)            
+            for z in parted_meas: 
 
-        w_lst = Mix_temp.weights 
-        weights.extend(
-            [x / (self.clutter_rate * self.clutter_den + sum(w_lst)) for x in w_lst]
-        )
+                w_lst = []
 
-        Mix_temp.weights = weights
+                # Convert the measurement set from list of len N of Dx1 arrays to 
+                # an DxN array 
+                num_meas = len(z)
+                meas_d = z[0].shape[0]
+                z_array = np.array(z).reshape((num_meas, meas_d)).transpose()
 
-        return Mix_temp
+                for jj in range(0, len(probDensity)):
+                    cur_dist = probDensity[jj] 
+                    (upd_dist, qz) = self.filter.correct(timestep, z, cur_dist, **filt_args) 
+                    w = qz * det_weights[jj]
+
+                    Mix_temp.add_components(upd_dist.alpha, upd_dist.beta, upd_dist.mean, upd_dist.covariance, upd_dist.IWdof, upd_dist.IWshape, w)            
+
+                    w_lst.append(w)
+
+                weights.extend(
+                    [x / (self.clutter_rate * self.clutter_den + sum(w_lst)) for x in w_lst]
+                )
+
+            Mix_temp.weights = weights
+
+            return Mix_temp
+        else:
+            return probDensity
 
     def _prune(self):
         """Removes hypotheses below a threshold.

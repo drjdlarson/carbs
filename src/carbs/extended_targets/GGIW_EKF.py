@@ -182,72 +182,88 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
         cur_IWdof = GGIW_obj.IWdof
         cur_IWshape = GGIW_obj.IWshape
 
-        W = np.size(meas, axis=1)
-
-        est_meas, meas_mat = self._est_meas(
-            timestep, cur_state, np.size(meas, axis=0), meas_fun_args
-        )
-
-        mean_meas = np.mean(meas, axis=1)
-        mean_meas = mean_meas.reshape((np.size(meas,axis=0)),1)
-
-        diff_Z = meas - mean_meas
-        Z = diff_Z @ diff_Z.T            # Essentially the scatter
-
-        X_hat = cur_IWshape * (cur_IWdof - 2 * GGIW_obj.d - 2)**(-1)
-        X_hat = (X_hat + X_hat.T)*0.5
-
-        epsilon = mean_meas - meas_mat @ cur_state
-
-        N = epsilon @ epsilon.T
-
-        S = meas_mat @ cur_cov @ meas_mat.T + X_hat / W 
-        S = (S + S.T) * 0.5
-
-        Vs = la.cholesky(S)
-        det_S = la.det(Vs)
-        inv_sqrt_S = la.inv(Vs)
-        iS = inv_sqrt_S * inv_sqrt_S.T 
-
-        K = cur_cov @ meas_mat.T @ iS 
+        num_meas = len(meas) 
         
-        X_sqrt = sla.sqrtm(X_hat)
-        S_sqrt_inv = sla.sqrtm(iS)
+        meas_d = meas[0].shape[0]
+        meas_arr = np.array(meas).reshape(num_meas, meas_d)
 
-        N_hat = X_sqrt @ S_sqrt_inv @ N @ S_sqrt_inv.T @ X_sqrt.T
+        try: 
+            W = np.size(meas_arr,axis=1)
+        except:
+            W = None
 
-        next_alpha = cur_alpha + W
-        next_beta = cur_beta + 1
-        next_state = cur_state + K @ epsilon 
-        next_cov = cur_cov - K @ meas_mat @ cur_cov
-        next_IWdof = cur_IWdof + W
-        next_IWshape = cur_IWshape + N_hat + Z 
+        if W is not None: 
 
-        next_dist = GGIW(alpha=next_alpha, beta=next_beta, mean=next_state, covariance=next_cov, IWdof=next_IWdof, IWshape=next_IWshape)
+            est_meas, meas_mat = self._est_meas(
+                timestep, cur_state, np.size(meas_arr, axis=0), meas_fun_args
+            )
 
-        gam = next_alpha / next_beta
+            mean_meas = np.mean(meas_arr, axis=1)
+            mean_meas = mean_meas.reshape((np.size(meas_arr,axis=0)),1)
 
-        
-        # Compute each term
-        term1  = (cur_IWdof - GGIW_obj.d - 1)/2 * np.log(np.linalg.det(cur_IWshape))
-        term2  = - (next_IWdof - GGIW_obj.d - 1)/2 * np.log(np.linalg.det(next_IWshape))
-        term3  = special.gammaln((next_IWdof - GGIW_obj.d - 1)/2)
-        term4  = - special.gammaln((cur_IWdof - GGIW_obj.d - 1)/2)
-        term5  = 0.5 * np.log(np.linalg.det(X_hat))
-        term6  = -0.5 * np.log(det_S)
-        term7  = special.gammaln(next_alpha)
-        term8  = -special.gammaln(cur_alpha)
-        term9  = cur_alpha * np.log(cur_beta)
-        term10 = - next_alpha * np.log(next_beta)
-        term11 = - ((W * np.log(np.pi) + np.log(W)) * GGIW_obj.d / 2)
+            diff_Z = meas_arr - mean_meas
+            Z = diff_Z @ diff_Z.T            # Essentially the scatter
 
-        # Sum them up
-        meas_fit_prob = (
-            term1 + term2 + term3 + term4 + term5 + term6 + 
-            term7 + term8 + term9 + term10 + term11
-        )
+            cur_IWshape = 0.5*(cur_IWshape+cur_IWshape.T)
 
-        return (next_dist, meas_fit_prob)
+            X_hat = cur_IWshape * (cur_IWdof - 2 * GGIW_obj.d - 2)**(-1)
+            X_hat = (X_hat + X_hat.T)*0.5
+
+            epsilon = mean_meas - meas_mat @ cur_state
+
+            N = epsilon @ epsilon.T
+
+            cur_cov = 0.5 * (cur_cov + cur_cov.T)
+
+            S = meas_mat @ cur_cov @ meas_mat.T + X_hat / W + self.meas_noise
+            S = (S + S.T) * 0.5 
+
+            Vs = la.cholesky(S)
+            det_S = la.det(Vs)
+            inv_sqrt_S = la.inv(Vs)
+            iS = inv_sqrt_S * inv_sqrt_S.T 
+
+            K = cur_cov @ meas_mat.T @ iS 
+            
+            X_sqrt = sla.sqrtm(X_hat)
+            S_sqrt_inv = sla.sqrtm(iS)
+
+            N_hat = X_sqrt @ S_sqrt_inv @ N @ S_sqrt_inv.T @ X_sqrt.T
+
+            next_alpha = cur_alpha + W
+            next_beta = cur_beta + 1
+            next_state = cur_state + K @ epsilon 
+            next_cov = cur_cov - K @ meas_mat @ cur_cov
+            next_IWdof = cur_IWdof + W
+            next_IWshape = cur_IWshape + N_hat + Z 
+
+            next_dist = GGIW(alpha=next_alpha, beta=next_beta, mean=next_state, covariance=next_cov, IWdof=next_IWdof, IWshape=next_IWshape)
+
+            gam = next_alpha / next_beta
+
+            
+            # Compute each term
+            term1  = (cur_IWdof - GGIW_obj.d - 1)/2 * np.log(np.linalg.det(cur_IWshape))
+            term2  = - (next_IWdof - GGIW_obj.d - 1)/2 * np.log(np.linalg.det(next_IWshape))
+            term3  = special.gammaln((next_IWdof - GGIW_obj.d - 1)/2)
+            term4  = - special.gammaln((cur_IWdof - GGIW_obj.d - 1)/2)
+            term5  = 0.5 * np.log(np.linalg.det(X_hat))
+            term6  = -0.5 * np.log(det_S)
+            term7  = special.gammaln(next_alpha)
+            term8  = -special.gammaln(cur_alpha)
+            term9  = cur_alpha * np.log(cur_beta)
+            term10 = - next_alpha * np.log(next_beta)
+            term11 = - ((W * np.log(np.pi) + np.log(W)) * GGIW_obj.d / 2)
+
+            # Sum them up
+            meas_fit_prob = (
+                term1 + term2 + term3 + term4 + term5 + term6 + 
+                term7 + term8 + term9 + term10 + term11
+            )
+
+            return (next_dist, meas_fit_prob)
+        else:
+            return (GGIW_obj,1)
 
     def _calc_meas_fit(self): #, meas, GGIW_pred, GGIW_upd, X_hat, inov_cov):
         
