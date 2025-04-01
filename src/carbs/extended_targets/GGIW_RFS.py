@@ -278,7 +278,7 @@ class GGIW_PHD(RandomFiniteSetBase):
 
                 for jj in range(0, len(probDensity)):
                     cur_dist = probDensity[jj] 
-                    (upd_dist, qz) = self.filter.correct(timestep, z, cur_dist, **filt_args) 
+                    (upd_dist, qz) = self.filter.correct(timestep, z_array, cur_dist, **filt_args) 
                     w = qz * det_weights[jj]
 
                     Mix_temp.add_components(upd_dist.alpha, upd_dist.beta, upd_dist.mean, upd_dist.covariance, upd_dist.IWdof, upd_dist.IWshape, w)            
