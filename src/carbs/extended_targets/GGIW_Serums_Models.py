@@ -227,7 +227,7 @@ class GGIW(BaseSingleModel):
         
         return "\n".join(combined_lines) + "\n"
     
-    def sample_measurements(self, xy_inds=[0,1], random_state=None):
+    def sample_measurements(self, xy_inds=[0,1], random_extent=False, random_state=None):
         """
         Simulate a set of measurements from this GGIW distribution:
           1) Number of points N ~ Poisson(alpha / beta),
@@ -246,21 +246,29 @@ class GGIW(BaseSingleModel):
         else:
             rng = np.random.default_rng(random_state)
 
-        # (1) Mean number of measurements = alpha / beta
+        # Mean number of measurements = alpha / beta
         lam = self._alpha / self._beta
         N = stats.poisson(lam).rvs(random_state=rng)
 
-        # (2) Target center is assumed to be the mean for this purpose, since sampling is for truth targets
+        # Target center is assumed to be the mean for this purpose, since sampling is for truth targets
         center = self._mean[xy_inds]
 
-        # (3) Sample the extent from an Inverse Wishart
-        extent = stats.invwishart.rvs(df=self._IWdof, scale=self._IWshape, random_state=rng)
-
-        # (4) Sample each measurement from N(center, extent)
-        if N > 0:
-            measurements = rng.multivariate_normal(center.flatten(), extent, size=N)
+        # Sample the extent from an Inverse Wishart
+        if random_extent:
+            extent = stats.invwishart.rvs(df=self._IWdof, scale=self._IWshape, random_state=rng)
+            # Sample each measurement from N(center, extent)
+            if N > 0:
+                measurements = rng.multivariate_normal(center.flatten(), extent, size=N)
+            else:
+                measurements = np.empty((0, self._d))
         else:
-            measurements = np.empty((0, self._d))
+            extent = self._IWshape / (self.IWdof + self.d + 1)
+            if N > 0:
+                measurements = rng.multivariate_normal(center.flatten(), extent, size=N)
+            else:
+                measurements = np.empty((0, self._d))
+
+        
 
         return measurements.T
 
@@ -345,6 +353,76 @@ class GGIW(BaseSingleModel):
         ax.plot(center[plt_inds[0]], center[plt_inds[1]], 'o')
         ax.set_aspect('equal', 'box') 
 
+    def plot_confidence_extents(self, h=0.95, plt_inds=[0, 1], ax=None, plot_mean=True, **kwargs):
+        """
+        Plot two dashed ellipses for the Inverse Wishart (IW) 'extent' using
+        the given confidence values h_min, h_max. 
+
+        Parameters
+        ----------
+        h_min : float
+            Lower quantile (e.g., 0.05).
+        h_max : float
+            Upper quantile (e.g., 0.95).
+        plt_inds : list of int
+            Indices for which 2D plane to visualize (default [0,1]).
+        ax : matplotlib.axes.Axes
+            Axes object. If None, uses current axes.
+        kwargs : dict
+            Extra properties passed to the Ellipse constructor
+            (e.g., edgecolor, alpha, etc.).
+        """
+        if ax is None:
+            ax = plt.gca()
+
+        if self.d != 2:
+            raise ValueError("plot_confidence_extents() only supports 2D for this example.")
+        
+        center = self._mean
+
+        if self._IWdof <= self._d + 1:
+            raise ValueError("Degrees of freedom must exceed d+1 for valid IW mean.")
+
+        mean_extent = self._IWshape / (self._IWdof - self._d - 1)
+
+        eigvals, eigvecs = np.linalg.eigh(mean_extent)
+        order = np.argsort(eigvals)
+        eigvals = eigvals[order]
+        eigvecs = eigvecs[:, order]
+
+        # Orientation angle 
+        angle = np.degrees(np.arctan2(eigvecs[1, 1], eigvecs[0, 1]))
+
+        # scale by sqrt(chi2.ppf(h, df=2)) since d_k|k follows a chi2 distribution
+        scale = np.sqrt(stats.chi2.ppf(h, df=2))
+        r1 = scale * np.sqrt(eigvals[0]) 
+        r2 = scale * np.sqrt(eigvals[1]) 
+        confidence_e = Ellipse(
+            xy=center[plt_inds],
+            width=2*r2,
+            height=2*r1,
+            angle=angle,
+            fill=False,
+            linestyle='--', 
+            **kwargs
+        )
+
+        ax.add_patch(confidence_e)
+
+        if plot_mean:
+            r1 = np.sqrt(eigvals[0]) 
+            r2 = np.sqrt(eigvals[1]) 
+            e = Ellipse(
+                xy=center[plt_inds],
+                width=2*r2,
+                height=2*r1,
+                angle=angle,
+                fill=False, 
+                **kwargs
+            ) 
+            ax.add_patch(e)
+
+        ax.set_aspect('equal', 'box')
 
 class GGIWMixture(BaseMixtureModel):
     """Gamma Gaussian Inverse Wishart Mixture object."""
@@ -467,7 +545,6 @@ class GGIWMixture(BaseMixtureModel):
     def add_components(self, alphas, betas, means, covariances, IWdofs, IWshapes, weights):
         """Add GGGIW distributions to the mixture."""
 
-
         if not isinstance(alphas, list):
             alphas = [
                 alphas,
@@ -508,6 +585,13 @@ class GGIWMixture(BaseMixtureModel):
             s += f"Term {ii+1}: (weight = {self.weights[ii]})\n"
             s += str(self._distributions[ii])
         return s
+    
+    def plot_confidence_extents(self, h=0.95, plt_inds=[0, 1], ax=None, plot_mean=True, **kwargs):
+        if ax is None:
+            ax = plt.gca()
+        for ii in range(len(self._distributions)):
+            cur_dist = self._distributions[ii]
+            cur_dist.plot_confidence_extents(h=h,plt_inds=plt_inds,ax=ax,plot_mean=plot_mean,**kwargs)
 
     def plot_distributions(self,plt_inds=[0,1], ax=None, cov_std=1.0, num_std=2.0, plot_covs=True, **kwargs):
         if ax is None:

@@ -264,13 +264,15 @@ class GGIW_PHD(RandomFiniteSetBase):
         det_weights = [self.prob_detection * x for x in probDensity.weights]
 
         for z in parted_meas: 
+            # Condition the measurement set from list of len N of Dx1 arrays to 
+            # an DxN array 
+            num_meas = len(z)
+            meas_d = z[0].shape[0]
+            z_array = np.array(z).reshape((num_meas, meas_d)).transpose()
 
-            z = np.squeeze(z) 
-
-            # w_lst = []
             for jj in range(0, len(probDensity)):
                 cur_dist = probDensity[jj] 
-                (upd_dist, qz) = self.filter.correct(timestep, z, cur_dist, **filt_args) 
+                (upd_dist, qz) = self.filter.correct(timestep, z_array, cur_dist, **filt_args) 
                 w = qz * det_weights[jj]
 
                 Mix_temp.add_components(upd_dist.alpha, upd_dist.beta, upd_dist.mean, upd_dist.covariance, upd_dist.IWdof, upd_dist.IWshape, w)            
