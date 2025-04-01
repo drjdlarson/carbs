@@ -434,7 +434,7 @@ class GGIWMixture(BaseMixtureModel):
             kwargs["distributions"] = [
                 GGIW(alpha=a, beta=b, mean=m, covariance=c, IWdof=v, IWshape=V) for a, b, m, c, v, V in zip(alphas, betas, means, covariances, IWdofs, IWshapes)
             ] 
-            kwargs["weights"] = [1 / len(alphas) for _ in range(len(alphas))]
+            #kwargs["weights"] = [1 / len(alphas) for _ in range(len(alphas))]
         super().__init__(**kwargs)
 
     def __getitem__(self,idx):
