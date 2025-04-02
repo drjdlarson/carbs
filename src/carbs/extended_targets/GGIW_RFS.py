@@ -246,6 +246,7 @@ class GGIW_PHD(RandomFiniteSetBase):
 
         # Partition measurements
         parted_meas = self._clustering_obj.cluster(meas)
+        #TODO: Need a way to distuinguish output from DBSCAN among valid cluster and noise cluster
 
         Mix = deepcopy(self._Mixture)
 
