@@ -203,12 +203,13 @@ class GGIW_PHD(RandomFiniteSetBase):
         #         spawn_mix.means, spawn_mix.covariances, spawn_mix.weights
         #     )
 
+        self._Mixture = self._predict_prob_density(timestep, self._Mixture, filt_args)
+
         for mix in self.birth_terms:
             obj = mix[1]
             weight = mix[0] 
             self._Mixture.add_components(obj.alpha, obj.beta, obj.mean, obj.covariance, obj.IWdof, obj.IWshape, weight)
 
-        self._Mixture = self._predict_prob_density(timestep, self._Mixture, filt_args)
 
     def _predict_prob_density(self, timestep, probDensity, filt_args):
 
@@ -263,7 +264,13 @@ class GGIW_PHD(RandomFiniteSetBase):
 
         Mix_temp = GGIWMixture()
 
-        det_weights = [self.prob_detection * x for x in probDensity.weights]
+        # det_weights = [self.prob_detection * x for x in probDensity.weights]
+
+        a_lst = probDensity.alphas
+        b_lst = probDensity.betas
+        w_lst = probDensity.weights
+
+        det_weights = [self.prob_detection * (b_lst[ii] / (1 + b_lst[ii])) ** a_lst[ii] * weight for ii, weight in enumerate(w_lst)]
 
         for z in parted_meas: 
 
