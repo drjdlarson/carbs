@@ -197,7 +197,8 @@ class GGIW_PHD(RandomFiniteSetBase):
 
         # if self.enable_spawning:
         #     spawn_mix = self._gen_spawned_targets(self._Mixture)
-
+        self._Mixture = self._predict_prob_density(timestep, self._Mixture, filt_args)
+        
         # if self.enable_spawning:
         #     self._Mixture.add_components(
         #         spawn_mix.means, spawn_mix.covariances, spawn_mix.weights
@@ -214,16 +215,15 @@ class GGIW_PHD(RandomFiniteSetBase):
     def _predict_prob_density(self, timestep, probDensity, filt_args):
 
         weights = [self.prob_survive * x for x in probDensity.weights.copy()] 
+        #print(probDensity.weights.copy())
         n_terms = len(weights)
         NewMixture = GGIWMixture() 
         for ii, _ in enumerate(probDensity._distributions):
-
             cur_probDensity = probDensity._distributions[ii]
-
             pred_probDensity = self.filter.predict(timestep,cur_probDensity, filt_args)
-
             NewMixture.add_components(pred_probDensity.alpha, pred_probDensity.beta, pred_probDensity.mean, pred_probDensity.covariance, pred_probDensity.IWdof, pred_probDensity.IWshape, weights=weights[ii])            
             
+
         return NewMixture 
 
     def correct(
