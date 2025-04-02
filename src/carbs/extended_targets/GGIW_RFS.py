@@ -198,17 +198,18 @@ class GGIW_PHD(RandomFiniteSetBase):
         # if self.enable_spawning:
         #     spawn_mix = self._gen_spawned_targets(self._Mixture)
 
-        self._Mixture = self._predict_prob_density(timestep, self._Mixture, filt_args)
-
         # if self.enable_spawning:
         #     self._Mixture.add_components(
         #         spawn_mix.means, spawn_mix.covariances, spawn_mix.weights
         #     )
 
+        self._Mixture = self._predict_prob_density(timestep, self._Mixture, filt_args)
+
         for mix in self.birth_terms:
             obj = mix[1]
             weight = mix[0] 
             self._Mixture.add_components(obj.alpha, obj.beta, obj.mean, obj.covariance, obj.IWdof, obj.IWshape, weight)
+
 
     def _predict_prob_density(self, timestep, probDensity, filt_args):
 
@@ -247,6 +248,7 @@ class GGIW_PHD(RandomFiniteSetBase):
         parted_meas = self._clustering_obj.cluster(meas)
 
         Mix = deepcopy(self._Mixture)
+
         Mix.weights = [self.prob_miss_detection * x for x in Mix.weights]
 
         UpdMix = self._correct_prob_density(timestep, parted_meas, self._Mixture, filt_args) 
@@ -258,42 +260,58 @@ class GGIW_PHD(RandomFiniteSetBase):
         # means = []
         # covariances = []
 
-        if parted_meas:
+        weights = []
 
-            weights = []
+        Mix_temp = GGIWMixture()
 
-            Mix_temp = GGIWMixture()
+        # det_weights = [self.prob_detection * x for x in probDensity.weights]
 
-            det_weights = [self.prob_detection * x for x in probDensity.weights]
+        a_lst = probDensity.alphas
+        b_lst = probDensity.betas
+        w_lst = probDensity.weights
 
-            for z in parted_meas: 
+        det_weights = [self.prob_detection * (b_lst[ii] / (1 + b_lst[ii])) ** a_lst[ii] * weight for ii, weight in enumerate(w_lst)]
 
-                w_lst = []
+        for z in parted_meas: 
 
-                # Convert the measurement set from list of len N of Dx1 arrays to 
-                # an DxN array 
-                num_meas = len(z)
-                meas_d = z[0].shape[0]
-                z_array = np.array(z).reshape((num_meas, meas_d)).transpose()
+            w_lst = []
+            # a_lst = []
+            # b_lst = []
+            # m_lst = []
+            # P_lst = []
+            # v_lst = []
+            # V_lst = []
 
-                for jj in range(0, len(probDensity)):
-                    cur_dist = probDensity[jj] 
-                    (upd_dist, qz) = self.filter.correct(timestep, z_array, cur_dist, **filt_args) 
-                    w = qz * det_weights[jj]
+            # Convert the measurement set from list of len N of Dx1 arrays to 
+            # an DxN array 
+            num_meas = len(z)
+            meas_d = z[0].shape[0]
+            z_array = np.array(z).reshape((num_meas, meas_d)).transpose()
 
-                    Mix_temp.add_components(upd_dist.alpha, upd_dist.beta, upd_dist.mean, upd_dist.covariance, upd_dist.IWdof, upd_dist.IWshape, w)            
+            for jj in range(0, len(probDensity)):
+                cur_dist = probDensity[jj] 
+                (upd_dist, qz) = self.filter.correct(timestep, z_array, cur_dist, **filt_args) 
+                w = qz * det_weights[jj]
 
-                    w_lst.append(w)
+                # a_lst.append(upd_dist.alpha)
+                # b_lst.append(upd_dist.beta)
+                # m_lst.append(upd_dist.mean)
+                # P_lst.append(upd_dist.covariance)
+                # v_lst.append(upd_dist.IWdof)
+                # V_lst.append(upd_dist.IWshape)
 
-                weights.extend(
-                    [x / (self.clutter_rate * self.clutter_den + sum(w_lst)) for x in w_lst]
-                )
+                Mix_temp.add_components(upd_dist.alpha, upd_dist.beta, upd_dist.mean, upd_dist.covariance, upd_dist.IWdof, upd_dist.IWshape, w)            
 
-            Mix_temp.weights = weights
+                w_lst.append(w)
 
-            return Mix_temp
-        else:
-            return probDensity
+            weights.extend(
+                [x / (self.clutter_rate * self.clutter_den + sum(w_lst)) for x in w_lst]
+            )
+
+        Mix_temp.weights = weights
+
+        return Mix_temp
+        # return GGIWMixture(alphas=a_lst,betas=b_lst,means=m_lst,covariances=P_lst,IWdofs=v_lst,IWshapes=V_lst,weights=weights)
 
     def _prune(self):
         """Removes hypotheses below a threshold.
@@ -307,8 +325,8 @@ class GGIW_PHD(RandomFiniteSetBase):
 
     def _merge(self):
             """Merges nearby hypotheses."""
-            loop_inds = set(range(0, len(self._Mixture.means)))
-
+            loop_inds = set(range(len(self._Mixture.means)))
+            
             w_lst = []
             a_lst = []
             b_lst = []
@@ -316,72 +334,39 @@ class GGIW_PHD(RandomFiniteSetBase):
             p_lst = []
             v_lst = []
             V_lst = []
-            while len(loop_inds) > 0:
-                jj = int(np.argmax(self._Mixture.weights))
-                comp_inds = []
+            
+            while loop_inds:
+                remaining_weights = {i: self._Mixture.weights[i] for i in loop_inds}
+                jj = max(remaining_weights, key=remaining_weights.get)
+                
+                comp_inds = set()
                 inv_cov = la.inv(self._Mixture.covariances[jj])
+                
                 for ii in loop_inds:
                     diff = self._Mixture.means[ii] - self._Mixture.means[jj]
                     val = diff.T @ inv_cov @ diff
                     if val <= self.merge_threshold:
-                        comp_inds.append(ii)
+                        comp_inds.add(ii)
+                
                 w_new = sum([self._Mixture.weights[ii] for ii in comp_inds])
-                m_new = (
-                    sum(
-                        [
-                            self._Mixture.weights[ii] * self._Mixture.means[ii]
-                            for ii in comp_inds
-                        ]
-                    )
-                    / w_new
-                )
-                p_new = (
-                    sum(
-                        [
-                            self._Mixture.weights[ii] * self._Mixture.covariances[ii]
-                            for ii in comp_inds
-                        ]
-                    )
-                    / w_new
-                )
-                p_new = 0.5 * (p_new+p_new.T)
-                a_new = (
-                    sum(
-                        [
-                            self._Mixture.weights[ii] * self._Mixture.alphas[ii]
-                            for ii in comp_inds
-                        ]
-                    )
-                    / w_new
-                )
-                b_new = (
-                    sum(
-                        [
-                            self._Mixture.weights[ii] * self._Mixture.betas[ii]
-                            for ii in comp_inds
-                        ]
-                    )
-                    / w_new
-                )
-                v_new = (
-                    sum(
-                        [
-                            self._Mixture.weights[ii] * self._Mixture.IWdofs[ii]
-                            for ii in comp_inds
-                        ]
-                    )
-                    / w_new
-                )
-                V_new = (
-                    sum(
-                        [
-                            self._Mixture.weights[ii] * self._Mixture.IWshapes[ii]
-                            for ii in comp_inds
-                        ]
-                    )
-                    / w_new
-                )
-
+                
+                if w_new <= 0:
+                    loop_inds = loop_inds.difference(comp_inds)
+                    continue
+                    
+                m_new = sum([self._Mixture.weights[ii] * self._Mixture.means[ii] for ii in comp_inds]) / w_new
+                
+                p_new = sum([self._Mixture.weights[ii] * self._Mixture.covariances[ii] for ii in comp_inds]) / w_new
+                p_new = 0.5 * (p_new + p_new.T) 
+                
+                a_new = sum([self._Mixture.weights[ii] * self._Mixture.alphas[ii] for ii in comp_inds]) / w_new
+                
+                b_new = sum([self._Mixture.weights[ii] * self._Mixture.betas[ii] for ii in comp_inds]) / w_new
+                
+                v_new = self._Mixture.IWdofs[jj] # sum([self._Mixture.weights[ii] * self._Mixture.IWdofs[ii] for ii in comp_inds]) / w_new
+                
+                V_new = self._Mixture.IWshapes[jj] # sum([self._Mixture.weights[ii] * self._Mixture.IWshapes[ii] for ii in comp_inds]) / w_new
+                
                 w_lst.append(w_new)
                 m_lst.append(m_new)
                 p_lst.append(p_new)
@@ -389,17 +374,18 @@ class GGIW_PHD(RandomFiniteSetBase):
                 b_lst.append(b_new)
                 v_lst.append(v_new)
                 V_lst.append(V_new)
-
-                loop_inds = loop_inds.symmetric_difference(comp_inds)
-                for ii in comp_inds:
-                    self._Mixture.weights[ii] = -1
-            # self._Mixture = smodels.GaussianMixture(
-            #     means=m_lst, covariances=p_lst, weights=w_lst
-            # )
-
-            self._Mixture = GGIWMixture(alphas=a_lst,betas=b_lst,means=m_lst,covariances=p_lst,IWdofs=v_lst,IWshapes=V_lst)
-            self._Mixture.weights = w_lst
-
+                
+                loop_inds = loop_inds.difference(comp_inds)
+            
+            self._Mixture = GGIWMixture(
+                alphas=a_lst,
+                betas=b_lst,
+                means=m_lst,
+                covariances=p_lst,
+                IWdofs=v_lst,
+                IWshapes=V_lst,
+                weights=w_lst
+            )
 
 
     def _cap(self):
