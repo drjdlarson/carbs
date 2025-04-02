@@ -157,6 +157,7 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
 
         next_IWdof = 2 * GGIW_obj.d + 2 + np.exp(-dt / self.tau) * (cur_IWdof - 2 * GGIW_obj.d - 2)
         next_IWshape = (next_IWdof - 2 * GGIW_obj.d - 2)/(cur_IWdof - 2 * GGIW_obj.d - 2) * cur_IWshape
+        next_IWshape = 0.5 * (next_IWshape + next_IWshape.transpose()) # Numerical step to keep IWshape positive definite
 
         next_dist = GGIW(alpha=next_alpha, beta=next_beta, mean=next_state, covariance=next_cov, IWdof=next_IWdof, IWshape=next_IWshape)
 
