@@ -542,42 +542,49 @@ class GGIWMixture(BaseMixtureModel):
         for ii, v in enumerate(val):
             self._distributions[ii].IWshape = v
     
-    def add_components(self, alphas, betas, means, covariances, IWdofs, IWshapes, weights):
+    def add_components(self, alphas:list=None, betas:list=None, 
+                       means:list=None, covariances:list=None, 
+                       IWdofs:list=None, IWshapes:list=None, weights=None, ggiw:GGIW=None):
         """Add GGGIW distributions to the mixture."""
+        if ggiw is None:
+            if not isinstance(alphas, list):
+                alphas = [
+                    alphas,
+                ]
+            if not isinstance(betas, list):
+                betas = [
+                    betas,
+                ]
+            if not isinstance(means, list):
+                means = [
+                    means,
+                ]
+            if not isinstance(covariances, list):
+                covariances = [
+                    covariances,
+                ]
+            if not isinstance(IWdofs, list):
+                IWdofs = [
+                    IWdofs,
+                ]
+            if not isinstance(IWshapes, list):
+                IWshapes = [
+                    IWshapes,
+                ]
+            if not isinstance(weights, list):
+                weights = [
+                    weights,
+                ]
 
-        if not isinstance(alphas, list):
-            alphas = [
-                alphas,
-            ]
-        if not isinstance(betas, list):
-            betas = [
-                betas,
-            ]
-        if not isinstance(means, list):
-            means = [
-                means,
-            ]
-        if not isinstance(covariances, list):
-            covariances = [
-                covariances,
-            ]
-        if not isinstance(IWdofs, list):
-            IWdofs = [
-                IWdofs,
-            ]
-        if not isinstance(IWshapes, list):
-            IWshapes = [
-                IWshapes,
-            ]
-        if not isinstance(weights, list):
-            weights = [
-                weights,
-            ]
+            self._distributions.extend(
+                [GGIW(alpha=a, beta=b, mean=m, covariance=c, IWdof=v, IWshape=V) for a, b, m, c, v, V in zip(alphas, betas, means, covariances, IWdofs, IWshapes)]
+            )
+            self.weights.extend(weights)
+        else:
+            # If we input the entire GGIW distribution and weight
+            self._distributions.extend([ggiw])
+            self.weights.extend([weights])
 
-        self._distributions.extend(
-            [GGIW(alpha=a, beta=b, mean=m, covariance=c, IWdof=v, IWshape=V) for a, b, m, c, v, V in zip(alphas, betas, means, covariances, IWdofs, IWshapes)]
-        )
-        self.weights.extend(weights)
 
     def __str__(self):
         s = ""
