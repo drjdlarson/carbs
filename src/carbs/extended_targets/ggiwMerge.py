@@ -1,10 +1,19 @@
 """
 Implementations for merging GGIW distributions
 
-Algorithm from publication Granström, Karl, and Umut Orguner. 
+Algorithm from publication:
+
+[1] Granström, Karl, and Umut Orguner. 
 "On the reduction of Gaussian inverse Wishart mixtures." 
 Information Fusion (FUSION), 2012 15th International 
-Conference on. IEEE, 2012.
+Conference on. IEEE, 2012. 
+
+and
+
+[2]  Granström, Karl, and Umut Orguner.
+"Estimation and Maintenance of Measurement Rates for Multiple
+Extended Target Tracking" Information Fusion (FUSION), 
+2012 15th International Conference on. IEEE, 2012.
 """
 
 import numpy as np
@@ -14,7 +23,7 @@ from carbs.extended_targets.GGIW_Serums_Models import GGIW
 
 def _dof_cost_function(nu:float, w_merged:float, d:int, scalar:float)->float:
     """
-    Implementation of Eq. (9d) from reference
+    Implementation of part of Eq. (9d) from reference [1]
     """
     d_terms = np.array(range(1,d+1),dtype='float')
     d_terms *= 0.5
@@ -26,8 +35,15 @@ def _dof_cost_function(nu:float, w_merged:float, d:int, scalar:float)->float:
 
     return t1 - t2 + scalar
 
+def _gamma_cost_function(alpha:float, scalar:float)->float:
+    """
+    Implementation of part of Eq. (25) from reference [1]
+    """
+    return np.log(alpha) - scipy.special.digamma(alpha) + scalar
+
+
 def ggiw_merge(w:list, means:list, covs:list, alphas:list, betas:list, dofs:list,
-                scale:list, labels:list = None, opt_nu:bool = True) -> GGIW:
+                scale:list, labels:list = None, opt_nu:bool = True, opt_alpha:bool = True) -> tuple:
     """
     Implementation to merge a group of GGIW components
 
@@ -49,6 +65,15 @@ def ggiw_merge(w:list, means:list, covs:list, alphas:list, betas:list, dofs:list
         dxd numpy array scale matrix of IW component of GGIW group
     labels : list, optional
         lable of GGIW group (default to None)
+    opt_nu : bool, optional
+        Set to true to use optimization for merged IW DOF calc. Else IW DOF is the weighted sum (default to True)
+    opt_alpha : bool, optional
+        Set to true to use optimization for merged Gamma shape calc. Else Gamma shape is the weighted sum (default to True)
+
+    Returns
+    -------
+    tuple
+        intensity, GGIW merged, label(optional)
     """
 
     num_comp = len(w)
@@ -63,11 +88,11 @@ def ggiw_merge(w:list, means:list, covs:list, alphas:list, betas:list, dofs:list
     cov_merged = sum([n*(c + e@e.transpose()) for n,c,e in zip(w,covs,e_lst)])/w_merged
     
     # Merge IW components
-    exp_dof = sum(a*b for a,b in zip(w, dofs))
+    exp_dof = sum(a*b for a,b in zip(w, dofs))/w_merged
     inv_scale = [np.linalg.inv(x) for x in scale] # Pre-compute matrix inversion
 
     if opt_nu:
-        # Precompute terms for Eq. (9d) that are not dependent on input params
+        # Precompute terms for Eq. (9d) from [1] that are not dependent on input params
         t3 = w_merged * shape_d * np.log(w_merged)
 
         temp = np.zeros((shape_d,shape_d))
@@ -86,7 +111,7 @@ def ggiw_merge(w:list, means:list, covs:list, alphas:list, betas:list, dofs:list
 
         solve_res = scipy.optimize.root_scalar(_dof_cost_function, x0=exp_dof, \
                                            args=(w_merged, shape_d, scalar), \
-                                           maxiter=1000, method='bisect',\
+                                           maxiter=1000, method='brenth',\
                                            bracket=[shape_d+2.0, 10000.0])
 
         if solve_res.converged:
@@ -95,10 +120,40 @@ def ggiw_merge(w:list, means:list, covs:list, alphas:list, betas:list, dofs:list
             dof_merged = exp_dof
     else:
         dof_merged = exp_dof
+    dof_merged = max(dof_merged, 2 * shape_d + 3)  # Numerical hack to ensure IW is well defined
 
     temp = sum(n * (a - shape_d - 1) * inv_sc for n,a,inv_sc in zip(w, dofs, inv_scale))
     scale_merged = w_merged * (dof_merged - shape_d - 1) * np.linalg.inv(temp)
     
     # Merge Gamma compoenents
+    exp_alpha = sum(a*b for a,b in zip(w, alphas))/w_merged
+    denom = sum([n * a/b for n,a,b in zip(w, alphas, betas)])/w_merged
+    if opt_alpha:
+        # Precompute terms for Eq. (25) from [2] that are not dependent on input params
+        t3 = (1/w_merged) * sum([n * (scipy.special.digamma(a) - np.log(b)) for n,a,b in zip(w, alphas, betas)])
 
-    return 1
+        t4 = np.log(denom)
+
+        scalar = t3-t4
+
+        solve_res = scipy.optimize.root_scalar(_gamma_cost_function, x0=exp_alpha, args=(scalar), \
+                                           maxiter=1000)
+        
+        if solve_res.converged:
+            alpha_merged = solve_res.root
+        else:
+            alpha_merged = exp_alpha
+    else:
+        alpha_merged = exp_alpha
+
+    beta_merged = alpha_merged / denom
+
+    # Label inplementation port from MATLAB. Retain label of componenet with highest weight
+    # Only return a merged label if a label list was given
+    if labels is not None:
+        max_w_ind = np.argmax(w)
+        return w_merged, GGIW(mean=mean_merged, covariance=cov_merged, alpha=alpha_merged, \
+                          beta=beta_merged, IWdof=dof_merged, IWshape=scale_merged), labels[max_w_ind]
+    else:
+        return w_merged, GGIW(mean=mean_merged, covariance=cov_merged, alpha=alpha_merged, \
+                          beta=beta_merged, IWdof=dof_merged, IWshape=scale_merged)
