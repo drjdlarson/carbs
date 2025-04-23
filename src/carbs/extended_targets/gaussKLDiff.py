@@ -1,9 +1,11 @@
 """
-Implementations for finding Kullback-Leibler distance between gaussian distributions
+Implementations for finding Kullback-Leibler distance between 
+gaussian distributions
 
-Algorithm from publication Granström, Karl, and Umut Orguner. "On the reduction of Gaussian inverse 
-Wishart mixtures." Information Fusion (FUSION), 2012 15th International 
-Conference on. IEEE, 2012.
+Algorithm from publication Granström, Karl, and Umut Orguner. 
+"On the reduction of Gaussian inverse  Wishart mixtures."
+ Information Fusion (FUSION), 2012 15th International Conference 
+ on. IEEE, 2012.
 """
 
 import numpy as np
@@ -43,7 +45,8 @@ def gauss_KL_diff(means:list, covs:list) -> np.ndarray:
             KL_diff_matrix[j,i] = val
     return KL_diff_matrix
 
-def single_gauss_KL_diff(mean1:np.ndarray, mean2:np.ndarray, cov1:np.ndarray, cov2:np.ndarray) -> float:
+def single_gauss_KL_diff(mean1:np.ndarray, mean2:np.ndarray, 
+                         cov1:np.ndarray, cov2:np.ndarray) -> float:
     """
     Implementation for two components.
 
@@ -67,6 +70,8 @@ def single_gauss_KL_diff(mean1:np.ndarray, mean2:np.ndarray, cov1:np.ndarray, co
     mean_dif = mean1 - mean2
     inv_cov1 = np.linalg.inv(cov1)
     inv_cov2 = np.linalg.inv(cov2)
-    dist = 0.5 * (np.trace(cov2 @ inv_cov1 + cov1 @ inv_cov2) + mean_dif.transpose() @ inv_cov2 @ mean_dif + mean_dif.transpose() @ inv_cov1 @ mean_dif) - d
+    dist = 0.5 * (np.trace(cov2 @ inv_cov1 + cov1 @ inv_cov2) + \
+                  mean_dif.transpose() @ inv_cov2 @ mean_dif + \
+                    mean_dif.transpose() @ inv_cov1 @ mean_dif) - d
     return dist
 

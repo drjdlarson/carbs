@@ -1,8 +1,10 @@
 """
-Implementations for finding Kullback-Leibler distance between inverse-wishart distributions
+Implementations for finding Kullback-Leibler distance between 
+inverse-wishart distributions
 
-Algorithm from publication Granström, Karl, and Umut Orguner. "On the reduction of Gaussian inverse 
-Wishart mixtures." Information Fusion (FUSION), 2012 15th International 
+Algorithm from publication Granström, Karl, and Umut Orguner. 
+"On the reduction of Gaussian inverse  Wishart mixtures." 
+Information Fusion (FUSION), 2012 15th International 
 Conference on. IEEE, 2012.
 """
 
@@ -45,7 +47,8 @@ def iw_KL_diff(dof:list, scale:list) -> np.ndarray:
             KL_diff_matrix[j,i] = val
     return KL_diff_matrix
 
-def single_iw_KL_diff(dof1:float, dof2:float, scale1:np.ndarray, scale2:np.ndarray) -> float:
+def single_iw_KL_diff(dof1:float, dof2:float, scale1:np.ndarray, 
+                      scale2:np.ndarray) -> float:
     """
     Implementation for two components.
 
@@ -71,10 +74,14 @@ def single_iw_KL_diff(dof1:float, dof2:float, scale1:np.ndarray, scale2:np.ndarr
     v1_D = np.repeat(((dof1 - float(d))/2),d) - d_terms
     v2_D = np.repeat(((dof2 - float(d))/2),d) - d_terms
 
-    temp = (float(dof1 - d - 1) * np.linalg.inv(scale1) - float(dof2 - d - 1) * np.linalg.inv(scale2)) @ (scale2 - scale1)
+    temp = (float(dof1 - d - 1) * np.linalg.inv(scale1) - float(dof2 - d - 1) *\
+             np.linalg.inv(scale2)) @ (scale2 - scale1)
     t1 = 0.5 * np.trace(temp)
 
-    t2 = 0.5 * (dof2 - dof1) * (np.linalg.slogdet(scale1)[1] - np.sum(scipy.special.digamma(v1_D)) - np.linalg.slogdet(scale2)[1] + np.sum(scipy.special.digamma(v2_D)))
+    t2 = 0.5 * (dof2 - dof1) * (np.linalg.slogdet(scale1)[1] - \
+                                np.sum(scipy.special.digamma(v1_D)) - \
+                                    np.linalg.slogdet(scale2)[1] + \
+                                        np.sum(scipy.special.digamma(v2_D)))
     
     return t1 + t2
 
