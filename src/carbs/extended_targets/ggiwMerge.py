@@ -115,12 +115,13 @@ def ggiw_merge(w:list, means:list, covs:list, alphas:list, betas:list, IWdof:lis
                                            bracket=[shape_d+2.0, 10000.0])
 
         if solve_res.converged:
+            
             dof_merged = solve_res.root
         else:
             dof_merged = exp_dof
     else:
         dof_merged = exp_dof
-    dof_merged = max(dof_merged, 2 * shape_d + 3)  # Numerical hack to ensure IW is well defined
+    dof_merged = float(round(max(dof_merged, 2 * shape_d + 3)))  # Numerical hack to ensure IW is well defined
 
     temp = sum(n * (a - shape_d - 1) * inv_sc for n,a,inv_sc in zip(w, IWdof, inv_scale))
     scale_merged = w_merged * (dof_merged - shape_d - 1) * np.linalg.inv(temp)
