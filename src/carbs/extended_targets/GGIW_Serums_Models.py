@@ -272,7 +272,8 @@ class GGIW(BaseSingleModel):
 
         return measurements.T
 
-    def plot_distribution(self, plt_inds=[0,1], ax=None, cov_std = 1.0, num_std=2.0, plot_covs=True, **kwargs):
+    def plot_distribution(self, plt_inds=[0,1], ax=None, cov_std = 1.0, num_std=1.0, 
+                          plot_covs=True, color = None, label = None, **kwargs):
         """
         Plot the GGIW in 2D:
           - draws an ellipse for the *mean* of the Inverse Wishart,
@@ -292,9 +293,19 @@ class GGIW(BaseSingleModel):
 
         if self.d != 2:
             raise ValueError("plot_distribution() only supports 2D for this example.")
+        
+        if label is None:
+            label = ''
 
         # The ellipse center = Gaussian mean
         center = self._mean
+
+         # Plot the center (Gaussian mean)
+        p = ax.plot(center[plt_inds[0]], center[plt_inds[1]], 'o', color=color, label=label)
+
+        #In case color is not set, this is how you get all cov and extension to be the same color
+        if color is None:
+            color = p[0].get_color()
 
         # Mean of Inverse Wishart(V, v) = V / (v - d - 1)  if v > d+1
         if self._IWdof <= self._d + 1:
@@ -320,7 +331,7 @@ class GGIW(BaseSingleModel):
             height=2*r1,   # total height
             angle=angle,
             fill=False,
-            **kwargs
+            color = color
         )
         ax.add_patch(ellipse)
 
@@ -341,16 +352,15 @@ class GGIW(BaseSingleModel):
                 width=2*r2_c,
                 height=2*r1_c,
                 angle=angle_c,
-                fill=True,
+                fill=False,
                 linestyle='--',   # maybe dashed to distinguish from extent
-                label='State Covariance',
-                **kwargs
+                linewidth=3,
+                color = color
             )
-            cov_ellipse.set_alpha(0.2)
+            cov_ellipse.set_alpha(0.5)
             ax.add_patch(cov_ellipse)
 
-        # Plot the center (Gaussian mean)
-        ax.plot(center[plt_inds[0]], center[plt_inds[1]], 'o')
+       
         ax.set_aspect('equal', 'box') 
 
     def plot_confidence_extents(self, h=0.95, plt_inds=[0, 1], ax=None, plot_mean=True, **kwargs):

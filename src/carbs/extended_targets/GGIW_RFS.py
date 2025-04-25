@@ -363,7 +363,7 @@ class GGIW_PHD(RandomFiniteSetBase):
                 w_merged, ggiw_merged = ggiw_merge(w=cluster_weight, means=cluster_mean, \
                                                    covs = cluster_cov, alphas= cluster_alpha, \
                                                     betas = cluster_beta, IWdof=cluster_iwdof, \
-                                                        IWshape=cluster_iwshape, opt_alpha=False, opt_nu=False)
+                                                        IWshape=cluster_iwshape, opt_alpha=True, opt_nu=True)
                 new_mixture.add_components(weights=w_merged, ggiw=ggiw_merged)
                 
                 loop_inds = loop_inds.symmetric_difference(comp_ind)
