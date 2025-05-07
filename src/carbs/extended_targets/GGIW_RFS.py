@@ -1466,17 +1466,13 @@ class GGIW_GLMB(RandomFiniteSetBase):
     def _inner_correct(
         self, timestep, meas, distrib_weight, GGIW_obj, filt_args
     ):
-        num_meas = len(meas) 
+        # num_meas = len(meas) 
         
-        meas_d = meas[0].shape[0]
+        # meas_d = meas[0].shape[0]
 
-        meas_arr = np.array(meas).reshape(num_meas, meas_d)
+        # meas_arr = np.array(meas).reshape(num_meas, meas_d)
         
-        new_GGIW, likely = self.filter.correct(timestep, meas_arr.T, GGIW_obj, **filt_args) 
-
-        # print(new_GGIW)
-        # print(likely)
-        # print(np.exp(likely))
+        new_GGIW, likely = self.filter.correct(timestep, meas, GGIW_obj, **filt_args) 
 
         new_w = distrib_weight * np.exp(likely)
 
@@ -1519,9 +1515,14 @@ class GGIW_GLMB(RandomFiniteSetBase):
         all_cost_m = np.zeros((num_pred, num_meas))
         for emm, z in enumerate(meas):
             for ii, ent in enumerate(self._track_tab):
+
+                num_meas = len(z)
+                meas_d = z[0].shape[0]
+                z_array = np.array(z).reshape((num_meas, meas_d)).transpose()
+
                 s_to_ii = num_pred * emm + ii + num_pred
                 (up_tab[s_to_ii], cost) = self._correct_track_tab_entry(
-                    z, ent, timestep, filt_args
+                    z_array, ent, timestep, filt_args
                 )
 
                 # update association history with current measurement index
@@ -1856,6 +1857,7 @@ class GGIW_GLMB(RandomFiniteSetBase):
                     self._labels[tt].append(existing.label) 
         if not update and not calc_states:
             warnings.warn("Extracting states performed no actions")
+            
         return idx_cmp 
     
     def cleanup(
@@ -1904,7 +1906,71 @@ class GGIW_GLMB(RandomFiniteSetBase):
                 extract_kwargs = {}
             self.extract_states(**extract_kwargs)
 
-   
+    def plot_states_labels(
+        self,
+        plt_inds=[0, 1],
+        ttl="Labeled State Trajectories with Extents",
+        ax=None,
+        **kwargs,
+        ):
+        """
+        Plot per‑label trajectories (as lines) **and** the latest confidence
+        ellipses produced by each GGIW object.
+
+        Parameters
+        ----------
+        plt_inds : tuple(int, int)
+            State indices to plot, e.g. (0,1) → x/y.
+        ttl : str
+            Figure title.
+        ax : matplotlib.axes.Axes, optional
+            Axes to plot on; new axes created if None.
+        """
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        if ax is None:
+            fig, ax = plt.subplots()
+        else:
+            fig = ax.figure
+
+        # --- gather trajectory history for every label --------------------------
+        traj = {}          # label → list of means over time
+        latest = {}        # label → latest GGIW object (for ellipse)
+
+        for g_list, lbl_list in zip(self._GGIW_objs, self._labels):
+            for ggiw, lbl in zip(g_list, lbl_list):
+                traj.setdefault(lbl, []).append(ggiw.mean[plt_inds].flatten())
+                latest[lbl] = ggiw   # overwrites until last time‑step
+
+        # --- unique colors per label -------------------------------------------
+        cmap = plt.get_cmap("tab20")
+        colors = {lbl: cmap(i % 20) for i, lbl in enumerate(traj)}
+
+        # --- plot everything ----------------------------------------------------
+        for lbl, pts in traj.items():
+            pts = np.stack(pts, axis=1)
+            col = colors[lbl]
+
+            # trajectory line + final point
+            ax.plot(pts[0], pts[1], "-", color=col, linewidth=1.5)
+            ax.scatter(pts[0, -1], pts[1, -1], color=col, edgecolor="k", zorder=5,
+                    label=f"Label {lbl}")
+
+            # confidence ellipse from SERUMS helper (h ≈ 0.95 by default)
+            latest[lbl].plot_confidence_extents(
+                h=0.95, plt_inds=list(plt_inds), ax=ax, color=col
+            )
+
+        # cosmetics
+        ax.set_title(ttl)
+        ax.set_xlabel(f"state[{plt_inds[0]}]")
+        ax.set_ylabel(f"state[{plt_inds[1]}]")
+        ax.set_aspect("equal", "box")
+        ax.grid(True, linewidth=0.3) 
+
+        return fig
+
    
 
 
