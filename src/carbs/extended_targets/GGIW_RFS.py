@@ -95,6 +95,9 @@ class GGIW_PHD(RandomFiniteSetBase):
         self._Mixture = GGIWMixture()
 
 
+        self.merge_as_average = False    # User can set to true, better numerical stability
+
+
         super().__init__(**kwargs)
 
     def save_filter_state(self):
@@ -342,43 +345,107 @@ class GGIW_PHD(RandomFiniteSetBase):
 
     def _merge(self):
             """Merges nearby hypotheses."""
-            loop_inds = set(range(len(self._Mixture.means)))
-            
-            new_mixture = GGIWMixture()
 
-            # Calculate the KL difference matrix of component distribution
-            gauss_dist = gauss_KL_diff(self._Mixture.means, self._Mixture.covariances)
-            iw_dist = iw_KL_diff(self._Mixture.IWdofs, self._Mixture.IWshapes)
-            gamma_dist = gamma_KL_diff(self._Mixture.alphas, self._Mixture.betas)
-
-            tot_dist = gauss_dist + iw_dist + gamma_dist
-            
-            while len(loop_inds) > 0:
-                jj = int(np.argmax(self._Mixture.weights))
-
-                comp_ind = []
-                for ii in loop_inds:
-                    if tot_dist[jj,ii] <= self.merge_threshold:
-                        comp_ind.append(ii)
-                cluster_weight = [self._Mixture.weights[ii] for ii in comp_ind]
-                cluster_mean =  [self._Mixture.means[ii] for ii in comp_ind]
-                cluster_cov =  [self._Mixture.covariances[ii] for ii in comp_ind]
-                cluster_alpha =  [self._Mixture.alphas[ii] for ii in comp_ind]
-                cluster_beta =  [self._Mixture.betas[ii] for ii in comp_ind]
-                cluster_iwdof =  [self._Mixture.IWdofs[ii] for ii in comp_ind]
-                cluster_iwshape = [self._Mixture.IWshapes[ii] for ii in comp_ind]
-
-                w_merged, ggiw_merged = ggiw_merge(w=cluster_weight, means=cluster_mean, \
-                                                   covs = cluster_cov, alphas= cluster_alpha, \
-                                                    betas = cluster_beta, IWdof=cluster_iwdof, \
-                                                        IWshape=cluster_iwshape, opt_alpha=True, opt_nu=True)
-                new_mixture.add_components(weights=w_merged, ggiw=ggiw_merged)
+            if self.merge_as_average:
+                loop_inds = set(range(len(self._Mixture.means)))
                 
-                loop_inds = loop_inds.symmetric_difference(comp_ind)
-                for ii in comp_ind:
-                    self._Mixture.weights[ii] = -1
-            
-            self._Mixture = new_mixture
+                w_lst = []
+                a_lst = []
+                b_lst = []
+                m_lst = []
+                p_lst = []
+                v_lst = []
+                V_lst = []
+                
+                while loop_inds:
+                    remaining_weights = {i: self._Mixture.weights[i] for i in loop_inds}
+                    jj = max(remaining_weights, key=remaining_weights.get)
+                    
+                    comp_inds = set()
+                    inv_cov = la.inv(self._Mixture.covariances[jj])
+                    
+                    for ii in loop_inds:
+                        diff = self._Mixture.means[ii] - self._Mixture.means[jj]
+                        val = diff.T @ inv_cov @ diff
+                        if val <= self.merge_threshold:
+                            comp_inds.add(ii)
+                    
+                    w_new = sum([self._Mixture.weights[ii] for ii in comp_inds])
+                    
+                    if w_new <= 0:
+                        loop_inds = loop_inds.difference(comp_inds)
+                        continue
+                        
+                    m_new = sum([self._Mixture.weights[ii] * self._Mixture.means[ii] for ii in comp_inds]) / w_new
+                    
+                    p_new = sum([self._Mixture.weights[ii] * self._Mixture.covariances[ii] for ii in comp_inds]) / w_new
+                    p_new = 0.5 * (p_new + p_new.T) 
+                    
+                    a_new = sum([self._Mixture.weights[ii] * self._Mixture.alphas[ii] for ii in comp_inds]) / w_new
+                    
+                    b_new = sum([self._Mixture.weights[ii] * self._Mixture.betas[ii] for ii in comp_inds]) / w_new
+                    
+                    v_new = self._Mixture.IWdofs[jj] # sum([self._Mixture.weights[ii] * self._Mixture.IWdofs[ii] for ii in comp_inds]) / w_new
+                    
+                    V_new = self._Mixture.IWshapes[jj] # sum([self._Mixture.weights[ii] * self._Mixture.IWshapes[ii] for ii in comp_inds]) / w_new
+                    
+                    w_lst.append(w_new)
+                    m_lst.append(m_new)
+                    p_lst.append(p_new)
+                    a_lst.append(a_new)
+                    b_lst.append(b_new)
+                    v_lst.append(v_new)
+                    V_lst.append(V_new)
+                    
+                    loop_inds = loop_inds.difference(comp_inds)
+                
+                self._Mixture = GGIWMixture(
+                    alphas=a_lst,
+                    betas=b_lst,
+                    means=m_lst,
+                    covariances=p_lst,
+                    IWdofs=v_lst,
+                    IWshapes=V_lst,
+                    weights=w_lst
+                )
+            else:
+                loop_inds = set(range(len(self._Mixture.means)))
+                
+                new_mixture = GGIWMixture()
+
+                # Calculate the KL difference matrix of component distribution
+                gauss_dist = gauss_KL_diff(self._Mixture.means, self._Mixture.covariances)
+                iw_dist = iw_KL_diff(self._Mixture.IWdofs, self._Mixture.IWshapes)
+                gamma_dist = gamma_KL_diff(self._Mixture.alphas, self._Mixture.betas)
+
+                tot_dist = gauss_dist + iw_dist + gamma_dist
+                
+                while len(loop_inds) > 0:
+                    jj = int(np.argmax(self._Mixture.weights))
+
+                    comp_ind = []
+                    for ii in loop_inds:
+                        if tot_dist[jj,ii] <= self.merge_threshold:
+                            comp_ind.append(ii)
+                    cluster_weight = [self._Mixture.weights[ii] for ii in comp_ind]
+                    cluster_mean =  [self._Mixture.means[ii] for ii in comp_ind]
+                    cluster_cov =  [self._Mixture.covariances[ii] for ii in comp_ind]
+                    cluster_alpha =  [self._Mixture.alphas[ii] for ii in comp_ind]
+                    cluster_beta =  [self._Mixture.betas[ii] for ii in comp_ind]
+                    cluster_iwdof =  [self._Mixture.IWdofs[ii] for ii in comp_ind]
+                    cluster_iwshape = [self._Mixture.IWshapes[ii] for ii in comp_ind]
+
+                    w_merged, ggiw_merged = ggiw_merge(w=cluster_weight, means=cluster_mean, \
+                                                    covs = cluster_cov, alphas= cluster_alpha, \
+                                                        betas = cluster_beta, IWdof=cluster_iwdof, \
+                                                            IWshape=cluster_iwshape, opt_alpha=True, opt_nu=True)
+                    new_mixture.add_components(weights=w_merged, ggiw=ggiw_merged)
+                    
+                    loop_inds = loop_inds.symmetric_difference(comp_ind)
+                    for ii in comp_ind:
+                        self._Mixture.weights[ii] = -1
+                
+                self._Mixture = new_mixture
 
     def _cap(self):
         """Removes least likely hypotheses until a maximum number is reached.
