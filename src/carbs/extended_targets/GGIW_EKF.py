@@ -238,24 +238,50 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
         gam = next_alpha / next_beta
 
         
-        # Compute each term
-        term1  = (cur_IWdof - GGIW_obj.d - 1)/2 * np.log(np.linalg.det(cur_IWshape))
-        term2  = - (next_IWdof - GGIW_obj.d - 1)/2 * np.log(np.linalg.det(next_IWshape))
-        term3  = special.gammaln((next_IWdof - GGIW_obj.d - 1)/2)
-        term4  = - special.gammaln((cur_IWdof - GGIW_obj.d - 1)/2)
-        term5  = 0.5 * np.log(np.linalg.det(X_hat))
-        term6  = -0.5 * np.log(det_S)
-        term7  = special.gammaln(next_alpha)
-        term8  = -special.gammaln(cur_alpha)
-        term9  = cur_alpha * np.log(cur_beta)
-        term10 = - next_alpha * np.log(next_beta)
-        term11 = - ((W * np.log(np.pi) + np.log(W)) * GGIW_obj.d / 2)
+        # # Compute each term
+        # term1  = (cur_IWdof - GGIW_obj.d - 1)/2 * np.log(np.linalg.det(cur_IWshape))
+        # term2  = - (next_IWdof - GGIW_obj.d - 1)/2 * np.log(np.linalg.det(next_IWshape))
+        # term3  = special.gammaln((next_IWdof - GGIW_obj.d - 1)/2)
+        # term4  = - special.gammaln((cur_IWdof - GGIW_obj.d - 1)/2)
+        # term5  = 0.5 * np.log(np.linalg.det(X_hat))
+        # term6  = -0.5 * np.log(det_S)
+        # term7  = special.gammaln(next_alpha)
+        # term8  = -special.gammaln(cur_alpha)
+        # term9  = cur_alpha * np.log(cur_beta)
+        # term10 = - next_alpha * np.log(next_beta)
+        # term11 = - ((W * np.log(np.pi) + np.log(W)) * GGIW_obj.d / 2)
 
-        # Sum them up
-        meas_fit_prob = (
-            term1 + term2 + term3 + term4 + term5 + term6 + 
-            term7 + term8 + term9 + term10 + term11
-        )
+        # # Sum them up
+        # meas_fit_prob = (
+        #     term1 + term2 + term3 + term4 + term5 + term6 + 
+        #     term7 + term8 + term9 + term10 + term11
+        # ) 
+        
+        
+        sign_S, log_det_S = np.linalg.slogdet(S)
+        sign_X, log_det_X = np.linalg.slogdet(X_hat)
+        sign_cur, log_det_cur = np.linalg.slogdet(cur_IWshape)
+        sign_next, log_det_next = np.linalg.slogdet(next_IWshape)
+        
+        gamma_term = (special.gammaln(next_alpha) - special.gammaln(cur_alpha) 
+                    + cur_alpha * np.log(cur_beta) - next_alpha * np.log(next_beta))
+        
+        gauss_term = -0.5 * log_det_S - 0.5 * np.trace(iS @ N)
+        
+        v1 = cur_IWdof - GGIW_obj.d - 1
+        v2 = next_IWdof - GGIW_obj.d - 1
+        
+        iw_term = (0.5 * v1 * log_det_cur - 0.5 * v2 * log_det_next 
+                + special.gammaln(v2/2) - special.gammaln(v1/2))
+        
+        extent_term = 0.5 * log_det_X
+        
+        spread_term = -0.5 * GGIW_obj.d * num_meas * np.log(np.pi * num_meas)
+        
+        log_likelihood = gamma_term + gauss_term + iw_term + extent_term + spread_term
+        
+        meas_fit_prob = np.exp(log_likelihood)
+
 
         return (next_dist, meas_fit_prob) 
     

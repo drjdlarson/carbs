@@ -144,8 +144,19 @@ class GGIW(BaseSingleModel):
     @property
     def d(self):
         return self._d
-
-
+    
+    def __eq__(self, obj):
+        if isinstance(obj, GGIW):
+            return (
+                np.array_equal(self.alpha, obj.alpha) and
+                np.array_equal(self.beta, obj.beta) and
+                np.array_equal(self.mean, obj.mean) and
+                np.array_equal(self.covariance, obj.covariance) and
+                np.array_equal(self.IWdof, obj.IWdof) and
+                np.array_equal(self.IWshape, obj.IWshape)
+            )
+        return False
+    
     def __str__(self):
         # Build Gamma block (3 lines)
         gamma_lines = []
@@ -307,8 +318,13 @@ class GGIW(BaseSingleModel):
         eigvals = eigvals[order]
         eigvecs = eigvecs[:, order]
 
-        # Radii for ellipse = sqrt(eigenvalues)*num_std
+        # Radii for ellipse = sqrt(eigenvalues) 
         r1, r2 = num_std * np.sqrt(eigvals)
+
+        scale = np.sqrt(stats.chi2.ppf(0.99, df=2))
+
+        r1 = r1 * scale
+        r2 = r2 * scale
 
         # Orientation angle (the second eigenvector is the major axis if
         # it's the larger eigenvalue, but here we sorted them)

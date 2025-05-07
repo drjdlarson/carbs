@@ -31,7 +31,7 @@ from serums.distances import calculate_ospa, calculate_ospa2, calculate_gospa
 
 ### MIGHT HAVE TO CHANGE IMPORTS BELOW, AND THEN CHANGE THEIR NAMES IN THE CLASS?? Depends if we do import serums.models or import GGIWMixture ###
 
-from carbs.swarm_estimator.tracker import RandomFiniteSetBase
+from carbs.swarm_estimator.tracker import RandomFiniteSetBase 
 from carbs.extended_targets.GGIW_Serums_Models import GGIWMixture
 from carbs.extended_targets.GGIW_Serums_Models import GGIW 
 
@@ -196,8 +196,7 @@ class GGIW_PHD(RandomFiniteSetBase):
             print("Warning: Spawning not implemented yet. \n\n")
 
         # if self.enable_spawning:
-        #     spawn_mix = self._gen_spawned_targets(self._Mixture)
-        self._Mixture = self._predict_prob_density(timestep, self._Mixture, filt_args)
+        #     spawn_mix = self._gen_spawned_targets(self._Mixture) 
         
         # if self.enable_spawning:
         #     self._Mixture.add_components(
@@ -248,9 +247,18 @@ class GGIW_PHD(RandomFiniteSetBase):
         parted_meas = self._clustering_obj.cluster(meas)
         #TODO: Need a way to distuinguish output from DBSCAN among valid cluster and noise cluster
 
+        # Mix = GGIWMixture()
+
         Mix = deepcopy(self._Mixture)
 
-        Mix.weights = [self.prob_miss_detection * x for x in Mix.weights]
+        w_lst = Mix.weights
+
+        # This loop is based on the assumption that any target in the frame must have at least one measurement, gets rid of weird bugs at low PD
+        for ii, x in enumerate(Mix):
+            if x not in self.birth_terms:
+                w_lst[ii] = w_lst[ii]*self.prob_miss_detection
+
+        Mix.weights = w_lst
 
         UpdMix = self._correct_prob_density(timestep, parted_meas, self._Mixture, filt_args) 
         UpdMix.add_components(Mix.alphas, Mix.betas, Mix.means, Mix.covariances, Mix.IWdofs, Mix.IWshapes, Mix.weights) 
@@ -271,7 +279,7 @@ class GGIW_PHD(RandomFiniteSetBase):
         b_lst = probDensity.betas
         w_lst = probDensity.weights
 
-        det_weights = [self.prob_detection * (b_lst[ii] / (1 + b_lst[ii])) ** a_lst[ii] * weight for ii, weight in enumerate(w_lst)]
+        det_weights = [self.prob_detection * weight for ii, weight in enumerate(w_lst)] # [self.prob_detection * (b_lst[ii] / (1 + b_lst[ii])) ** a_lst[ii] * weight for ii, weight in enumerate(w_lst)]
 
         for z in parted_meas: 
 
@@ -292,7 +300,7 @@ class GGIW_PHD(RandomFiniteSetBase):
             for jj in range(0, len(probDensity)):
                 cur_dist = probDensity[jj] 
                 (upd_dist, qz) = self.filter.correct(timestep, z_array, cur_dist, **filt_args) 
-                w = qz * det_weights[jj]
+                w = np.exp(qz) * det_weights[jj]
 
                 # a_lst.append(upd_dist.alpha)
                 # b_lst.append(upd_dist.beta)
@@ -953,3 +961,903 @@ class GGIW_PHD(RandomFiniteSetBase):
             writer = animation.PillowWriter(fps=30)
             anim.save(save_path, writer=writer)
         return anim
+    
+
+
+
+
+
+class GGIW_GLMB(RandomFiniteSetBase):
+    """
+    Delta-Generalized Labeled Multi-Bernoulli filter for Gamma Gaussian Inverse Wishart distributions for extended target tracking. 
+
+    Restructured to account for GGIW stuff while also sticking with the ETT SERUMS classes that we've wrote. 
+
+    Note: birth_terms is a list of tuples including the GGIW component and the Probability of birth.  
+    """
+
+    class _TabEntry:
+        
+        def __init__(self):
+            self.label = ()  # time step born, index of birth model born from
+            self.distrib_weights_hist = []  # list of weights of the probDensity
+            self.meas_assoc_hist = (
+                []
+            )  # list indices into measurement list per time step
+
+            self.GGIW_hist = []   # list of lists of GGIW objects for each timestep
+            
+            self.time_index = None
+
+        def __str__(self):
+            s = ""
+            s += f"Label: {self.label} \n" 
+            s += f"Time Index: {self.time_index} \n"
+            s += f"Measurement Association History: {self.meas_assoc_hist} \n"
+            s += "GGIW History: \n"
+            for ii in self.GGIW_hist:
+                s += f"{ii[0]} \n"
+            return s
+
+        def setup(self,tab):
+            """Use to avoid expensive deepcopy."""
+            self.label = tab.label
+            self.distrib_weights_hist = tab.distrib_weights_hist.copy()
+            self.meas_assoc_hist = tab.meas_assoc_hist.copy()
+
+            self.GGIW_hist = [None] * len(tab.GGIW_hist)
+            self.GGIW_hist = [s.copy() for s in [s_lst for s_lst in tab.GGIW_hist]] 
+
+            self.time_index = tab.time_index
+
+    class _HypothesisHelper:
+        def __init__(self):
+            self.assoc_prob = 0
+            self.track_set = []   # indices in lookup table
+
+        def __str__(self):
+            s = ""
+            s += f"Association Probability: {self.assoc_prob} \n"
+            s += f"Track Set: {self.track_set} \n"
+            s += f"Number of Tracks: {len(self.track_set)} \n"
+            return s
+
+        @property
+        def num_tracks(self):
+            return len(self.track_set)
+
+    class _ExtractHistHelper:
+        def __init__(self):
+            self.label = ()
+            self.meas_ind_hist = []
+            self.b_time_index = None
+            self.GGIWs = [] 
+
+    def __init__(
+        self,
+        clustering_obj,
+        req_births=None,
+        req_surv=None,
+        req_upd=None,
+        gating_on=False,
+        prune_threshold=10**-15,
+        max_hyps=3000,
+        decimal_places=2,
+        save_measurements=False,
+        partition_thresh = 1, 
+        **kwargs,
+    ):
+        self.req_births = req_births
+        self.req_surv = req_surv
+        self.req_upd = req_upd
+        self.gating_on = gating_on
+        self.prune_threshold = prune_threshold
+        self.max_hyps = max_hyps
+        self.decimal_places = decimal_places
+        self.save_measurements = save_measurements
+        self.partition_thresh = partition_thresh 
+
+        if clustering_obj is None:
+            raise("Please choose a clustering_obj. ")
+        else:
+            self._clustering_obj = clustering_obj
+    
+        self._track_tab = []  # list of all possible tracks
+        self._labels = []  # local copy for internal modification
+        self._extractable_hists = []
+
+        self._filter = None
+        self._baseFilter = None
+
+        hyp0 = self._HypothesisHelper()
+        hyp0.assoc_prob = 1
+        hyp0.track_set = []
+        self._hypotheses = [hyp0]  # list of _HypothesisHelper objects
+
+        self._card_dist = []  # probability of having index # as cardinality
+
+        """ linear index corresponding to timestep, manually updated. Used
+            to index things since timestep in label can have decimals. Must
+            be updated once per time step."""
+        self._time_index_cntr = 0
+
+        self.ospa2 = None
+        self.ospa2_localization = None
+        self.ospa2_cardinality = None
+        self._ospa2_params = {}
+
+        super().__init__(**kwargs)
+        self._GGIW_objs = [[]]
+
+    def save_filter_state(self):
+        """Saves filter variables so they can be restored later.
+
+        Note that to pickle the resulting dictionary the :code:`dill` package
+        may need to be used due to potential pickling of functions.
+        """
+        filt_state = super().save_filter_state()
+
+        filt_state["req_births"] = self.req_births
+        filt_state["req_surv"] = self.req_surv
+        filt_state["req_upd"] = self.req_upd
+        filt_state["gating_on"] = self.gating_on
+        filt_state["prune_threshold"] = self.prune_threshold
+        filt_state["max_hyps"] = self.max_hyps
+        filt_state["decimal_places"] = self.decimal_places
+        filt_state["save_measurements"] = self.save_measurements
+
+        filt_state["_track_tab"] = self._track_tab
+        filt_state["_labels"] = self._labels
+        filt_state["_extractable_hists"] = self._extractable_hists
+
+        if self._baseFilter is not None:
+            filt_state["_baseFilter"] = (
+                type(self._baseFilter),
+                self._baseFilter.save_filter_state(),
+            )
+        else:
+            filt_state["_baseFilter"] = (None, self._baseFilter)
+        filt_state["_hypotheses"] = self._hypotheses
+        filt_state["_card_dist"] = self._card_dist
+        filt_state["_time_index_cntr"] = self._time_index_cntr
+
+        filt_state["ospa2"] = self.ospa2
+        filt_state["ospa2_localization"] = self.ospa2_localization
+        filt_state["ospa2_cardinality"] = self.ospa2_cardinality
+        filt_state["_ospa2_params"] = self._ospa_params
+
+        return filt_state
+
+    def load_filter_state(self, filt_state):
+        """Initializes filter using saved filter state.
+
+        Attributes
+        ----------
+        filt_state : dict
+            Dictionary generated by :meth:`save_filter_state`.
+        """
+        super().load_filter_state(filt_state)
+
+        self.req_births = filt_state["req_births"]
+        self.req_surv = filt_state["req_surv"]
+        self.req_upd = filt_state["req_upd"]
+        self.gating_on = filt_state["gating_on"]
+        self.prune_threshold = filt_state["prune_threshold"]
+        self.max_hyps = filt_state["max_hyps"]
+        self.decimal_places = filt_state["decimal_places"]
+        self.save_measurements = filt_state["save_measurements"]
+
+        self._track_tab = filt_state["_track_tab"]
+        self._labels = filt_state["_labels"]
+        self._extractable_hists = filt_state["_extractable_hists"]
+
+        cls_type = filt_state["_baseFilter"][0]
+        if cls_type is not None:
+            self._baseFilter = cls_type()
+            self._baseFilter.load_filter_state(filt_state["_baseFilter"][1])
+        else:
+            self._baseFilter = None
+        self._hypotheses = filt_state["_hypotheses"]
+        self._card_dist = filt_state["_card_dist"]
+        self._time_index_cntr = filt_state["_time_index_cntr"]
+
+        self.ospa2 = filt_state["ospa2"]
+        self.ospa2_localization = filt_state["ospa2_localization"]
+        self.ospa2_cardinality = filt_state["ospa2_cardinality"]
+        self._ospa2_params = filt_state["_ospa2_params"]
+
+
+    @property
+    def GGIWs(self):
+        """Read only list of extracted GGIW Components. """
+        return self._GGIW_objs
+    
+    @property
+    def labels(self):
+        """Read only list of extracted labels.
+
+        This is a list with 1 element per timestep, and each element is a list
+        of the best labels extracted at that timestep. The order of each
+        element corresponds to the state order.
+        """
+        return self._labels
+    
+    @property
+    def filter(self):
+        """Inner filter handling dynamics, must be a gncpy.filters.BayesFilter."""
+        return self._filter
+
+    @filter.setter
+    def filter(self, val):
+        self._baseFilter = deepcopy(val)
+        self._filter = val
+
+    @property
+    def cardinality(self):
+        """Cardinality estimate."""
+        return np.argmax(self._card_dist)
+    
+    def _init_filt_states(self, distrib): 
+        
+        ggiw_objs = [deepcopy(g) for (i,g) in distrib]
+        
+        weights = distrib.weights.copy()
+        
+        return weights, ggiw_objs 
+
+    def _gen_birth_tab(self, timestep):
+        log_cost = []
+        birth_tab = []
+        for ii, (distrib,p) in enumerate(self.birth_terms):
+            cost = p / (1 - p)
+            log_cost.append(-np.log(cost))
+            entry = self._TabEntry()
+            entry.GGIW_hist = [None]
+            entry.distrib_weights_hist = [None]
+            (
+                entry.distrib_weights_hist[0],
+                entry.GGIW_hist[0],
+            ) = self._init_filt_states(distrib) # basically extracts GGIW and weight from GGIW Mixture in the birth model
+            entry.label = (round(timestep, self.decimal_places), ii)
+            entry.time_index = self._time_index_cntr
+            birth_tab.append(entry)
+        return birth_tab, log_cost
+
+    def _gen_birth_hyps(self, paths, hyp_costs):
+        birth_hyps = []
+        tot_b_prob = sum([np.log(1 - x[1]) for x in self.birth_terms])
+        for p, c in zip(paths, hyp_costs):
+            hyp = self._HypothesisHelper()
+            # NOTE: this may suffer from underflow and can be improved
+            hyp.assoc_prob = tot_b_prob - c.item()
+            hyp.track_set = p
+            birth_hyps.append(hyp)
+        lse = log_sum_exp([x.assoc_prob for x in birth_hyps])
+        for ii in range(0, len(birth_hyps)):
+            birth_hyps[ii].assoc_prob = np.exp(birth_hyps[ii].assoc_prob - lse)
+        return birth_hyps
+
+    def _predict_track_tab_entry(self, tab, timestep, filt_args):
+        """Updates table entries probability density."""
+        newTab = self._TabEntry()
+        newTab.setup(tab) 
+        new_GGIW_hist = [None] * len(newTab.GGIW_hist[-1])
+        for ii, dist in enumerate(newTab.GGIW_hist[-1]):
+            new_GGIW_hist[ii] = self.filter.predict(timestep, dist, filt_args)
+        newTab.GGIW_hist.append(new_GGIW_hist) 
+        newTab.distrib_weights_hist.append(newTab.distrib_weights_hist[-1].copy())
+        return newTab
+    
+    def _gen_surv_tab(self, timestep, filt_args):
+        surv_tab = []
+        for ii, track in enumerate(self._track_tab):
+            entry = self._predict_track_tab_entry(track, timestep, filt_args)
+
+            surv_tab.append(entry)
+        return surv_tab
+
+    def _gen_surv_hyps(self, avg_prob_survive, avg_prob_death):
+        surv_hyps = []
+        sum_sqrt_w = 0
+        # avg_prob_mm =
+        for hyp in self._hypotheses:
+            sum_sqrt_w = sum_sqrt_w + np.sqrt(hyp.assoc_prob)
+        for hyp in self._hypotheses:
+            if hyp.num_tracks == 0:
+                new_hyp = self._HypothesisHelper()
+                new_hyp.assoc_prob = np.log(hyp.assoc_prob)
+                new_hyp.track_set = hyp.track_set
+                surv_hyps.append(new_hyp)
+            else:
+                cost = avg_prob_survive[hyp.track_set] / avg_prob_death[hyp.track_set]
+                log_cost = -np.log(cost)  # this is length hyp.num_tracks
+                k = np.round(self.req_surv * np.sqrt(hyp.assoc_prob) / sum_sqrt_w)
+                (paths, hyp_cost) = k_shortest(np.array(log_cost), k)
+
+                pdeath_log = np.sum(
+                    [np.log(avg_prob_death[ii]) for ii in hyp.track_set]
+                )
+
+                for p, c in zip(paths, hyp_cost):
+                    new_hyp = self._HypothesisHelper()
+                    new_hyp.assoc_prob = pdeath_log + np.log(hyp.assoc_prob) - c.item()
+                    if len(p) > 0:
+                        new_hyp.track_set = [hyp.track_set[ii] for ii in p]
+                    else:
+                        new_hyp.track_set = []
+                    surv_hyps.append(new_hyp)
+        lse = log_sum_exp([x.assoc_prob for x in surv_hyps])
+        for ii in range(0, len(surv_hyps)):
+            surv_hyps[ii].assoc_prob = np.exp(surv_hyps[ii].assoc_prob - lse)
+        return surv_hyps
+    
+    def _calc_avg_prob_surv_death(self):
+        avg_prob_survive = self.prob_survive * np.ones(len(self._track_tab))
+        avg_prob_death = 1 - avg_prob_survive
+
+        return avg_prob_survive, avg_prob_death
+    
+    def _set_pred_hyps(self, birth_tab, birth_hyps, surv_hyps):
+        self._hypotheses = []
+        tot_w = 0
+        for b_hyp in birth_hyps:
+            for s_hyp in surv_hyps:
+                new_hyp = self._HypothesisHelper()
+                new_hyp.assoc_prob = b_hyp.assoc_prob * s_hyp.assoc_prob
+                tot_w = tot_w + new_hyp.assoc_prob
+                surv_lst = []
+                for x in s_hyp.track_set:
+                    surv_lst.append(x + len(birth_tab))
+                new_hyp.track_set = b_hyp.track_set + surv_lst
+                self._hypotheses.append(new_hyp)
+        for ii in range(0, len(self._hypotheses)):
+            n_val = self._hypotheses[ii].assoc_prob / tot_w
+            self._hypotheses[ii].assoc_prob = n_val
+
+    def _calc_card_dist(self, hyp_lst):
+        """Calucaltes the cardinality distribution."""
+        if len(hyp_lst) == 0:
+            return [
+                1,
+            ]
+        # card_dist = []
+        # for ii in range(0, max(map(lambda x: x.num_tracks, hyp_lst)) + 1): 
+        #     card = 0
+        #     for hyp in hyp_lst:
+        #         if hyp.num_tracks == ii:
+        #             card = card + hyp.assoc_prob
+        #     card_dist.append(card)
+        # return card_dist
+
+        max_card = max([x.num_tracks for x in hyp_lst]) if hyp_lst else 0
+        card_dist = [0.0] * (max_card + 1)
+        
+        for hyp in hyp_lst:
+            card = hyp.num_tracks
+            card_dist[card] += hyp.assoc_prob
+        
+        # Ensure normalization
+        total = sum(card_dist)
+        if total > 0:
+            card_dist = [p/total for p in card_dist]
+        else:
+            card_dist = [0.0] * len(card_dist)
+            card_dist[0] = 1.0
+            
+        return card_dist
+    
+    def _clean_predictions(self):
+        hash_lst = []
+        for hyp in self._hypotheses:
+            if len(hyp.track_set) == 0:
+                lst = []
+            else:
+                sorted_inds = hyp.track_set.copy()
+                sorted_inds.sort()
+                lst = [int(x) for x in sorted_inds]
+            h = hash("*".join(map(str, lst)))
+            hash_lst.append(h)
+        new_hyps = []
+        used_hash = []
+        for ii, h in enumerate(hash_lst):
+            if h not in used_hash:
+                used_hash.append(h)
+                new_hyps.append(self._hypotheses[ii])
+            else:
+                new_ii = used_hash.index(h)
+                new_hyps[new_ii].assoc_prob += self._hypotheses[ii].assoc_prob
+        self._hypotheses = new_hyps
+
+    def predict(self, timestep, filt_args={}):
+        """Prediction step of the GLMB filter.
+
+        This predicts new hypothesis, and propogates them to the next time
+        step. It also updates the cardinality distribution.
+
+        Parameters
+        ----------
+        timestep: float
+            Current timestep.
+        filt_args : dict, optional
+            Passed to the inner filter. The default is {}.
+
+        Returns
+        -------
+        None.
+        """
+        # Find cost for each birth track, and setup lookup table
+        birth_tab, log_cost = self._gen_birth_tab(timestep)
+
+        # get K best hypothesis, and their index in the lookup table
+        (paths, hyp_costs) = k_shortest(np.array(log_cost), self.req_births)
+
+        # calculate association probabilities for birth hypothesis
+        birth_hyps = self._gen_birth_hyps(paths, hyp_costs)
+
+        # Init and propagate surviving track table
+        surv_tab = self._gen_surv_tab(timestep, filt_args)
+
+        # Calculation for average survival/death probabilities
+        (avg_prob_survive, avg_prob_death) = self._calc_avg_prob_surv_death()
+
+        # loop over postierior components
+        surv_hyps = self._gen_surv_hyps(avg_prob_survive, avg_prob_death)
+
+        # self._card_dist = self._calc_card_dist(surv_hyps)
+
+        # Get  predicted hypothesis by convolution
+        self._track_tab = birth_tab + surv_tab
+        self._set_pred_hyps(birth_tab, birth_hyps, surv_hyps)
+
+        self._clean_predictions()
+
+        self._card_dist = self._calc_card_dist(surv_hyps)
+
+
+    def _inner_correct(
+        self, timestep, meas, distrib_weight, GGIW_obj, filt_args
+    ):
+        num_meas = len(meas) 
+        
+        meas_d = meas[0].shape[0]
+
+        meas_arr = np.array(meas).reshape(num_meas, meas_d)
+        
+        new_GGIW, likely = self.filter.correct(timestep, meas_arr.T, GGIW_obj, **filt_args) 
+
+        # print(new_GGIW)
+        # print(likely)
+        # print(np.exp(likely))
+
+        new_w = distrib_weight * np.exp(likely)
+
+        return new_GGIW, new_w
+
+    def _correct_track_tab_entry(self, meas, tab, timestep, filt_args):
+        newTab = self._TabEntry()
+        newTab.setup(tab)
+        
+        depleted = False   # idk why this is here tbh, later issue. 
+        
+        new_GGIW = [None] * len(newTab.distrib_weights_hist[-1])
+        new_w = [None] * len(newTab.distrib_weights_hist[-1])
+
+        for ii, (dist,w) in enumerate(zip(newTab.GGIW_hist[-1], newTab.distrib_weights_hist[-1])):
+            new_GGIW[ii], new_w[ii] = self._inner_correct(timestep,meas,w,dist,filt_args)
+
+        newTab.GGIW_hist[-1] = new_GGIW
+
+        new_w = new_w + np.finfo(float).eps
+
+        if not depleted:
+            cost = np.sum(new_w).item()
+            newTab.distrib_weights_hist[-1] = [w / cost for w in new_w]
+        else:
+            cost = 0
+        return newTab, cost
+
+    def _gen_cor_tab(self, num_meas, meas, timestep, filt_args):
+        num_pred = len(self._track_tab)
+        up_tab = [None] * (num_meas + 1) * num_pred 
+
+        for ii, track in enumerate(self._track_tab): 
+            entry = self._TabEntry()
+            entry.setup(track)
+            entry.meas_assoc_hist.append(None)
+            up_tab[ii] = entry
+        # measurement updated tracks
+
+        all_cost_m = np.zeros((num_pred, num_meas))
+        for emm, z in enumerate(meas):
+            for ii, ent in enumerate(self._track_tab):
+                s_to_ii = num_pred * emm + ii + num_pred
+                (up_tab[s_to_ii], cost) = self._correct_track_tab_entry(
+                    z, ent, timestep, filt_args
+                )
+
+                # update association history with current measurement index
+                if up_tab[s_to_ii] is not None:
+                    up_tab[s_to_ii].meas_assoc_hist.append(emm)
+                all_cost_m[ii, emm] = cost
+        return up_tab, all_cost_m
+
+    def _gen_cor_hyps(
+        self, num_meas, avg_prob_detect, avg_prob_miss_detect, all_cost_m
+    ):
+        num_pred = len(self._track_tab)
+        up_hyps = []
+        if num_meas == 0:
+            for hyp in self._hypotheses:
+                pmd_log = np.sum(
+                    [np.log(avg_prob_miss_detect[ii]) for ii in hyp.track_set]
+                )
+                hyp.assoc_prob = -self.clutter_rate + pmd_log + np.log(hyp.assoc_prob)
+                up_hyps.append(hyp)
+        else:
+            clutter = self.clutter_rate * self.clutter_den
+            ss_w = 0
+            for p_hyp in self._hypotheses:
+                ss_w += np.sqrt(p_hyp.assoc_prob)
+            for p_hyp in self._hypotheses:
+                if p_hyp.num_tracks == 0:  # all clutter
+                    new_hyp = self._HypothesisHelper()
+                    new_hyp.assoc_prob = (
+                        -self.clutter_rate
+                        + num_meas * np.log(clutter)
+                        + np.log(p_hyp.assoc_prob)
+                    )
+                    new_hyp.track_set = p_hyp.track_set.copy()
+                    up_hyps.append(new_hyp)
+                else:
+                    pd = np.array([avg_prob_detect[ii] for ii in p_hyp.track_set])
+                    pmd = np.array([avg_prob_miss_detect[ii] for ii in p_hyp.track_set])
+                    ratio = pd / pmd
+
+                    ratio = ratio.reshape((ratio.size, 1))
+                    ratio = np.tile(ratio, (1, num_meas))
+
+                    cost_m = np.zeros(all_cost_m[p_hyp.track_set, :].shape)
+                    for ii, ts in enumerate(p_hyp.track_set):
+                        cost_m[ii, :] = ratio[ii] * all_cost_m[ts, :] / clutter
+                    max_row_inds, max_col_inds = np.where(cost_m >= np.inf)
+                    if max_row_inds.size > 0:
+                        cost_m[max_row_inds, max_col_inds] = np.finfo(float).max
+                    min_row_inds, min_col_inds = np.where(cost_m <= 0.0)
+                    if min_row_inds.size > 0:
+                        cost_m[min_row_inds, min_col_inds] = np.finfo(float).eps  # 1
+                    neg_log = -np.log(cost_m)
+                    # if max_row_inds.size > 0:
+                    #     neg_log[max_row_inds, max_col_inds] = -np.inf
+                    # if min_row_inds.size > 0:
+                    #     neg_log[min_row_inds, min_col_inds] = np.inf
+
+                    m = np.round(self.req_upd * np.sqrt(p_hyp.assoc_prob) / ss_w)
+                    m = int(m.item())
+                    [assigns, costs] = murty_m_best(neg_log, m)
+
+                    pmd_log = np.sum(
+                        [np.log(avg_prob_miss_detect[ii]) for ii in p_hyp.track_set]
+                    )
+                    for a, c in zip(assigns, costs):
+                        new_hyp = self._HypothesisHelper()
+                        new_hyp.assoc_prob = (
+                            -self.clutter_rate
+                            + num_meas * np.log(clutter)
+                            + pmd_log
+                            + np.log(p_hyp.assoc_prob)
+                            - c
+                        )
+                        new_hyp.track_set = list(
+                            np.array(p_hyp.track_set) + num_pred * a
+                        )
+                        up_hyps.append(new_hyp)
+        lse = log_sum_exp([x.assoc_prob for x in up_hyps])
+        for ii in range(0, len(up_hyps)):
+            up_hyps[ii].assoc_prob = np.exp(up_hyps[ii].assoc_prob - lse)
+        return up_hyps
+
+    def _calc_avg_prob_det_mdet(self):
+        avg_prob_detect = self.prob_detection * np.ones(len(self._track_tab))
+        avg_prob_miss_detect = 1 - avg_prob_detect
+
+        return avg_prob_detect, avg_prob_miss_detect
+
+    def _clean_updates(self):
+        used = [0] * len(self._track_tab)
+        for hyp in self._hypotheses:
+            for ii in hyp.track_set:
+                if self._track_tab[ii] is not None:
+                    used[ii] += 1
+        nnz_inds = [idx for idx, val in enumerate(used) if val != 0]
+        track_cnt = len(nnz_inds)
+
+        new_inds = [None] * len(self._track_tab)
+        for ii, v in zip(nnz_inds, [ii for ii in range(0, track_cnt)]):
+            new_inds[ii] = v
+        # new_tab = [self._TabEntry().setup(self._track_tab[ii]) for ii in nnz_inds]
+        new_tab = [self._track_tab[ii] for ii in nnz_inds]
+        new_hyps = []
+        for ii, hyp in enumerate(self._hypotheses):
+            if len(hyp.track_set) > 0:
+                track_set = [new_inds[ii] for ii in hyp.track_set]
+                if None in track_set:
+                    continue
+                hyp.track_set = track_set
+            new_hyps.append(hyp)
+        self._track_tab = new_tab
+        self._hypotheses = new_hyps
+
+    def correct(self, timestep, meas_in, filt_args={}):
+        """Correction step of the GLMB filter.
+
+        Notes
+        -----
+        This corrects the hypotheses based on the measurements and gates the
+        measurements according to the class settings. It also updates the
+        cardinality distribution.
+
+        Parameters
+        ----------
+        timestep: float
+            Current timestep.
+        meas_in : list
+            List of Nm x 1 numpy arrays each representing a measuremnt.
+        filt_args : dict, optional
+            keyword arguments to pass to the inner filters correct function.
+            The default is {}.
+
+        .. todo::
+            Fix the measurement gating
+
+        Returns
+        -------
+        None
+        """
+        # gate measurements by tracks
+        if self.gating_on:
+            warnings.warn("Gating not implemented yet. SKIPPING", RuntimeWarning)
+            # means = []
+            # covs = []
+            # for ent in self._track_tab:
+            #     means.extend(ent.probDensity.means)
+            #     covs.extend(ent.probDensity.covariances)
+            # meas = self._gate_meas(meas, means, covs)
+
+        meas = self._clustering_obj.cluster(meas_in) 
+        
+        if self.save_measurements:
+            self._meas_tab.append(deepcopy(meas))
+        num_meas = len(meas)
+
+        # missed detection tracks
+        cor_tab, all_cost_m = self._gen_cor_tab(num_meas, meas, timestep, filt_args)
+
+        # Calculation for average detection/missed probabilities
+        avg_prob_det, avg_prob_mdet = self._calc_avg_prob_det_mdet()
+
+        # component updates
+        cor_hyps = self._gen_cor_hyps(num_meas, avg_prob_det, avg_prob_mdet, all_cost_m)
+
+        # save values and cleanup
+        self._track_tab = cor_tab
+        self._hypotheses = cor_hyps
+        self._card_dist = self._calc_card_dist(self._hypotheses)
+        self._clean_updates()
+
+    def _prune(self):
+        """Removes hypotheses below a threshold.
+
+        This should be called once per time step after the correction and
+        before the state extraction.
+        """
+        # Find hypotheses with low association probabilities
+        temp_assoc_probs = np.array([])
+        for ii in range(0, len(self._hypotheses)):
+            temp_assoc_probs = np.append(
+                temp_assoc_probs, self._hypotheses[ii].assoc_prob
+            )
+        keep_indices = np.argwhere(temp_assoc_probs > self.prune_threshold).T
+        keep_indices = keep_indices.flatten()
+
+        # For re-weighing association probabilities
+        new_sum = np.sum(temp_assoc_probs[keep_indices])
+        self._hypotheses = [self._hypotheses[ii] for ii in keep_indices]
+        for ii in range(0, len(keep_indices)):
+            self._hypotheses[ii].assoc_prob = self._hypotheses[ii].assoc_prob / new_sum
+        # Re-calculate cardinality
+        self._card_dist = self._calc_card_dist(self._hypotheses)
+
+    def _cap(self):
+        """Removes least likely hypotheses until a maximum number is reached.
+
+        This should be called once per time step after pruning and
+        before the state extraction.
+        """
+        # Determine if there are too many hypotheses
+        if len(self._hypotheses) > self.max_hyps:
+            temp_assoc_probs = np.array([])
+            for ii in range(0, len(self._hypotheses)):
+                temp_assoc_probs = np.append(
+                    temp_assoc_probs, self._hypotheses[ii].assoc_prob
+                )
+            sorted_indices = np.argsort(temp_assoc_probs)
+
+            # Reverse order to get descending array
+            sorted_indices = sorted_indices[::-1]
+
+            # Take the top n assoc_probs, where n = max_hyps
+            keep_indices = np.array([], dtype=np.int64)
+            for ii in range(0, self.max_hyps):
+                keep_indices = np.append(keep_indices, int(sorted_indices[ii]))
+            # Assign to class
+            self._hypotheses = [self._hypotheses[ii] for ii in keep_indices]
+
+            # Normalize association probabilities
+            new_sum = 0
+            for ii in range(0, len(self._hypotheses)):
+                new_sum = new_sum + self._hypotheses[ii].assoc_prob
+            for ii in range(0, len(self._hypotheses)):
+                self._hypotheses[ii].assoc_prob = (
+                    self._hypotheses[ii].assoc_prob / new_sum
+                )
+            # Re-calculate cardinality
+            self._card_dist = self._calc_card_dist(self._hypotheses)
+
+    def _extract_helper(self, track):
+        GGIWs = [None] * len(track.GGIW_hist) 
+        for ii, (w_lst, GGIW_lst) in enumerate(
+            zip(track.distrib_weights_hist, track.GGIW_hist)
+        ):
+            idx = np.argmax(w_lst)
+            GGIWs[ii] = GGIW_lst[idx] 
+            
+        return GGIWs
+
+    def _update_extract_hist(self, idx_cmp):
+        used_meas_inds = [[] for ii in range(self._time_index_cntr)]
+        used_labels = []
+        new_extract_hists = [None] * len(self._hypotheses[idx_cmp].track_set) 
+        for ii, track in enumerate(
+            [
+                self._track_tab[trk_ind]
+                for trk_ind in self._hypotheses[idx_cmp].track_set
+            ]
+        ): 
+            new_extract_hists[ii] = self._ExtractHistHelper()
+            new_extract_hists[ii].label = track.label
+            new_extract_hists[ii].meas_ind_hist = track.meas_assoc_hist.copy()
+            new_extract_hists[ii].b_time_index = track.time_index
+            (
+                new_extract_hists[ii].GGIWs
+            ) = self._extract_helper(track)
+
+            used_labels.append(track.label)
+
+            for t_inds_after_b, meas_ind in enumerate(
+                new_extract_hists[ii].meas_ind_hist
+            ):
+                tt = new_extract_hists[ii].b_time_index + t_inds_after_b
+                if meas_ind is not None and meas_ind not in used_meas_inds[tt]:
+                    used_meas_inds[tt].append(meas_ind)
+        good_inds = []
+        for ii, existing in enumerate(self._extractable_hists):
+            used = existing.label in used_labels
+            if used:
+                continue
+            for t_inds_after_b, meas_ind in enumerate(existing.meas_ind_hist):
+                tt = existing.b_time_index + t_inds_after_b
+                used = meas_ind is not None and meas_ind in used_meas_inds[tt]
+                if used:
+                    break
+            if not used:
+                good_inds.append(ii)
+        self._extractable_hists = [self._extractable_hists[ii] for ii in good_inds]
+        self._extractable_hists.extend(new_extract_hists)
+
+    def extract_states(self, update=True, calc_states=True):
+        """Extracts the best state estimates.
+
+        This extracts the best states from the distribution. It should be
+        called once per time step after the correction function. This calls
+        both the inner filters predict and correct functions so the keyword
+        arguments must contain any additional variables needed by those
+        functions.
+
+        Parameters
+        ----------
+        update : bool, optional
+            Flag indicating if the label history should be updated. This should
+            be done once per timestep and can be disabled if calculating states
+            after the final timestep. The default is True.
+        calc_states : bool, optional
+            Flag indicating if the states should be calculated based on the
+            label history. This only needs to be done before the states are used.
+            It can simply be called once after the end of the simulation. The
+            default is true.
+
+        Returns
+        -------
+        idx_cmp : int
+            Index of the hypothesis table used when extracting states.
+        """
+        card = np.argmax(self._card_dist)
+        tracks_per_hyp = np.array([x.num_tracks for x in self._hypotheses])
+        weight_per_hyp = np.array([x.assoc_prob for x in self._hypotheses])
+
+        self._GGIW_objs = [[] for ii in range(self._time_index_cntr)]
+        self._labels = [[] for ii in range(self._time_index_cntr)]  
+
+        if len(tracks_per_hyp) == 0:
+            return None
+        idx_cmp = np.argmax(weight_per_hyp * (tracks_per_hyp == card)) 
+
+        if update:
+            self._update_extract_hist(idx_cmp) 
+
+        if calc_states:
+            for existing in self._extractable_hists:
+                for t_inds_after_b, g in enumerate(existing.GGIWs):
+                    tt = existing.b_time_index + t_inds_after_b
+                    # if len(self._labels[tt]) == 0:
+                    #     self._states[tt] = [s]
+                    #     self._labels[tt] = [existing.label]
+                    #     self._covs[tt] = [c]
+                    # else:
+                    self._GGIW_objs[tt].append(g)
+                    self._labels[tt].append(existing.label) 
+        if not update and not calc_states:
+            warnings.warn("Extracting states performed no actions")
+        return idx_cmp 
+    
+    def cleanup(
+        self,
+        enable_prune=True,
+        enable_cap=True,
+        enable_extract=True,
+        extract_kwargs=None,
+    ):
+        """Performs the cleanup step of the filter.
+
+        This can prune, cap, and extract states. It must be called once per
+        timestep, even if all three functions are disabled. This is to ensure
+        that internal counters for tracking linear timestep indices are properly
+        incremented. If this is called with `enable_extract` set to true then
+        the extract states method does not need to be called separately. It is
+        recommended to call this function instead of
+        :meth:`carbs.swarm_estimator.tracker.GeneralizedLabeledMultiBernoulli.extract_states`
+        directly.
+
+        Parameters
+        ----------
+        enable_prune : bool, optional
+            Flag indicating if prunning should be performed. The default is True.
+        enable_cap : bool, optional
+            Flag indicating if capping should be performed. The default is True.
+        enable_extract : bool, optional
+            Flag indicating if state extraction should be performed. The default is True.
+        extract_kwargs : dict, optional
+            Additional arguments to pass to :meth:`.extract_states`. The
+            default is None. Only used if extracting states.
+
+        Returns
+        -------
+        None.
+
+        """
+        self._time_index_cntr += 1
+
+        if enable_prune:
+            self._prune()
+        if enable_cap:
+            self._cap()
+        if enable_extract:
+            if extract_kwargs is None:
+                extract_kwargs = {}
+            self.extract_states(**extract_kwargs)
+
+   
+   
+
+
+
+
