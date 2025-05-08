@@ -214,12 +214,12 @@ class GGIW_PHD(RandomFiniteSetBase):
         #         spawn_mix.means, spawn_mix.covariances, spawn_mix.weights
         #     )
 
-        self._Mixture = self._predict_prob_density(timestep, self._Mixture, filt_args)
-
         for mix in self.birth_terms:
             obj = mix[1]
             weight = mix[0] 
             self._Mixture.add_components(obj.alpha, obj.beta, obj.mean, obj.covariance, obj.IWdof, obj.IWshape, weight)
+
+        self._Mixture = self._predict_prob_density(timestep, self._Mixture, filt_args)
 
 
     def _predict_prob_density(self, timestep, probDensity, filt_args):
@@ -385,9 +385,9 @@ class GGIW_PHD(RandomFiniteSetBase):
                     
                     b_new = sum([self._Mixture.weights[ii] * self._Mixture.betas[ii] for ii in comp_inds]) / w_new
                     
-                    v_new = self._Mixture.IWdofs[jj] # sum([self._Mixture.weights[ii] * self._Mixture.IWdofs[ii] for ii in comp_inds]) / w_new
+                    v_new = sum([self._Mixture.weights[ii] * self._Mixture.IWdofs[ii] for ii in comp_inds]) / w_new
                     
-                    V_new = self._Mixture.IWshapes[jj] # sum([self._Mixture.weights[ii] * self._Mixture.IWshapes[ii] for ii in comp_inds]) / w_new
+                    V_new = sum([self._Mixture.weights[ii] * self._Mixture.IWshapes[ii] for ii in comp_inds]) / w_new
                     
                     w_lst.append(w_new)
                     m_lst.append(m_new)
@@ -1039,13 +1039,17 @@ class GGIW_GLMB(RandomFiniteSetBase):
             self.time_index = None
 
         def __str__(self):
-            s = ""
-            s += f"Label: {self.label} \n" 
-            s += f"Time Index: {self.time_index} \n"
-            s += f"Measurement Association History: {self.meas_assoc_hist} \n"
-            s += "GGIW History: \n"
-            for ii in self.GGIW_hist:
-                s += f"{ii[0]} \n"
+            s  = f"Label: {self.label}\n"
+            s += f"Time Index: {self.time_index}\n"
+            s += f"Measurement Association History: {self.meas_assoc_hist}\n"
+            s += f"Weight History: {self.distrib_weights_hist}\n"
+            s += "State History:\n"
+            cols = [hist[0].mean for hist in self.GGIW_hist]
+            M = np.hstack(cols)
+            s += np.array2string(M,
+                                precision=3,
+                                suppress_small=True, 
+                                max_line_width=420)
             return s
 
         def setup(self,tab):
@@ -1053,9 +1057,8 @@ class GGIW_GLMB(RandomFiniteSetBase):
             self.label = tab.label
             self.distrib_weights_hist = tab.distrib_weights_hist.copy()
             self.meas_assoc_hist = tab.meas_assoc_hist.copy()
-
-            self.GGIW_hist = [None] * len(tab.GGIW_hist)
-            self.GGIW_hist = [s.copy() for s in [s_lst for s_lst in tab.GGIW_hist]] 
+            
+            self.GGIW_hist = [g for g in tab.GGIW_hist]
 
             self.time_index = tab.time_index
 
@@ -1081,6 +1084,9 @@ class GGIW_GLMB(RandomFiniteSetBase):
             self.meas_ind_hist = []
             self.b_time_index = None
             self.GGIWs = [] 
+
+        def __str__(self):
+            return f"Extract History Helper Object for label: {self.label}"
 
     def __init__(
         self,
@@ -1119,7 +1125,7 @@ class GGIW_GLMB(RandomFiniteSetBase):
         self._baseFilter = None
 
         hyp0 = self._HypothesisHelper()
-        hyp0.assoc_prob = 1
+        hyp0.assoc_prob = 0.1
         hyp0.track_set = []
         self._hypotheses = [hyp0]  # list of _HypothesisHelper objects
 
@@ -1246,14 +1252,6 @@ class GGIW_GLMB(RandomFiniteSetBase):
         """Cardinality estimate."""
         return np.argmax(self._card_dist)
     
-    def _init_filt_states(self, distrib): 
-        
-        ggiw_objs = [deepcopy(g) for (i,g) in distrib]
-        
-        weights = distrib.weights.copy()
-        
-        return weights, ggiw_objs 
-
     def _gen_birth_tab(self, timestep):
         log_cost = []
         birth_tab = []
@@ -1262,11 +1260,11 @@ class GGIW_GLMB(RandomFiniteSetBase):
             log_cost.append(-np.log(cost))
             entry = self._TabEntry()
             entry.GGIW_hist = [None]
-            entry.distrib_weights_hist = [None]
-            (
-                entry.distrib_weights_hist[0],
-                entry.GGIW_hist[0],
-            ) = self._init_filt_states(distrib) # basically extracts GGIW and weight from GGIW Mixture in the birth model
+            entry.distrib_weights_hist = [None] 
+
+            entry.distrib_weights_hist[0] = distrib.weights.copy()
+            entry.GGIW_hist[0] = [distrib[0]]
+
             entry.label = (round(timestep, self.decimal_places), ii)
             entry.time_index = self._time_index_cntr
             birth_tab.append(entry)
@@ -1290,8 +1288,9 @@ class GGIW_GLMB(RandomFiniteSetBase):
         """Updates table entries probability density."""
         newTab = self._TabEntry()
         newTab.setup(tab) 
-        new_GGIW_hist = [None] * len(newTab.GGIW_hist[-1])
-        for ii, dist in enumerate(newTab.GGIW_hist[-1]):
+        new_GGIW_hist = [None] * len(newTab.GGIW_hist[-1])  
+
+        for ii, dist in enumerate(newTab.GGIW_hist[-1]): 
             new_GGIW_hist[ii] = self.filter.predict(timestep, dist, filt_args)
         newTab.GGIW_hist.append(new_GGIW_hist) 
         newTab.distrib_weights_hist.append(newTab.distrib_weights_hist[-1].copy())
@@ -1474,7 +1473,7 @@ class GGIW_GLMB(RandomFiniteSetBase):
         
         new_GGIW, likely = self.filter.correct(timestep, meas, GGIW_obj, **filt_args) 
 
-        new_w = distrib_weight * np.exp(likely)
+        new_w = distrib_weight * np.exp(likely)   # The GGIW EKF returns the log likelihood.  
 
         return new_GGIW, new_w
 
@@ -1482,7 +1481,7 @@ class GGIW_GLMB(RandomFiniteSetBase):
         newTab = self._TabEntry()
         newTab.setup(tab)
         
-        depleted = False   # idk why this is here tbh, later issue. 
+        depleted = False   # idk why this is here, later issue. 
         
         new_GGIW = [None] * len(newTab.distrib_weights_hist[-1])
         new_w = [None] * len(newTab.distrib_weights_hist[-1])
@@ -1492,11 +1491,11 @@ class GGIW_GLMB(RandomFiniteSetBase):
 
         newTab.GGIW_hist[-1] = new_GGIW
 
-        new_w = new_w + np.finfo(float).eps
+        new_w = [w + np.finfo(float).eps for w in new_w]  
 
         if not depleted:
             cost = np.sum(new_w).item()
-            newTab.distrib_weights_hist[-1] = [w / cost for w in new_w]
+            newTab.distrib_weights_hist[-1] = [w / cost for w in new_w] 
         else:
             cost = 0
         return newTab, cost
@@ -1516,15 +1515,15 @@ class GGIW_GLMB(RandomFiniteSetBase):
         for emm, z in enumerate(meas):
             for ii, ent in enumerate(self._track_tab):
 
-                num_meas = len(z)
+                meas_per_clust = len(z)
                 meas_d = z[0].shape[0]
-                z_array = np.array(z).reshape((num_meas, meas_d)).transpose()
+                z_array = np.array(z).reshape((meas_per_clust, meas_d)).transpose()
 
                 s_to_ii = num_pred * emm + ii + num_pred
                 (up_tab[s_to_ii], cost) = self._correct_track_tab_entry(
                     z_array, ent, timestep, filt_args
                 )
-
+                
                 # update association history with current measurement index
                 if up_tab[s_to_ii] is not None:
                     up_tab[s_to_ii].meas_assoc_hist.append(emm)
@@ -1613,6 +1612,9 @@ class GGIW_GLMB(RandomFiniteSetBase):
         return avg_prob_detect, avg_prob_miss_detect
 
     def _clean_updates(self):
+        # print("Before update:")
+        # print(f"Hypothesis 0: track_set = {self._hypotheses[0].track_set} \n ")
+
         used = [0] * len(self._track_tab)
         for hyp in self._hypotheses:
             for ii in hyp.track_set:
@@ -1624,7 +1626,6 @@ class GGIW_GLMB(RandomFiniteSetBase):
         new_inds = [None] * len(self._track_tab)
         for ii, v in zip(nnz_inds, [ii for ii in range(0, track_cnt)]):
             new_inds[ii] = v
-        # new_tab = [self._TabEntry().setup(self._track_tab[ii]) for ii in nnz_inds]
         new_tab = [self._track_tab[ii] for ii in nnz_inds]
         new_hyps = []
         for ii, hyp in enumerate(self._hypotheses):
@@ -1636,6 +1637,10 @@ class GGIW_GLMB(RandomFiniteSetBase):
             new_hyps.append(hyp)
         self._track_tab = new_tab
         self._hypotheses = new_hyps
+
+        # print("After update:")
+        # print(f"Hypothesis 0: track_set = {self._hypotheses[0].track_set} \n ")
+        
 
     def correct(self, timestep, meas_in, filt_args={}):
         """Correction step of the GLMB filter.
@@ -1832,14 +1837,24 @@ class GGIW_GLMB(RandomFiniteSetBase):
         """
         card = np.argmax(self._card_dist)
         tracks_per_hyp = np.array([x.num_tracks for x in self._hypotheses])
-        weight_per_hyp = np.array([x.assoc_prob for x in self._hypotheses])
+        weight_per_hyp = np.array([x.assoc_prob for x in self._hypotheses]) 
 
         self._GGIW_objs = [[] for ii in range(self._time_index_cntr)]
         self._labels = [[] for ii in range(self._time_index_cntr)]  
 
         if len(tracks_per_hyp) == 0:
             return None
-        idx_cmp = np.argmax(weight_per_hyp * (tracks_per_hyp == card)) 
+        # idx_cmp = np.argmax(weight_per_hyp * (tracks_per_hyp == card)) 
+
+        max_weight = np.max(weight_per_hyp * (tracks_per_hyp == card))
+        idx_cmp_candidates = np.where(weight_per_hyp * (tracks_per_hyp == card) == max_weight)[0]  
+        
+        idx_cmp = idx_cmp_candidates[0]
+
+        # idx_cmp = sorted(idx_cmp_candidates,
+        #          key=lambda i: tuple(sorted(self._hypotheses[i].track_set)))[0]
+
+        # print(weight_per_hyp * (tracks_per_hyp == card))
 
         if update:
             self._update_extract_hist(idx_cmp) 
@@ -1971,7 +1986,341 @@ class GGIW_GLMB(RandomFiniteSetBase):
 
         return fig
 
-   
+
+
+class GGIW_JGLMB(GGIW_GLMB):
+    """Implements a Joint Generalized Labeled Multi-Bernoulli Filter.
+
+    The Joint GLMB is designed to call predict and correct simultaneously,
+    as a single joint prediction-correction step.
+    Calling them asynchronously may cause poor performance.
+
+    Notes
+    -----
+    This is based on :cite:`Vo2017_AnEfficientImplementationoftheGeneralizedLabeledMultiBernoulliFilter`.
+    It does not account for agents spawned from existing tracks, only agents
+    birthed from the given birth model.
+    """
+
+    def __init__(self, rng=None, **kwargs):
+        super().__init__(**kwargs)
+        self._old_track_tab_len = len(self._track_tab)
+        self._update_has_been_called = (
+            True  # used to denote if the update function should be called or not.
+        )
+        if rng is None:
+            self._rng = np.random.default_rng()
+        else:
+            self._rng = rng
+
+    def save_filter_state(self):
+        """Saves filter variables so they can be restored later.
+
+        Note that to pickle the resulting dictionary the :code:`dill` package
+        may need to be used due to potential pickling of functions.
+        """
+        filt_state = super().save_filter_state()
+
+        filt_state["_old_track_tab_len"] = self._old_track_tab_len
+
+        return filt_state
+
+    def load_filter_state(self, filt_state):
+        """Initializes filter using saved filter state.
+
+        Attributes
+        ----------
+        filt_state : dict
+            Dictionary generated by :meth:`save_filter_state`.
+        """
+        super().load_filter_state(filt_state)
+
+        self._old_track_tab_len = filt_state["_old_track_tab_len"]
+
+    def predict(self, timestep, filt_args={}):
+        """Prediction step of the JGLMB filter.
+
+        This predicts new hypothesis, and propogates them to the next time
+        step. Because this calls
+        the inner filter's predict function, the keyword arguments must contain
+        any information needed by that function.
+
+        Parameters
+        ----------
+        timestep: float
+            Current timestep.
+        filt_args : dict, optional
+            Passed to the inner filter. The default is {}.
+
+        Returns
+        -------
+        None.
+        """
+        if self._update_has_been_called:
+            # Birth Track Table
+            birth_tab = self._gen_birth_tab(timestep)[0]
+        else:
+            birth_tab = []
+            warnings.warn("Joint GLMB should call predict and correct simultaneously")
+        self._update_has_been_called = False
+
+        # Survival Track Table
+        surv_tab = self._gen_surv_tab(timestep, filt_args)
+
+        # Prediction Track Table
+
+        self._track_tab = birth_tab + surv_tab
+
+    def _unique_faster(self, keys):
+        difference = np.diff(np.append(keys, np.nan), n=1, axis=0)
+        keyind = np.not_equal(difference, 0)
+        mindices = (keys[0][np.where(keyind)]).astype(int)
+        return mindices
+
+    def _calc_avg_prob_surv_death(self):
+        avg_surv = np.zeros(len(self.birth_terms) + self._old_track_tab_len)
+        for ii in range(0, avg_surv.shape[0]):
+            if ii <= len(self.birth_terms) - 1:
+                avg_surv[ii] = self.birth_terms[ii][1]
+            else:
+                avg_surv[ii] = self.prob_survive
+        # avg_surv = np.array([avg_surv]).T
+        avg_death = 1 - avg_surv
+        return avg_surv, avg_death
+
+    def _calc_avg_prob_det_mdet(self):
+        avg_detect = self.prob_detection * np.ones(len(self._track_tab))
+        # avg_detect = np.array([avg_detect]).T
+        avg_miss = 1 - avg_detect
+        return avg_detect, avg_miss
+
+    def _gen_cor_tab(self, num_meas, meas, timestep, filt_args):
+        num_pred = len(self._track_tab)
+        up_tab = [None] * (num_meas + 1) * num_pred
+
+        for ii, track in enumerate(self._track_tab):
+            up_tab[ii] = self._TabEntry()
+            up_tab[ii].setup(track)
+            up_tab[ii].meas_assoc_hist.append(None)
+        # measurement updated tracks
+        all_cost_m = np.zeros((num_pred, num_meas))
+        # for emm, z in enumerate(meas):
+        for ii, ent in enumerate(self._track_tab):
+            for emm, z in enumerate(meas):
+
+                num_meas = len(z)
+                meas_d = z[0].shape[0]
+                z_array = np.array(z).reshape((num_meas, meas_d)).transpose()
+
+                s_to_ii = num_pred * emm + ii + num_pred
+                (up_tab[s_to_ii], cost) = self._correct_track_tab_entry(
+                    z_array, ent, timestep, filt_args
+                )
+
+                # update association history with current measurement index
+                if up_tab[s_to_ii] is not None:
+                    up_tab[s_to_ii].meas_assoc_hist.append(emm)
+                all_cost_m[ii, emm] = cost
+        return up_tab, all_cost_m
+
+    def _gen_cor_hyps(
+        self,
+        num_meas,
+        avg_prob_detect,
+        avg_prob_miss_detect,
+        avg_prob_surv,
+        avg_prob_death,
+        all_cost_m,
+    ):
+        # Define clutter
+        clutter = self.clutter_rate * self.clutter_den
+        # clutter = self.clutter_den
+
+        # Joint Cost Matrix
+        joint_cost = np.concatenate(
+            [
+                np.diag(avg_prob_death.ravel()),
+                np.diag(avg_prob_surv.ravel() * avg_prob_miss_detect.ravel()),
+            ],
+            axis=1,
+        )
+
+        other_jc_terms = (
+            np.tile((avg_prob_surv * avg_prob_detect).reshape((-1, 1)), (1, num_meas))
+            * all_cost_m
+            / (clutter)
+        )
+
+        # Full joint cost matrix
+        joint_cost = np.append(joint_cost, other_jc_terms, axis=1)
+
+        # Gated Measurement index matrix
+        gate_meas_indices = np.zeros((len(self._track_tab), num_meas))
+        for ii in range(0, len(self._track_tab)):
+            for jj in range(0, len(self._track_tab[ii].gatemeas)):
+                gate_meas_indices[ii][jj] = self._track_tab[ii].gatemeas[jj]
+        gate_meas_indc = gate_meas_indices >= 0
+
+        # Component updates
+        ss_w = 0
+        up_hyp = []
+        for p_hyp in self._hypotheses:
+            ss_w += np.sqrt(p_hyp.assoc_prob)
+        for p_hyp in self._hypotheses:
+            cpreds = len(self._track_tab)
+            num_births = len(self.birth_terms)
+            num_exists = len(p_hyp.track_set)
+            num_tracks = num_births + num_exists
+
+            # Hypothesis index masking
+            tindices = np.concatenate(
+                (np.arange(0, num_births), num_births + np.array(p_hyp.track_set))
+            ).astype(int)
+            lselmask = np.zeros((len(self._track_tab), num_meas), dtype="bool")
+            lselmask[tindices,] = gate_meas_indc[tindices,]
+
+            keys = np.array([np.sort(gate_meas_indices[lselmask])])
+            mindices = self._unique_faster(keys)
+
+            comb_tind_cpred = np.append(
+                np.append(tindices, cpreds + tindices), [2 * cpreds + mindices]
+            )
+            # print(joint_cost.shape)
+            # print(tindices)
+            # print(comb_tind_cpred)
+            cost_m = joint_cost[tindices][:, comb_tind_cpred]
+            # print(cost_m.shape)
+            # cost_m = np.zeros((len(tindices), len(comb_tind_cpred)))
+            # cmi = 0
+            # for ind in tindices:
+            #     cost_m[cmi, :] = joint_cost[ind, comb_tind_cpred]
+            #     cmi = cmi + 1
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                neg_log = -np.log(cost_m)
+
+            m = np.round(self.req_upd * np.sqrt(p_hyp.assoc_prob) / ss_w)
+            m = int(m.item()) + 1
+
+            # Gibbs Sampler
+            [assigns, costs] = gibbs(neg_log, m, rng=self._rng)
+
+            # Process unique assighnments from gibbs sampler
+            assigns[assigns < num_tracks] = -np.inf
+            for ii in range(np.shape(assigns)[0]):
+                if len(np.shape(assigns)) < 2:
+                    if assigns[ii] >= num_tracks and assigns[ii] < 2 * num_tracks:
+                        assigns[ii] = -1
+                else:
+                    for jj in range(np.shape(assigns)[1]):
+                        if (
+                            assigns[ii][jj] >= num_tracks
+                            and assigns[ii][jj] < 2 * num_tracks
+                        ):
+                            assigns[ii][jj] = -1
+            assigns[assigns >= 2 * num_tracks] -= 2 * num_tracks
+            if assigns[assigns >= 0].size != 0:
+                assigns[assigns >= 0] = mindices[
+                    assigns[assigns >= 0].astype(int)[
+                        assigns[assigns >= 0].astype(int) >= 0
+                    ]
+                ]
+            # Assign updated hypotheses from gibbs sampler
+            for c, cst in enumerate(costs.flatten()):
+                update_hyp_cmp_temp = assigns[c,]
+                update_hyp_cmp_idx = cpreds * (update_hyp_cmp_temp + 1) + np.append(
+                    np.array([np.arange(0, num_births)]),
+                    num_births + np.array([p_hyp.track_set]),
+                )
+                new_hyp = self._HypothesisHelper()
+                new_hyp.assoc_prob = (
+                    -self.clutter_rate
+                    + num_meas * np.log(clutter)
+                    + np.log(p_hyp.assoc_prob)
+                    - cst
+                )
+                new_hyp.track_set = update_hyp_cmp_idx[update_hyp_cmp_idx >= 0].astype(
+                    int
+                )
+                up_hyp.append(new_hyp)
+        lse = log_sum_exp([x.assoc_prob for x in up_hyp])
+
+        for ii in range(0, len(up_hyp)):
+            up_hyp[ii].assoc_prob = np.exp(up_hyp[ii].assoc_prob - lse)
+        return up_hyp
+
+    def correct(self, timestep, meas_in, filt_args={}):
+        """Correction step of the JGLMB filter.
+
+        This corrects the hypotheses based on the measurements and gates the
+        measurements according to the class settings. It also updates the
+        cardinality distribution. Because this calls the inner filter's correct
+        function, the keyword arguments must contain any information needed by
+        that function.
+
+        Parameters
+        ----------
+        timestep: float
+            Current timestep.
+        meas_in : list
+            List of Nm x 1 numpy arrays each representing a measuremnt.
+        filt_args : dict, optional
+            keyword arguments to pass to the inner filters correct function.
+            The default is {}.
+
+        Todo
+        ----
+            Fix the measurement gating
+
+        Returns
+        -------
+        None
+        """
+
+        meas = self._clustering_obj.cluster(meas_in)
+
+        # gating by tracks
+        if self.gating_on:
+            RuntimeError("Gating not implemented yet. PLEASE TURN OFF GATING")
+            # for ent in self._track_tab:
+            #     ent.gatemeas = self._gate_meas(meas, ent.probDensity.means,
+            #                                     ent.probDensity.covariances)
+        else:
+            for ent in self._track_tab:
+                ent.gatemeas = np.arange(0, len(meas))
+        # Pre-calculation of average survival/death probabilities
+        avg_prob_surv, avg_prob_death = self._calc_avg_prob_surv_death()
+
+        # Pre-calculation of average detection/missed probabilities
+        avg_prob_detect, avg_prob_miss_detect = self._calc_avg_prob_det_mdet()
+
+        if self.save_measurements:
+            self._meas_tab.append(deepcopy(meas))
+        num_meas = len(meas)
+
+        # missed detection tracks
+        [up_tab, all_cost_m] = self._gen_cor_tab(num_meas, meas, timestep, filt_args)
+
+        up_hyp = self._gen_cor_hyps(
+            num_meas,
+            avg_prob_detect,
+            avg_prob_miss_detect,
+            avg_prob_surv,
+            avg_prob_death,
+            all_cost_m,
+        )
+
+        self._track_tab = up_tab
+        self._hypotheses = up_hyp
+        self._card_dist = self._calc_card_dist(self._hypotheses)
+        self._clean_predictions()
+        self._clean_updates()
+        self._update_has_been_called = True
+        self._old_track_tab_len = len(self._track_tab)
+
+
+
+
 
 
 

@@ -258,30 +258,22 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
         # ) 
         
         
-        sign_S, log_det_S = np.linalg.slogdet(S)
-        sign_X, log_det_X = np.linalg.slogdet(X_hat)
-        sign_cur, log_det_cur = np.linalg.slogdet(cur_IWshape)
-        sign_next, log_det_next = np.linalg.slogdet(next_IWshape)
-        
-        gamma_term = (special.gammaln(next_alpha) - special.gammaln(cur_alpha) 
-                    + cur_alpha * np.log(cur_beta) - next_alpha * np.log(next_beta))
-        
-        gauss_term = -0.5 * log_det_S - 0.5 * np.trace(iS @ N)
-        
-        v1 = cur_IWdof - GGIW_obj.d - 1
-        v2 = next_IWdof - GGIW_obj.d - 1
-        
-        iw_term = (0.5 * v1 * log_det_cur - 0.5 * v2 * log_det_next 
-                + special.gammaln(v2/2) - special.gammaln(v1/2))
-        
-        extent_term = 0.5 * log_det_X
-        
-        spread_term = -0.5 * GGIW_obj.d * num_meas * np.log(np.pi * num_meas)
-        
-        log_likelihood = gamma_term + gauss_term + iw_term + extent_term + spread_term
-        
-        meas_fit_prob = np.exp(log_likelihood)
+        m = num_meas
+        d = GGIW_obj.d
 
+        log_det_S = np.linalg.slogdet(S)[1]
+        log_det_X = np.linalg.slogdet(X_hat)[1]
+        log_det_cur = np.linalg.slogdet(cur_IWshape)[1]
+        log_det_next = np.linalg.slogdet(next_IWshape)[1]
+
+        gamma_term = special.gammaln(next_alpha) - special.gammaln(cur_alpha) + cur_alpha*np.log(cur_beta) - next_alpha*np.log(next_beta) - special.gammaln(m+1)
+        gauss_term = -0.5*m*log_det_S - 0.5*np.trace(np.linalg.inv(S) @ N)
+        iw_term = 0.5*cur_IWdof*log_det_cur - 0.5*next_IWdof*log_det_next + special.multigammaln(next_IWdof/2, d) - special.multigammaln(cur_IWdof/2, d)
+        extent_term = -0.5*m*log_det_X
+        spread_term = -0.5*d*m*np.log(np.pi) - 0.5*d*np.log(m) - 0.5*d*log_det_S
+
+        log_likelihood = gamma_term + gauss_term + iw_term + extent_term + spread_term
+        meas_fit_prob = (log_likelihood)
 
         return (next_dist, meas_fit_prob) 
     
