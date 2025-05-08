@@ -95,7 +95,7 @@ class GGIW_PHD(RandomFiniteSetBase):
         self._Mixture = GGIWMixture()
 
 
-        self.merge_as_average = False    # User can set to true, better numerical stability
+        self.merge_as_average = True    # User can set to true, better numerical stability
 
 
         super().__init__(**kwargs)
@@ -255,8 +255,7 @@ class GGIW_PHD(RandomFiniteSetBase):
         self._meas_tab.append(meas)   # Keeps track of measurements for plotting purposes
 
         # Partition measurements
-        parted_meas = self._clustering_obj.cluster(meas)
-        #TODO: Need a way to distuinguish output from DBSCAN among valid cluster and noise cluster
+        self._parted_meas = self._clustering_obj.cluster(meas)
 
         # Mix = GGIWMixture()
 
@@ -271,7 +270,7 @@ class GGIW_PHD(RandomFiniteSetBase):
 
         Mix.weights = w_lst
 
-        UpdMix = self._correct_prob_density(timestep, parted_meas, self._Mixture, filt_args) 
+        UpdMix = self._correct_prob_density(timestep, self._parted_meas, self._Mixture, filt_args) 
         UpdMix.add_components(Mix.alphas, Mix.betas, Mix.means, Mix.covariances, Mix.IWdofs, Mix.IWshapes, Mix.weights) 
 
         self._Mixture = UpdMix
@@ -345,6 +344,10 @@ class GGIW_PHD(RandomFiniteSetBase):
 
     def _merge(self):
             """Merges nearby hypotheses."""
+            loop_inds = set(range(len(self._Mixture.means)))
+            if len(loop_inds) < 2:
+                # Exit if num component is less than 2
+                return
 
             if self.merge_as_average:
                 loop_inds = set(range(len(self._Mixture.means)))
