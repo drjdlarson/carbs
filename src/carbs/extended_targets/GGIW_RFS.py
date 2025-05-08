@@ -1926,6 +1926,7 @@ class GGIW_GLMB(RandomFiniteSetBase):
         plt_inds=[0, 1],
         ttl="Labeled State Trajectories with Extents",
         ax=None,
+        linewidth=1.0,
         **kwargs,
         ):
         """
@@ -1948,39 +1949,31 @@ class GGIW_GLMB(RandomFiniteSetBase):
             fig, ax = plt.subplots()
         else:
             fig = ax.figure
+            
+        traj, latest = {}, {}
 
-        # --- gather trajectory history for every label --------------------------
-        traj = {}          # label → list of means over time
-        latest = {}        # label → latest GGIW object (for ellipse)
-
-        for g_list, lbl_list in zip(self._GGIW_objs, self._labels):
-            for ggiw, lbl in zip(g_list, lbl_list):
+        for kk, (g_list, lbl_list) in enumerate(zip(self._GGIW_objs, self._labels)): 
+            step = dict(zip(lbl_list, g_list))          # label → GGIW at this step
+            for lbl, ggiw in step.items():              # only labels that exist now
                 traj.setdefault(lbl, []).append(ggiw.mean[plt_inds].flatten())
-                latest[lbl] = ggiw   # overwrites until last time‑step
+                latest[lbl] = ggiw                      # keeps the newest object
 
-        # --- unique colors per label -------------------------------------------
         cmap = plt.get_cmap("tab20")
         colors = {lbl: cmap(i % 20) for i, lbl in enumerate(traj)}
 
-        # --- plot everything ----------------------------------------------------
         for lbl, pts in traj.items():
             pts = np.stack(pts, axis=1)
             col = colors[lbl]
-
-            # trajectory line + final point
-            ax.plot(pts[0], pts[1], "-", color=col, linewidth=1.5)
+            
+            ax.plot(pts[0], pts[1], "-", color=col, linewidth=linewidth)
             ax.scatter(pts[0, -1], pts[1, -1], color=col, edgecolor="k", zorder=5,
                     label=f"Label {lbl}")
-
-            # confidence ellipse from SERUMS helper (h ≈ 0.95 by default)
+            
             latest[lbl].plot_confidence_extents(
-                h=0.95, plt_inds=list(plt_inds), ax=ax, color=col
+                h=0.95, plt_inds=list(plt_inds), ax=ax, color=col,linewidth=linewidth
             )
-
-        # cosmetics
-        ax.set_title(ttl)
-        ax.set_xlabel(f"state[{plt_inds[0]}]")
-        ax.set_ylabel(f"state[{plt_inds[1]}]")
+            
+        ax.set_title(ttl) 
         ax.set_aspect("equal", "box")
         ax.grid(True, linewidth=0.3) 
 
