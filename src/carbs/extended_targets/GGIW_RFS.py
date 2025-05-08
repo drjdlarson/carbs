@@ -95,7 +95,7 @@ class GGIW_PHD(RandomFiniteSetBase):
         self._Mixture = GGIWMixture()
 
 
-        self.merge_as_average = False    # User can set to true, better numerical stability
+        self.merge_as_average = True    # User can set to true, better numerical stability
 
 
         super().__init__(**kwargs)
@@ -345,6 +345,10 @@ class GGIW_PHD(RandomFiniteSetBase):
 
     def _merge(self):
             """Merges nearby hypotheses."""
+            loop_inds = set(range(len(self._Mixture.means)))
+            if len(loop_inds) < 2:
+                # Exit if num component is less than 2
+                return
 
             if self.merge_as_average:
                 loop_inds = set(range(len(self._Mixture.means)))
