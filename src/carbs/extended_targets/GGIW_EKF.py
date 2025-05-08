@@ -209,8 +209,6 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
 
         N = epsilon @ epsilon.T
 
-        cur_cov = 0.5 * (cur_cov + cur_cov.T)
-
         S = meas_mat @ cur_cov @ meas_mat.T + X_hat / W + self.meas_noise
         S = (S + S.T) * 0.5 
 
@@ -229,7 +227,8 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
         next_alpha = cur_alpha + W
         next_beta = cur_beta + 1
         next_state = cur_state + K @ epsilon 
-        next_cov = cur_cov - K @ meas_mat @ cur_cov
+        temp = np.eye(cur_cov.shape[0]) - K @ meas_mat
+        next_cov = temp @ cur_cov @ temp.T + K @ self.meas_noise @ K.T # Joseph form
         next_IWdof = cur_IWdof + W
         next_IWshape = cur_IWshape + N_hat + Z 
 
