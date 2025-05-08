@@ -255,8 +255,7 @@ class GGIW_PHD(RandomFiniteSetBase):
         self._meas_tab.append(meas)   # Keeps track of measurements for plotting purposes
 
         # Partition measurements
-        parted_meas = self._clustering_obj.cluster(meas)
-        #TODO: Need a way to distuinguish output from DBSCAN among valid cluster and noise cluster
+        self._parted_meas = self._clustering_obj.cluster(meas)
 
         # Mix = GGIWMixture()
 
@@ -271,7 +270,7 @@ class GGIW_PHD(RandomFiniteSetBase):
 
         Mix.weights = w_lst
 
-        UpdMix = self._correct_prob_density(timestep, parted_meas, self._Mixture, filt_args) 
+        UpdMix = self._correct_prob_density(timestep, self._parted_meas, self._Mixture, filt_args) 
         UpdMix.add_components(Mix.alphas, Mix.betas, Mix.means, Mix.covariances, Mix.IWdofs, Mix.IWshapes, Mix.weights) 
 
         self._Mixture = UpdMix

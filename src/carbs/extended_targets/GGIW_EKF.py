@@ -85,6 +85,9 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
         self.forgetting_factor = forgetting_factor   # for prediction step of gamma distribution, essentially affects how fast alpha and beta change over time
         self.tau = tau                               # for IW dof prediction
 
+    def override_state_mat (self, state_mat):
+        self._state_mat = state_mat
+
     def predict(
         self,
         timestep,
@@ -104,7 +107,7 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
 
         # self._init_model()
 
-        if self.__model is not None:
+        if self.__model is not None: # NOT RUN
             if control_fun_params is None:
                 control_fun_params = ()
             (
@@ -116,13 +119,15 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
             ).reshape((-1, 1))
 
         else:
-            if dyn_fun_params is None:
+            if dyn_fun_params is None: # NOT RUN
                 dyn_fun_params = ()
+
+            # NOT RUN
             next_state, state_mat, dt = self._predict_next_state(
                 timestep, cur_state, dyn_fun_params
             )
-
-            if self.cont_cov:
+            
+            if self.cont_cov: # NOT RUN
                 if dt is None:
                     raise RuntimeError(
                         "dt can not be None when using a continuous covariance model"
@@ -145,9 +150,11 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
                     raise RuntimeError(msg)
                 next_cov = tmp.reshape(cur_cov.shape)
             else:
+
+                # Currently using this until we can be sure about what gdyn state vector looks like
+                next_state = state_mat @ cur_state
                 next_cov = state_mat @ cur_cov @ state_mat.T + self.proc_noise
 
-        # next_cov = state_mat @ cur_cov @ state_mat.T + self.proc_noise
 
         # All predict steps above are the same for traditional EKFs and are only for the kinematics
         # Now for the additions: 
