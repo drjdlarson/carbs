@@ -152,7 +152,7 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
             else:
 
                 # Currently using this until we can be sure about what gdyn state vector looks like
-                next_state = state_mat @ cur_state
+                #next_state = state_mat @ cur_state
                 next_cov = state_mat @ cur_cov @ state_mat.T + self.proc_noise
 
 
@@ -163,10 +163,12 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
         next_beta = cur_beta / self.forgetting_factor
 
         next_IWdof = 2 * GGIW_obj.d + 2 + np.exp(-dt / self.tau) * (cur_IWdof - 2 * GGIW_obj.d - 2)
-        next_IWshape = (next_IWdof - 2 * GGIW_obj.d - 2)/(cur_IWdof - 2 * GGIW_obj.d - 2) * cur_IWshape
+        next_IWshape = (next_IWdof - 2 * GGIW_obj.d - 2)/(cur_IWdof - 2 * GGIW_obj.d - 2) \
+            * cur_IWshape
         next_IWshape = 0.5 * (next_IWshape + next_IWshape.transpose()) # Numerical step to keep IWshape positive definite
 
-        next_dist = GGIW(alpha=next_alpha, beta=next_beta, mean=next_state, covariance=next_cov, IWdof=next_IWdof, IWshape=next_IWshape)
+        next_dist = GGIW(alpha=next_alpha, beta=next_beta, mean=next_state, 
+                         covariance=next_cov, IWdof=next_IWdof, IWshape=next_IWshape)
 
         return next_dist
         
@@ -190,10 +192,12 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
         cur_IWdof = GGIW_obj.IWdof
         cur_IWshape = GGIW_obj.IWshape
 
-        num_meas = len(meas) 
-        
-        meas_d = meas[0].shape[0]
-        meas_arr = np.array(meas).reshape(num_meas, meas_d)
+        num_meas = meas.shape[1]
+        old_num_meas = len(meas)
+        old_meas_d = meas[0].shape[0]
+        meas_d = meas.shape[0]
+
+        meas_arr = np.array(meas).reshape(meas_d, num_meas)
 
         W = np.size(meas_arr,axis=1)
 
@@ -216,7 +220,7 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
 
         N = epsilon @ epsilon.T
 
-        S = meas_mat @ cur_cov @ meas_mat.T + X_hat / W + self.meas_noise
+        S = meas_mat @ cur_cov @ meas_mat.T + X_hat / num_meas + self.meas_noise
         S = (S + S.T) * 0.5 
 
         Vs = la.cholesky(S)
@@ -231,15 +235,17 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
 
         N_hat = X_sqrt @ S_sqrt_inv @ N @ S_sqrt_inv.T @ X_sqrt.T
 
-        next_alpha = cur_alpha + W
+        next_alpha = cur_alpha + num_meas
         next_beta = cur_beta + 1
         next_state = cur_state + K @ epsilon 
         temp = np.eye(cur_cov.shape[0]) - K @ meas_mat
         next_cov = temp @ cur_cov @ temp.T + K @ self.meas_noise @ K.T # Joseph form
-        next_IWdof = cur_IWdof + W
+        next_IWdof = cur_IWdof + num_meas
         next_IWshape = cur_IWshape + N_hat + Z 
 
-        next_dist = GGIW(alpha=next_alpha, beta=next_beta, mean=next_state, covariance=next_cov, IWdof=next_IWdof, IWshape=next_IWshape)
+        next_dist = GGIW(alpha=next_alpha, beta=next_beta, 
+                         mean=next_state, covariance=next_cov, 
+                         IWdof=next_IWdof, IWshape=next_IWshape)
 
         gam = next_alpha / next_beta
 
@@ -272,9 +278,15 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
         log_det_cur = np.linalg.slogdet(cur_IWshape)[1]
         log_det_next = np.linalg.slogdet(next_IWshape)[1]
 
-        gamma_term = special.gammaln(next_alpha) - special.gammaln(cur_alpha) + cur_alpha*np.log(cur_beta) - next_alpha*np.log(next_beta) - special.gammaln(m+1)
+        gamma_term = special.gammaln(next_alpha) - special.gammaln(cur_alpha) \
+            + cur_alpha*np.log(cur_beta) - next_alpha*np.log(next_beta) \
+                - special.gammaln(m+1)
         gauss_term = -0.5*m*log_det_S - 0.5*np.trace(np.linalg.inv(S) @ N)
-        iw_term = 0.5*cur_IWdof*log_det_cur - 0.5*next_IWdof*log_det_next + special.multigammaln(next_IWdof/2, d) - special.multigammaln(cur_IWdof/2, d)
+
+        iw_term = 0.5*cur_IWdof*log_det_cur - 0.5*next_IWdof*log_det_next \
+            + special.multigammaln(next_IWdof/2, d) \
+                - special.multigammaln(cur_IWdof/2, d)
+        
         extent_term = -0.5*m*log_det_X
         spread_term = -0.5*d*m*np.log(np.pi) - 0.5*d*np.log(m) - 0.5*d*log_det_S
 
