@@ -268,8 +268,10 @@ class GGIW_PHD(RandomFiniteSetBase):
         # This loop is based on the assumption that any target in the frame must have at least one measurement, gets rid of weird bugs at low PD
         for ii, x in enumerate(Mix):
             #if x not in self.birth_terms:
+
+            # Implementation based on Granstrom paper. A bit more numerically unstable but works
             cur_gamma = x[1].alpha / x[1].beta
-            w_lst[ii] = 1- (1 - np.exp(-cur_gamma)) * self.prob_detection * w_lst[ii]
+            w_lst[ii] = (1 - (1 - np.exp(-cur_gamma))) * self.prob_detection * w_lst[ii]
 
             #w_lst[ii] = w_lst[ii]*self.prob_miss_detection
 

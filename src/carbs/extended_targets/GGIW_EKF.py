@@ -231,40 +231,20 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
 
         N_hat = X_sqrt @ S_sqrt_inv @ N @ S_sqrt_inv.T @ X_sqrt.T
 
-        next_alpha = cur_alpha + W
+        next_alpha = cur_alpha + W + 150 # Numerical hack here. Need to investigate why
         next_beta = cur_beta + 1
         next_state = cur_state + K @ epsilon 
         temp = np.eye(cur_cov.shape[0]) - K @ meas_mat
         next_cov = temp @ cur_cov @ temp.T + K @ self.meas_noise @ K.T # Joseph form
-        next_IWdof = cur_IWdof + W
+        next_IWdof = max(cur_IWdof + W, GGIW_obj.d + 5)
         next_IWshape = cur_IWshape + N_hat + Z 
 
         next_dist = GGIW(alpha=next_alpha, beta=next_beta, mean=next_state, covariance=next_cov, IWdof=next_IWdof, IWshape=next_IWshape)
 
         gam = next_alpha / next_beta
-
         
-        # # Compute each term
-        # term1  = (cur_IWdof - GGIW_obj.d - 1)/2 * np.log(np.linalg.det(cur_IWshape))
-        # term2  = - (next_IWdof - GGIW_obj.d - 1)/2 * np.log(np.linalg.det(next_IWshape))
-        # term3  = special.gammaln((next_IWdof - GGIW_obj.d - 1)/2)
-        # term4  = - special.gammaln((cur_IWdof - GGIW_obj.d - 1)/2)
-        # term5  = 0.5 * np.log(np.linalg.det(X_hat))
-        # term6  = -0.5 * np.log(det_S)
-        # term7  = special.gammaln(next_alpha)
-        # term8  = -special.gammaln(cur_alpha)
-        # term9  = cur_alpha * np.log(cur_beta)
-        # term10 = - next_alpha * np.log(next_beta)
-        # term11 = - ((W * np.log(np.pi) + np.log(W)) * GGIW_obj.d / 2)
-
-        # # Sum them up
-        # meas_fit_prob = (
-        #     term1 + term2 + term3 + term4 + term5 + term6 + 
-        #     term7 + term8 + term9 + term10 + term11
-        # ) 
-        
-        
-        m = num_meas
+        # Likelihood calc
+        m = W
         d = GGIW_obj.d
 
         log_det_S = np.linalg.slogdet(S)[1]
