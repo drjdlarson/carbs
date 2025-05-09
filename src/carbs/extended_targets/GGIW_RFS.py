@@ -213,7 +213,7 @@ class GGIW_PHD(RandomFiniteSetBase):
         #     self._Mixture.add_components(
         #         spawn_mix.means, spawn_mix.covariances, spawn_mix.weights
         #     )
-        
+
         self._Mixture = self._predict_prob_density(timestep, self._Mixture, filt_args)
 
         for mix in self.birth_terms:
@@ -268,7 +268,10 @@ class GGIW_PHD(RandomFiniteSetBase):
         # This loop is based on the assumption that any target in the frame must have at least one measurement, gets rid of weird bugs at low PD
         for ii, x in enumerate(Mix):
             #if x not in self.birth_terms:
-            w_lst[ii] = w_lst[ii]*self.prob_miss_detection
+            cur_gamma = x[1].alpha / x[1].beta
+            w_lst[ii] = 1- (1 - np.exp(-cur_gamma)) * self.prob_detection * w_lst[ii]
+
+            #w_lst[ii] = w_lst[ii]*self.prob_miss_detection
 
         Mix.weights = w_lst
 
