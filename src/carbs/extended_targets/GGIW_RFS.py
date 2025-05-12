@@ -1044,7 +1044,7 @@ class GGIW_GLMB(RandomFiniteSetBase):
                 []
             )  # list indices into measurement list per time step
 
-            self.GGIW_hist = []   # list of lists of GGIW objects for each timestep
+            self.GGIW_hist = []   # list of lists of GGIW objects for each timestep 
             
             self.time_index = None
 
@@ -1068,7 +1068,7 @@ class GGIW_GLMB(RandomFiniteSetBase):
             self.distrib_weights_hist = tab.distrib_weights_hist.copy()
             self.meas_assoc_hist = tab.meas_assoc_hist.copy()
             
-            self.GGIW_hist = [g for g in tab.GGIW_hist]
+            self.GGIW_hist = [g for g in tab.GGIW_hist] 
 
             self.time_index = tab.time_index
 
@@ -1135,7 +1135,7 @@ class GGIW_GLMB(RandomFiniteSetBase):
         self._baseFilter = None
 
         hyp0 = self._HypothesisHelper()
-        hyp0.assoc_prob = 0.1
+        hyp0.assoc_prob = 1
         hyp0.track_set = []
         self._hypotheses = [hyp0]  # list of _HypothesisHelper objects
 
@@ -1153,6 +1153,9 @@ class GGIW_GLMB(RandomFiniteSetBase):
 
         super().__init__(**kwargs)
         self._GGIW_objs = [[]]
+        self._states = [[]]
+        self._covs = [[]]
+
 
     def save_filter_state(self):
         """Saves filter variables so they can be restored later.
@@ -1238,6 +1241,16 @@ class GGIW_GLMB(RandomFiniteSetBase):
         return self._GGIW_objs
     
     @property
+    def states(self):
+        """Read only list of extracted states.
+
+        This is a list with 1 element per timestep, and each element is a list
+        of the best states extracted at that timestep. The order of each
+        element corresponds to the label order.
+        """
+        return self._states
+
+    @property
     def labels(self):
         """Read only list of extracted labels.
 
@@ -1246,6 +1259,25 @@ class GGIW_GLMB(RandomFiniteSetBase):
         element corresponds to the state order.
         """
         return self._labels
+
+    @property
+    def covariances(self):
+        """Read only list of extracted covariances.
+
+        This is a list with 1 element per timestep, and each element is a list
+        of the best covariances extracted at that timestep. The order of each
+        element corresponds to the state order.
+
+        Raises
+        ------
+        RuntimeWarning
+            If the class is not saving the covariances, and returns an empty list.
+        """
+        if not self.save_covs:
+            raise RuntimeWarning("Not saving covariances")
+            return []
+        return self._covs
+
     
     @property
     def filter(self):
@@ -1850,7 +1882,9 @@ class GGIW_GLMB(RandomFiniteSetBase):
         weight_per_hyp = np.array([x.assoc_prob for x in self._hypotheses]) 
 
         self._GGIW_objs = [[] for ii in range(self._time_index_cntr)]
-        self._labels = [[] for ii in range(self._time_index_cntr)]  
+        self._states = [[] for ii in range(self._time_index_cntr)]
+        self._labels = [[] for ii in range(self._time_index_cntr)]
+        self._covs = [[] for ii in range(self._time_index_cntr)]
 
         if len(tracks_per_hyp) == 0:
             return None
@@ -1878,6 +1912,8 @@ class GGIW_GLMB(RandomFiniteSetBase):
                     #     self._labels[tt] = [existing.label]
                     #     self._covs[tt] = [c]
                     # else:
+                    self._states[tt].append(g.mean)
+                    self._covs[tt].append(g.covariance)
                     self._GGIW_objs[tt].append(g)
                     self._labels[tt].append(existing.label) 
         if not update and not calc_states:
@@ -1931,63 +1967,343 @@ class GGIW_GLMB(RandomFiniteSetBase):
                 extract_kwargs = {}
             self.extract_states(**extract_kwargs)
 
-    def plot_states_labels(
+    def _ospa_setup_emat(self, state_dim, state_inds):
+        # get sizes
+        num_timesteps = len(self.states)
+        num_objs = 0
+        lbl_to_ind = {}
+
+        for lst in self.labels:
+            for lbl in lst:
+                if lbl is None:
+                    continue
+                key = str(lbl)
+                if key not in lbl_to_ind:
+                    lbl_to_ind[key] = num_objs
+                    num_objs += 1
+        # create matrices
+        est_mat = np.nan * np.ones((state_dim, num_timesteps, num_objs))
+        est_cov_mat = np.nan * np.ones((state_dim, state_dim, num_timesteps, num_objs))
+
+        for tt, (lbl_lst, s_lst) in enumerate(zip(self.labels, self.states)):
+            for lbl, s in zip(lbl_lst, s_lst):
+                if lbl is None:
+                    continue
+                obj_num = lbl_to_ind[str(lbl)]
+                est_mat[:, tt, obj_num] = s.ravel()[state_inds]
+        if self.save_covs:
+            for tt, (lbl_lst, c_lst) in enumerate(zip(self.labels, self.covariances)):
+                for lbl, c in zip(lbl_lst, c_lst):
+                    if lbl is None:
+                        continue
+                    est_cov_mat[:, :, tt, lbl_to_ind[str(lbl)]] = c[state_inds][
+                        :, state_inds
+                    ]
+        return est_mat, est_cov_mat
+
+    def calculate_ospa2(
         self,
-        plt_inds=[0, 1],
-        ttl="Labeled State Trajectories with Extents",
-        ax=None,
-        linewidth=1.0,
-        **kwargs,
-        ):
-        """
-        Plot per‑label trajectories (as lines) **and** the latest confidence
-        ellipses produced by each GGIW object.
+        truth,
+        c,
+        p,
+        win_len,
+        true_covs=None,
+        core_method=SingleObjectDistance.MANHATTAN,
+        state_inds=None,
+    ):
+        """Calculates the OSPA(2) distance between the truth at all timesteps.
+
+        Wrapper for :func:`serums.distances.calculate_ospa2`.
 
         Parameters
         ----------
-        plt_inds : tuple(int, int)
-            State indices to plot, e.g. (0,1) → x/y.
-        ttl : str
-            Figure title.
-        ax : matplotlib.axes.Axes, optional
-            Axes to plot on; new axes created if None.
+        truth : list
+            Each element represents a timestep and is a list of N x 1 numpy array,
+            one per true agent in the swarm.
+        c : float
+            Distance cutoff for considering a point properly assigned. This
+            influences how cardinality errors are penalized. For :math:`p = 1`
+            it is the penalty given false point estimate.
+        p : int
+            The power of the distance term. Higher values penalize outliers
+            more.
+        win_len : int
+            Number of samples to include in window.
+        core_method : :class:`serums.enums.SingleObjectDistance`, Optional
+            The main distance measure to use for the localization component.
+            The default value is :attr:`.SingleObjectDistance.MANHATTAN`.
+        true_covs : list, Optional
+            Each element represents a timestep and is a list of N x N numpy arrays
+            corresonponding to the uncertainty about the true states. Note the
+            order must be consistent with the truth data given. This is only
+            needed for core methods :attr:`SingleObjectDistance.HELLINGER`. The defautl
+            value is None.
+        state_inds : list, optional
+            Indices in the state vector to use, will be applied to the truth
+            data as well. The default is None which means the full state is
+            used.
         """
-        import numpy as np
-        import matplotlib.pyplot as plt
+        # error checking on optional input arguments
+        core_method = self._ospa_input_check(core_method, truth, true_covs)
 
-        if ax is None:
-            fig, ax = plt.subplots()
+        # setup data structures
+        if state_inds is None:
+            state_dim = self._ospa_find_s_dim(truth)
+            state_inds = range(state_dim)
         else:
-            fig = ax.figure
-            
-        traj, latest = {}, {}
+            state_dim = len(state_inds)
+        if state_dim is None:
+            warnings.warn("Failed to get state dimension. SKIPPING OSPA(2) calculation")
 
-        for kk, (g_list, lbl_list) in enumerate(zip(self._GGIW_objs, self._labels)): 
-            step = dict(zip(lbl_list, g_list))          # label → GGIW at this step
-            for lbl, ggiw in step.items():              # only labels that exist now
-                traj.setdefault(lbl, []).append(ggiw.mean[plt_inds].flatten())
-                latest[lbl] = ggiw                      # keeps the newest object
+            nt = len(self._states)
+            self.ospa2 = np.zeros(nt)
+            self.ospa2_localization = np.zeros(nt)
+            self.ospa2_cardinality = np.zeros(nt)
+            self._ospa2_params["core"] = core_method
+            self._ospa2_params["cutoff"] = c
+            self._ospa2_params["power"] = p
+            self._ospa2_params["win_len"] = win_len
+            return
+        true_mat, true_cov_mat = self._ospa_setup_tmat(
+            truth, state_dim, true_covs, state_inds
+        )
+        est_mat, est_cov_mat = self._ospa_setup_emat(state_dim, state_inds)
 
-        cmap = plt.get_cmap("tab20")
-        colors = {lbl: cmap(i % 20) for i, lbl in enumerate(traj)}
+        # find OSPA
+        (
+            self.ospa2,
+            self.ospa2_localization,
+            self.ospa2_cardinality,
+            self._ospa2_params["core"],
+            self._ospa2_params["cutoff"],
+            self._ospa2_params["power"],
+            self._ospa2_params["win_len"],
+        ) = calculate_ospa2(
+            est_mat,
+            true_mat,
+            c,
+            p,
+            win_len,
+            core_method=core_method,
+            true_cov_mat=true_cov_mat,
+            est_cov_mat=est_cov_mat,
+        )
 
-        for lbl, pts in traj.items():
-            pts = np.stack(pts, axis=1)
-            col = colors[lbl]
-            
-            ax.plot(pts[0], pts[1], "-", color=col, linewidth=linewidth)
-            ax.scatter(pts[0, -1], pts[1, -1], color=col, edgecolor="k", zorder=5,
-                    label=f"Label {lbl}")
-            
-            latest[lbl].plot_confidence_extents(
-                h=0.95, plt_inds=list(plt_inds), ax=ax, color=col,linewidth=linewidth
+    def plot_states_labels(
+        self,
+        plt_inds,
+        ax=None, 
+        x_lbl=None,
+        y_lbl=None,
+        meas_tx_fnc=None,
+        h=0.95,
+        extent_plot_step=1,
+        **kwargs,
+    ):
+        opts = pltUtil.init_plotting_opts(**kwargs)
+        f_hndl = opts["f_hndl"]
+        true_states = opts["true_states"]
+        sig_bnd = opts["sig_bnd"]
+        rng = opts["rng"]
+        meas_inds = opts["meas_inds"]
+        lgnd_loc = opts["lgnd_loc"]
+        mrkr = opts["marker"]
+
+        if rng is None:
+            rng = rnd.default_rng(1)
+        if x_lbl is None:
+            x_lbl = "x-position"
+        if y_lbl is None:
+            y_lbl = "y-position"
+        meas_specs_given = (
+            meas_inds is not None and len(meas_inds) == 2
+        ) or meas_tx_fnc is not None
+        plt_meas = meas_specs_given and self.save_measurements
+        show_sig = sig_bnd is not None and self.save_covs
+
+        s_lst = deepcopy(self.states)
+        l_lst = deepcopy(self.labels)
+        g_lst = deepcopy(self.GGIWs)
+        x_dim = None
+
+        if f_hndl is None and ax is None:
+            f_hndl = plt.figure()
+            f_hndl.add_subplot(1, 1, 1)
+        elif ax is None:
+            ax = plt.gca()
+
+        # get state dimension
+        for states in s_lst:
+            if states is not None and len(states) > 0:
+                x_dim = states[0].size
+                break
+        # get unique labels
+        u_lbls = []
+        for lbls in l_lst:
+            if lbls is None:
+                continue
+            for lbl in lbls:
+                if lbl not in u_lbls:
+                    u_lbls.append(lbl)
+        cmap = pltUtil.get_cmap(len(u_lbls))
+
+        # get array of all state values for each label
+        added_sig_lbl = False
+        added_true_lbl = False
+        added_state_lbl = False
+        added_meas_lbl = False
+        for c_idx, lbl in enumerate(u_lbls):
+            x = np.nan * np.ones((x_dim, len(s_lst))) 
+            GGIW_lst = [None] * len(g_lst)
+            if show_sig:
+                sigs = [None] * len(s_lst)
+            for tt, lbls in enumerate(l_lst):
+                if lbls is None:
+                    continue
+                if lbl in lbls:
+                    ii = lbls.index(lbl)
+                    if g_lst[tt][ii] is not None: 
+                        GGIW_lst[tt] = g_lst[tt][ii] 
+                    if s_lst[tt][ii] is not None:
+                        x[:, [tt]] = s_lst[tt][ii].copy()
+                    if show_sig:
+                        sig = np.zeros((2, 2))
+                        if self._covs[tt][ii] is not None:
+                            sig[0, 0] = self._covs[tt][ii][plt_inds[0], plt_inds[0]]
+                            sig[0, 1] = self._covs[tt][ii][plt_inds[0], plt_inds[1]]
+                            sig[1, 0] = self._covs[tt][ii][plt_inds[1], plt_inds[0]]
+                            sig[1, 1] = self._covs[tt][ii][plt_inds[1], plt_inds[1]]
+                        else:
+                            sig = None
+                        sigs[tt] = sig
+            # plot
+            color = cmap(c_idx)
+
+            if show_sig:
+                for tt, sig in enumerate(sigs):
+                    if sig is None:
+                        continue
+                    w, h, a = pltUtil.calc_error_ellipse(sig, sig_bnd)
+                    if not added_sig_lbl:
+                        s = r"${}\sigma$ Error Ellipses".format(sig_bnd)
+                        e = Ellipse(
+                            xy=x[plt_inds, tt],
+                            width=w,
+                            height=h,
+                            angle=a,
+                            zorder=-10000,
+                            label=s,
+                        )
+                        added_sig_lbl = True
+                    else:
+                        e = Ellipse(
+                            xy=x[plt_inds, tt],
+                            width=w,
+                            height=h,
+                            angle=a,
+                            zorder=-10000,
+                        )
+                    e.set_clip_box(ax.bbox)
+                    e.set_alpha(0.2)
+                    e.set_facecolor(color)
+                    ax.add_patch(e)
+            settings = {
+                "color": color,
+                "markeredgecolor": "k",
+                "marker": mrkr,
+                "ls": "-",
+            }
+            if not added_state_lbl:
+                settings["label"] = "States"
+                # f_hndl.axes[0].scatter(x[plt_inds[0], :], x[plt_inds[1], :],
+                #                        color=color, edgecolors='k',
+                #                        label='States')
+                added_state_lbl = True
+            # else:
+            ax.plot(x[plt_inds[0], :], x[plt_inds[1], :], **settings)
+
+            for idx, g in enumerate(GGIW_lst):
+                if idx % extent_plot_step == 0 and g is not None:
+                    g.plot_confidence_extents(h=h, plt_inds=plt_inds, ax=ax, edgecolor=color, linewidth=1.5)
+
+            GGIW_lst[-1].plot_confidence_extents(h=h, plt_inds=plt_inds, ax=ax, edgecolor=color, linewidth=1.5)
+
+            s = "({}, {})".format(lbl[0], lbl[1])
+            tmp = x.copy()
+            tmp = tmp[:, ~np.any(np.isnan(tmp), axis=0)]
+            ax.text(
+                tmp[plt_inds[0], 0], tmp[plt_inds[1], 0], s, color=color
             )
-            
-        ax.set_title(ttl) 
-        ax.set_aspect("equal", "box")
-        ax.grid(True, linewidth=0.3) 
+        # if true states are available then plot them
+        if true_states is not None and any([len(x) > 0 for x in true_states]):
+            if x_dim is None:
+                for states in true_states:
+                    if len(states) > 0:
+                        x_dim = states[0].size
+                        break
+            max_true = max([len(x) for x in true_states])
+            x = np.nan * np.ones((x_dim, len(true_states), max_true))
+            for tt, states in enumerate(true_states):
+                for ii, state in enumerate(states):
+                    if state is not None and state.size > 0:
+                        x[:, [tt], ii] = state.copy()
+            for ii in range(0, max_true):
+                if not added_true_lbl:
+                    ax.plot(
+                        x[plt_inds[0], :, ii],
+                        x[plt_inds[1], :, ii],
+                        color="k",
+                        marker=".",
+                        label="True Trajectories",
+                    )
+                    added_true_lbl = True
+                else:
+                    ax.plot(
+                        x[plt_inds[0], :, ii],
+                        x[plt_inds[1], :, ii],
+                        color="k",
+                        marker=".",
+                    )
+        if plt_meas:
+            meas_x = []
+            meas_y = []
+            for meas_tt in self._meas_tab:
+                if meas_tx_fnc is not None:
+                    tx_meas = [meas_tx_fnc(m) for m in meas_tt]
+                    mx_ii = [tm[0].item() for tm in tx_meas]
+                    my_ii = [tm[1].item() for tm in tx_meas]
+                else:
+                    mx_ii = [m[meas_inds[0]].item() for m in meas_tt]
+                    my_ii = [m[meas_inds[1]].item() for m in meas_tt]
+                meas_x.extend(mx_ii)
+                meas_y.extend(my_ii)
+            color = (128 / 255, 128 / 255, 128 / 255)
+            meas_x = np.asarray(meas_x)
+            meas_y = np.asarray(meas_y)
+            if meas_x.size > 0:
+                if not added_meas_lbl:
+                    ax.scatter(
+                        meas_x,
+                        meas_y,
+                        zorder=-1,
+                        alpha=0.35,
+                        color=color,
+                        marker="^",
+                        label="Measurements",
+                    )
+                else:
+                    ax.scatter(
+                        meas_x, meas_y, zorder=-1, alpha=0.35, color=color, marker="^"
+                    )
+        ax.grid(True)
+        # pltUtil.set_title_label(
+        #     f_hndl, 0, opts, ttl=ttl, x_lbl="x-position", y_lbl="y-position"
+        # )
+        if lgnd_loc is not None:
+            plt.legend(loc=lgnd_loc)
+        plt.tight_layout()
 
-        return fig
+        return f_hndl
 
 
 

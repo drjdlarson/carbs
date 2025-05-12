@@ -231,20 +231,17 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
 
         N_hat = X_sqrt @ S_sqrt_inv @ N @ S_sqrt_inv.T @ X_sqrt.T
 
-        next_alpha = cur_alpha + W + 150 # Numerical hack here. Need to investigate why
+        next_alpha = cur_alpha + W
         next_beta = cur_beta + 1
         next_state = cur_state + K @ epsilon 
         temp = np.eye(cur_cov.shape[0]) - K @ meas_mat
         next_cov = temp @ cur_cov @ temp.T + K @ self.meas_noise @ K.T # Joseph form
-        next_IWdof = max(cur_IWdof + W, GGIW_obj.d + 5)
+        next_IWdof = cur_IWdof + W
         next_IWshape = cur_IWshape + N_hat + Z 
 
         next_dist = GGIW(alpha=next_alpha, beta=next_beta, mean=next_state, covariance=next_cov, IWdof=next_IWdof, IWshape=next_IWshape)
-
-        gam = next_alpha / next_beta
         
-        # Likelihood calc
-        m = W
+        m = num_meas
         d = GGIW_obj.d
 
         log_det_S = np.linalg.slogdet(S)[1]
@@ -253,10 +250,10 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
         log_det_next = np.linalg.slogdet(next_IWshape)[1]
 
         gamma_term = special.gammaln(next_alpha) - special.gammaln(cur_alpha) + cur_alpha*np.log(cur_beta) - next_alpha*np.log(next_beta) - special.gammaln(m+1)
-        gauss_term = -0.5*m*log_det_S - 0.5*np.trace(np.linalg.inv(S) @ N)
+        gauss_term = -0.5*d*log_det_S 
         iw_term = 0.5*cur_IWdof*log_det_cur - 0.5*next_IWdof*log_det_next + special.multigammaln(next_IWdof/2, d) - special.multigammaln(cur_IWdof/2, d)
-        extent_term = -0.5*m*log_det_X
-        spread_term = -0.5*d*m*np.log(np.pi) - 0.5*d*np.log(m) - 0.5*d*log_det_S
+        extent_term = 0.5*log_det_X
+        spread_term = -0.5*d*m*np.log(np.pi) - 0.5*d*np.log(m)
 
         log_likelihood = gamma_term + gauss_term + iw_term + extent_term + spread_term
         meas_fit_prob = (log_likelihood)
@@ -291,4 +288,3 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
         #         special.gamma(upd_alpha)*pred_beta**(pred_alpha) / (special.gamma(pred_alpha)*upd_beta**(upd_alpha))
 
         return L
-
