@@ -2098,8 +2098,38 @@ class GGIW_GLMB(RandomFiniteSetBase):
         meas_tx_fnc=None,
         h=0.95,
         extent_plot_step=1,
+        true_GGIWs=None,
         **kwargs,
     ):
+        """Plots the best estimates for the states, labels, and extents. 
+        
+        Parameters
+        ----------
+        plt_inds : list
+            List of indices in the state vector to plot
+        ax : Matplotlib axis object, optional
+            Axis to plot in.
+        x_lbl : string, optional
+            X-axis label for the plot.
+        y_lbl : string, optional
+            Y-axis label for the plot.
+        meas_tx_fnc : callable, optional
+            Takes in the measurement vector as an Nm x 1 numpy array and
+            returns a numpy array representing the states to plot (size 2). The
+            default is None.
+        h : float
+            Confidence interval for the Inverse Wishart distribution.
+        extent_plot_step : integrer
+            Index step for plotting the extents. 
+        true_GGIWs : list
+            List of lists of GGIW objects for the truth at each prior time step. 
+            
+        Returns
+        -------
+        Matplotlib figure
+            Instance of the matplotlib figure used
+        """
+        
         opts = pltUtil.init_plotting_opts(**kwargs)
         f_hndl = opts["f_hndl"]
         true_states = opts["true_states"]
@@ -2211,7 +2241,7 @@ class GGIW_GLMB(RandomFiniteSetBase):
                 "color": color,
                 "markeredgecolor": "k",
                 "marker": mrkr,
-                "ls": "-",
+                "ls": "--",
             }
             if not added_state_lbl:
                 settings["label"] = "States"
@@ -2234,6 +2264,23 @@ class GGIW_GLMB(RandomFiniteSetBase):
             ax.text(
                 tmp[plt_inds[0], 0], tmp[plt_inds[1], 0], s, color=color
             )
+
+        # if true GGIWs are available, plot them
+        if true_GGIWs is not None:
+            for t_lst in true_GGIWs: 
+                mean_temp = np.nan * np.ones((x_dim, len(t_lst)))
+
+                for ii, g in enumerate(t_lst):
+                    mean_temp[:, ii] = g.mean.flatten() 
+
+                ax.plot(mean_temp[plt_inds[0], :], mean_temp[plt_inds[1], :], color='k') 
+
+                for idx, g in enumerate(t_lst):
+                    if idx % extent_plot_step == 0 and g is not None:
+                        g.plot_confidence_extents(h=h, plt_inds=plt_inds, ax=ax, edgecolor='k', linewidth=1)
+                        
+                t_lst[-1].plot_confidence_extents(h=h, plt_inds=plt_inds, ax=ax, edgecolor='k', linewidth=1)
+
         # if true states are available then plot them
         if true_states is not None and any([len(x) > 0 for x in true_states]):
             if x_dim is None:
@@ -2301,7 +2348,7 @@ class GGIW_GLMB(RandomFiniteSetBase):
         # )
         if lgnd_loc is not None:
             plt.legend(loc=lgnd_loc)
-        plt.tight_layout()
+        # plt.tight_layout()
 
         return f_hndl
 

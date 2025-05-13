@@ -464,7 +464,7 @@ class GGIWMixture(BaseMixtureModel):
         super().__init__(**kwargs)
 
     def __getitem__(self,idx):
-        return GGIW(self.alphas[idx], self.betas[idx], self.means[idx], self.covariances[idx], self.IWdofs[idx], self.IWshapes[idx])
+        return self._distributions[idx]
 
     @property
     def means(self):
