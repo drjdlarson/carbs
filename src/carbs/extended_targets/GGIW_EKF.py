@@ -209,7 +209,7 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
 
         cur_IWshape = 0.5*(cur_IWshape+cur_IWshape.T)
 
-        X_hat = cur_IWshape * (cur_IWdof - 2 * GGIW_obj.d - 2)**(-1)
+        X_hat = cur_IWshape / (cur_IWdof - 2 * GGIW_obj.d - 2) 
         X_hat = (X_hat + X_hat.T)*0.5
 
         epsilon = mean_meas - meas_mat @ cur_state
@@ -256,35 +256,11 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
         spread_term = -0.5*d*m*np.log(np.pi) - 0.5*d*np.log(m)
 
         log_likelihood = gamma_term + gauss_term + iw_term + extent_term + spread_term
-        meas_fit_prob = (log_likelihood)
+        
+        # This is to try and curve overflow 
+        with np.errstate(all='ignore'):
+            meas_fit_prob = np.exp(log_likelihood)
+            meas_fit_prob = np.nan_to_num(meas_fit_prob, nan=0.0, posinf=0.0, neginf=0.0) 
 
         return (next_dist, meas_fit_prob) 
     
-    def _calc_meas_fit(self): #, meas, GGIW_pred, GGIW_upd, X_hat, inov_cov):
-        
-        # W = np.size(meas, axis=1) 
-
-        # d = GGIW_pred.IWshape.ndim
-
-        # pred_alpha = GGIW_pred.alpha
-        # pred_beta = GGIW_pred.beta
-        # pred_state = GGIW_pred.mean
-        # pred_cov = GGIW_pred.covariance
-        # pred_IWdof = GGIW_pred.IWdof
-        # pred_IWshape = GGIW_pred.IWshape 
-
-        # upd_alpha = GGIW_upd.alpha
-        # upd_beta = GGIW_upd.beta
-        # upd_state = GGIW_upd.mean
-        # upd_cov = GGIW_upd.covariance
-        # upd_IWdof = GGIW_upd.IWdof
-        # upd_IWshape = GGIW_upd.IWshape 
-
-        L = 1
-
-        # L = (np.pi**W * W) ** (-d/2) * la.det(pred_IWshape)**((pred_IWdof-d-1)/2) / \
-        #         la.det(upd_IWshape)**((upd_IWdof-d-1)/2) * special.multigammaln((upd_IWdof-d-1)/2,d) / \
-        #         special.multigammaln((pred_IWdof-d-1)/2,d) * la.det(X_hat)**0.5 / la.det(inov_cov)**0.5 * \
-        #         special.gamma(upd_alpha)*pred_beta**(pred_alpha) / (special.gamma(pred_alpha)*upd_beta**(upd_alpha))
-
-        return L

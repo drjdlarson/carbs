@@ -23,6 +23,8 @@ import gncpy.plotting as pltUtil
 import gncpy.filters as gfilts
 import gncpy.errors as gerr
 
+from scipy.optimize import linear_sum_assignment
+
 import serums.models as smodels
 from serums.enums import SingleObjectDistance
 from serums.distances import calculate_ospa, calculate_ospa2, calculate_gospa
@@ -94,9 +96,9 @@ class GGIW_PHD(RandomFiniteSetBase):
 
         self._Mixture = GGIWMixture()
 
+        self.merge_as_average = True 
 
-        self.merge_as_average = True    # User can set to true, better numerical stability
-
+        self.extracted_mixture = []
 
         super().__init__(**kwargs)
 
@@ -245,7 +247,7 @@ class GGIW_PHD(RandomFiniteSetBase):
         meas = deepcopy(meas_in)
 
         if self.gating_on:
-            print("Warning: gating not implemented yet. \n\n")
+            print("Warning: gating not implemented yet. Please turn off. \n\n")
             # meas = self._gate_meas(
             #     meas,
             #     self._Mixture.means,
@@ -257,23 +259,16 @@ class GGIW_PHD(RandomFiniteSetBase):
         self._meas_tab.append(meas)   # Keeps track of measurements for plotting purposes
 
         # Partition measurements
-        self._parted_meas = self._clustering_obj.cluster(meas)
-
-        # Mix = GGIWMixture()
+        self._parted_meas = self._clustering_obj.cluster(meas) 
 
         Mix = deepcopy(self._Mixture)
 
         w_lst = Mix.weights
 
-        # This loop is based on the assumption that any target in the frame must have at least one measurement, gets rid of weird bugs at low PD
-        for ii, x in enumerate(Mix):
-            #if x not in self.birth_terms:
-
+        for ii, x in enumerate(Mix): 
             # Implementation based on Granstrom paper. A bit more numerically unstable but works
             cur_gamma = x[1].alpha / x[1].beta
-            w_lst[ii] = (1 - (1 - np.exp(-cur_gamma))) * self.prob_detection * w_lst[ii]
-
-            #w_lst[ii] = w_lst[ii]*self.prob_miss_detection
+            w_lst[ii] = (1 - (1 - np.exp(-cur_gamma))) * self.prob_detection * w_lst[ii] 
 
         Mix.weights = w_lst
 
@@ -317,7 +312,7 @@ class GGIW_PHD(RandomFiniteSetBase):
             for jj in range(0, len(probDensity)):
                 cur_dist = probDensity[jj] 
                 (upd_dist, qz) = self.filter.correct(timestep, z_array, cur_dist, **filt_args) 
-                w = np.exp(qz) * det_weights[jj]
+                w = (qz) * det_weights[jj]
 
                 # a_lst.append(upd_dist.alpha)
                 # b_lst.append(upd_dist.beta)
@@ -509,6 +504,8 @@ class GGIW_PHD(RandomFiniteSetBase):
                 self._Mixture.weights[ii]
             )
 
+        self.extracted_mixture.append(temp)
+
         return temp
 
     def cleanup(
@@ -551,6 +548,7 @@ class GGIW_PHD(RandomFiniteSetBase):
             if extract_kwargs is None:
                 extract_kwargs = {}
             self.extract_states(**extract_kwargs)
+            self.extract_mixture(**extract_kwargs)
 
     def __ani_state_plotting(
         self,
@@ -1020,9 +1018,943 @@ class GGIW_PHD(RandomFiniteSetBase):
             writer = animation.PillowWriter(fps=30)
             anim.save(save_path, writer=writer)
         return anim
+
+    def calculate_extended_ospa(self, truth, c, p, c_gamma=5, c_x=10, c_X=5, w_gamma=1, w_x=1, w_X=1):
+        """
+        Calculate OSPA for extended targets with GGIW distributions.
+        
+        Parameters
+        ----------
+        truth : list
+            List where each element is a list of GGIW objects for that timestep
+        c : float
+            Cut-off distance
+        p : int
+            Order parameter (typically 1 or 2)
+        c_gamma : float
+            Maximum expected error for measurement rate
+        c_x : float
+            Maximum expected error for kinematic state
+        c_X : float
+            Maximum expected error for extension state
+        """
+
+        num_timesteps = min(len(self.extracted_mixture), len(truth))
+        
+        self.ospa = np.zeros(num_timesteps)
+        self.ospa_localization = np.zeros(num_timesteps)
+        self.ospa_cardinality = np.zeros(num_timesteps)
+        self.ospa_rate = np.zeros(num_timesteps)
+        self.ospa_kinematic = np.zeros(num_timesteps)
+        self.ospa_extension = np.zeros(num_timesteps)
+        
+        for tt in range(num_timesteps):
+            true_ggiws = truth[tt] if truth[tt] is not None else []
+            extracted_ggiws = self._get_ggiws_from_mixture(self.extracted_mixture[tt]) 
+            
+            ospa_res = self._calculate_ggiw_ospa(
+                extracted_ggiws, true_ggiws, c, p,
+                c_gamma, c_x, c_X, w_gamma, w_x, w_X
+            )
+            
+            self.ospa[tt] = ospa_res['total']
+            self.ospa_localization[tt] = ospa_res['localization']
+            self.ospa_cardinality[tt] = ospa_res['cardinality']
+            self.ospa_rate[tt] = ospa_res['rate']
+            self.ospa_kinematic[tt] = ospa_res['kinematic']
+            self.ospa_extension[tt] = ospa_res['extension']
+
+    def _get_ggiws_from_mixture(self, mixture):
+        """Extract GGIW objects from a GGIWMixture."""
+        ggiws = []
+        if mixture is not None and len(mixture) > 0:
+            for i in range(len(mixture)):
+                ggiw = GGIW(
+                    alpha=mixture.alphas[i],
+                    beta=mixture.betas[i],
+                    mean=mixture.means[i],
+                    covariance=mixture.covariances[i],
+                    IWdof=mixture.IWdofs[i],
+                    IWshape=mixture.IWshapes[i]
+                )
+                ggiws.append(ggiw)
+        return ggiws
+
+    def _calculate_ggiw_ospa(self, est_ggiws, true_ggiws, c, p, 
+                            c_gamma, c_x, c_X, w_gamma, w_x, w_X):
+        """
+        Calculate OSPA between sets of GGIW distributions per paper Equation 45-47.
+        """
+        n_est = len(est_ggiws)
+        n_true = len(true_ggiws)
+        
+        if n_est == 0 and n_true == 0:
+            return {
+                'total': 0, 'localization': 0, 'cardinality': 0,
+                'rate': 0, 'kinematic': 0, 'extension': 0
+            }
+        
+        if n_est > 0 and n_true > 0:
+            dist_matrix = np.zeros((n_est, n_true))
+            
+            for i in range(n_est):
+                for j in range(n_true):
+                    d_gamma = self._ggiw_rate_distance(est_ggiws[i], true_ggiws[j])
+                    d_x = self._ggiw_kinematic_distance(est_ggiws[i], true_ggiws[j]) 
+                    d_X = self._ggiw_extension_distance(est_ggiws[i], true_ggiws[j])
+                    
+                    d_gamma_norm = w_gamma * min(d_gamma, c_gamma) / c_gamma
+                    d_x_norm = w_x * min(d_x, c_x) / c_x
+                    d_X_norm = w_X * min(d_X, c_X) / c_X
+                    
+                    dist_matrix[i,j] = d_gamma_norm + d_x_norm + d_X_norm
+            
+            row_ind, col_ind = linear_sum_assignment(dist_matrix)
+            
+            localization = 0
+            for i, j in zip(row_ind, col_ind):
+                d = min(dist_matrix[i,j], c)
+                localization += d**p
+            
+            cardinality = abs(n_est - n_true) * c**p
+            
+        else:
+            localization = 0
+            cardinality = max(n_est, n_true) * c**p
+        
+        n_max = max(n_est, n_true)
+        if n_max > 0:
+            total_ospa = ((localization + cardinality) / n_max)**(1/p)
+            loc_ospa = (localization / n_max)**(1/p)
+            card_ospa = (cardinality / n_max)**(1/p)
+        else:
+            total_ospa = loc_ospa = card_ospa = 0
+        
+        if n_est > 0 and n_true > 0 and len(row_ind) > 0:
+            rate_sum = 0
+            kin_sum = 0
+            ext_sum = 0
+            
+            for i, j in zip(row_ind, col_ind):
+                d_gamma = min(self._ggiw_rate_distance(est_ggiws[i], true_ggiws[j]), c_gamma)
+                d_x = min(self._ggiw_kinematic_distance(est_ggiws[i], true_ggiws[j]), c_x)
+                d_X = min(self._ggiw_extension_distance(est_ggiws[i], true_ggiws[j]), c_X)
+                
+                rate_sum += d_gamma**p
+                kin_sum += d_x**p
+                ext_sum += d_X**p
+            
+            n_unassigned = abs(n_est - n_true)
+            rate_sum += n_unassigned * c_gamma**p
+            kin_sum += n_unassigned * c_x**p
+            ext_sum += n_unassigned * c_X**p
+            
+            rate_ospa = (rate_sum / n_max)**(1/p)
+            kin_ospa = (kin_sum / n_max)**(1/p)
+            ext_ospa = (ext_sum / n_max)**(1/p)
+        else:
+            rate_ospa = c_gamma
+            kin_ospa = c_x
+            ext_ospa = c_X
+        
+        return {
+            'total': total_ospa,
+            'localization': loc_ospa,
+            'cardinality': card_ospa,
+            'rate': rate_ospa,
+            'kinematic': kin_ospa,
+            'extension': ext_ospa
+        }
+
+    def _ggiw_rate_distance(self, ggiw1, ggiw2):
+        """Calculate distance between measurement rates."""
+        rate1 = ggiw1.alpha / ggiw1.beta if ggiw1.beta > 0 else 0
+        rate2 = ggiw2.alpha / ggiw2.beta if ggiw2.beta > 0 else 0
+        return abs(rate1 - rate2)
+
+    def _ggiw_kinematic_distance(self, ggiw1, ggiw2):
+        """Calculate distance between kinematic states."""
+        diff = ggiw1.mean - ggiw2.mean
+        return la.norm(diff)
+
+    def _ggiw_extension_distance(self, ggiw1, ggiw2):
+        """Calculate distance between extensions."""
+        if ggiw1.IWdof > ggiw1.d + 1:
+            X1 = ggiw1.IWshape / (ggiw1.IWdof - ggiw1.d - 1)
+        else:
+            X1 = ggiw1.IWshape
+            
+        if ggiw2.IWdof > ggiw2.d + 1:
+            X2 = ggiw2.IWshape / (ggiw2.IWdof - ggiw2.d - 1)
+        else:
+            X2 = ggiw2.IWshape
+        
+        return la.norm(X1 - X2, 'fro')
+
+    def plot_extended_ospa(self, time_units="index", time=None, **kwargs):
+        """
+        Plot OSPA metrics for extended targets.
+        """
+        opts = pltUtil.init_plotting_opts(**kwargs)
+        f_hndl = opts["f_hndl"]
+        
+        if not hasattr(self, 'ospa'):
+            raise RuntimeError("Must call calculate_extended_ospa first")
+        
+        if f_hndl is None:
+            f_hndl = plt.figure(figsize=(12, 10))
+        
+        if time is None:
+            time = np.arange(len(self.ospa))
+        
+        plt.subplot(3, 1, 1)
+        plt.plot(time, self.ospa, 'b-', linewidth=2)
+        plt.grid(True)
+        plt.ylabel('Total OSPA')
+        plt.title('Extended Target OSPA Metrics')
+        
+        plt.subplot(3, 1, 2)
+        plt.plot(time, self.ospa_localization, 'g-', label='Localization')
+        plt.plot(time, self.ospa_cardinality, 'r-', label='Cardinality')
+        plt.grid(True)
+        plt.ylabel('OSPA')
+        plt.legend()
+        
+        # plt.subplot(3, 2, 3)
+        # plt.plot(time, self.ospa_rate, 'm-', linewidth=2)
+        # plt.grid(True)
+        # plt.ylabel('Rate OSPA')
+        
+        # plt.subplot(3, 2, 4)
+        # plt.plot(time, self.ospa_kinematic, 'c-', linewidth=2)
+        # plt.grid(True)
+        # plt.ylabel('Kinematic OSPA')
+        
+        # plt.subplot(3, 2, 5)
+        # plt.plot(time, self.ospa_extension, 'y-', linewidth=2)
+        # plt.grid(True)
+        # plt.xlabel(f'Time ({time_units})')
+        # plt.ylabel('Extension OSPA')
+        
+        plt.subplot(3, 1, 3)
+        plt.plot(time, self.ospa_rate, 'm-', label='Rate', alpha=0.7)
+        plt.plot(time, self.ospa_kinematic, 'c-', label='Kinematic', alpha=0.7)
+        plt.plot(time, self.ospa_extension, 'y-', label='Extension', alpha=0.7)
+        plt.grid(True)
+        plt.xlabel(f'Time ({time_units})')
+        plt.ylabel('Component OSPA')
+        plt.legend()
+        
+        plt.tight_layout()
+        return f_hndl
+
+class GGIW_CPHD(GGIW_PHD):
+    """Implements the extended target Cardinalized Probability Hypothesis Density filter.
+
+    The kwargs in the constructor are passed through to the parent constructor.
+
+    Notes
+    -----
+    The filter implementation is based on
+    :cite:`Vo2006_TheCardinalizedProbabilityHypothesisDensityFilterforLinearGaussianMultiTargetModels`
+    and :cite:`Vo2007_AnalyticImplementationsoftheCardinalizedProbabilityHypothesisDensityFilter`.
+
+    Attributes
+    ----------
+    agents_per_state : list, optional
+        number of agents per state. The default is [].
+    """
+
+    def __init__(self, max_expected_card=10, **kwargs):
+        self.agents_per_state = []
+        self._max_expected_card = max_expected_card
+
+        self._card_dist = np.zeros(
+            self.max_expected_card + 1
+        )  # local copy for internal modification
+        self._card_dist[0] = 1
+        self._card_time_hist = []  # local copy for internal modification
+        self._n_states_per_time = []
+
+        super().__init__(**kwargs)
+
+    @property
+    def max_expected_card(self):
+        """Maximum expected cardinality. The default is 10."""
+        return self._max_expected_card
+
+    @max_expected_card.setter
+    def max_expected_card(self, x):
+        self._card_dist = np.zeros(x + 1)
+        self._card_dist[0] = 1
+        self._max_expected_card = x
+
+    @property
+    def cardinality(self):
+        """Cardinality of the RFS."""
+        return np.argmax(self._card_dist)
+
+    def predict(self, timestep, **kwargs):
+        """Prediction step of the CPHD filter.
+
+        This predicts new hypothesis, and propogates them to the next time
+        step. It also updates the cardinality distribution.
+
+
+        Parameters
+        ----------
+        timestep: float
+            current timestep
+        **kwargs : dict, optional
+            See :meth:carbs.swarm_estimator.tracker.ProbabilityHypothesisDensity.predict`
+            for the available arguments.
+
+        Returns
+        -------
+        None.
+
+        """
+        super().predict(timestep, **kwargs)
+
+        survive_cdn_predict = np.zeros(self.max_expected_card + 1)
+        for j in range(0, self.max_expected_card + 1):
+            terms = np.zeros(self.max_expected_card + 1)
+            for i in range(j, self.max_expected_card + 1):
+                temp = np.array(
+                    [
+                        np.sum(np.log(range(1, i + 1))),
+                        -np.sum(np.log(range(1, j + 1))),
+                        np.sum(np.log(range(1, i - j + 1))),
+                        j * np.log(self.prob_survive),
+                        (i - j) * np.log(self.prob_death),
+                    ]
+                )
+                terms[i] = np.exp(np.sum(temp)) * self._card_dist[i]
+            survive_cdn_predict[j] = np.sum(terms)
+        cdn_predict = np.zeros(self.max_expected_card + 1)
+        if len(self.birth_terms) != 1:
+            warnings.warn("Only using the first birth term in cardinality update")
+        birth = np.sum(
+            np.array([w for w in self.birth_terms.weights])
+        )  # NOTE: assumes 1 GM for the birth model
+        log_birth = np.log(birth)
+        for n in range(0, self.max_expected_card + 1):
+            terms = np.zeros(self.max_expected_card + 1)
+            for j in range(0, n + 1):
+                temp = np.array(
+                    [birth, (n - j) * log_birth, -np.sum(np.log(range(1, n - j + 1)))]
+                )
+                terms[j] = np.exp(np.sum(temp)) * survive_cdn_predict[j]
+            cdn_predict[n] = np.sum(terms)
+        self._card_dist = (cdn_predict / np.sum(cdn_predict)).copy()
+
+        self._card_time_hist.append(
+            (np.argmax(self._card_dist).item(), np.std(self._card_dist))
+        )
+
+    def correct(
+        self, timestep, meas_in, meas_mat_args={}, est_meas_args={}, filt_args={}
+    ):
+        """Correction step of the CPHD filter.
+
+        This corrects the hypotheses based on the measurements and gates the
+        measurements according to the class settings. It also updates the
+        cardinality distribution.
+
+
+        Parameters
+        ----------
+        timestep: float
+            current timestep
+        meas_in : list
+            2d numpy arrays representing a measurement.
+        meas_mat_args : dict, optional
+            keyword arguments to pass to the inner filters get measurement
+            matrix function. Only used if gating is on. The default is {}.
+        est_meas_args : TYPE, optional
+            keyword arguments to pass to the inner filters estimate
+            measurements function. Only used if gating is on. The default is {}.
+        filt_args : TYPE, optional
+            keyword arguments to pass to the inner filters correct function.
+            The default is {}.
+
+        Returns
+        -------
+        None.
+
+        """
+        meas = deepcopy(meas_in)
+
+        if self.gating_on:
+            print("Warning: gating not implemented yet. Please turn off. \n\n")
+            # meas = self._gate_meas(
+            #     meas,
+            #     self._Mixture.means,
+            #     self._Mixture.covariances,
+            #     meas_mat_args,
+            #     est_meas_args,
+            # )
+
+        self._meas_tab.append(meas)   # Keeps track of measurements for plotting purposes
+
+        # Partition measurements
+        self._parted_meas = self._clustering_obj.cluster(meas) 
+
+        Mix = deepcopy(self._Mixture)
+
+        UpdMix = self._correct_prob_density(timestep, self._parted_meas, Mix, filt_args) 
+        # UpdMix.add_components(Mix.alphas, Mix.betas, Mix.means, Mix.covariances, Mix.IWdofs, Mix.IWshapes, Mix.weights)  
+
+        self._Mixture = UpdMix
+
+    def _correct_prob_density(self, timestep, meas, probDensity, filt_args):
+        """Helper function for correction step.
+
+        Loops over all elements in a probability distribution and preforms
+        the filter correction.
+        """
+        w_pred = np.zeros((len(probDensity.weights), 1))
+        for i in range(0, len(probDensity.weights)):
+            w_pred[i] = probDensity.weights[i]
+        xdim = len(probDensity.means[0])
+
+        d = probDensity[0].d
+
+        plen = len(probDensity.means)
+        zlen = len(meas)
+
+        qz_temp = np.zeros((plen, zlen))
+        mean_temp = np.zeros((zlen, xdim, plen))
+        cov_temp = np.zeros((zlen, plen, xdim, xdim))
+        a_temp = np.zeros((zlen, plen))
+        b_temp = np.zeros((zlen, plen))
+        v_temp = np.zeros((zlen, plen))
+        V_temp = np.zeros((zlen, plen, d, d))
+
+        for z_ind in range(0, zlen):
+            for p_ind in range(0, plen): 
+                z = meas[z_ind]
+                num_meas = len(z)
+                meas_d = z[0].shape[0]
+                z_array = np.array(z).reshape((num_meas, meas_d)).transpose()
+                (ggiw_temp, qz) = self.filter.correct(
+                    timestep, z_array, probDensity[p_ind], **filt_args
+                )
+                qz_temp[p_ind, z_ind] = qz
+                mean_temp[z_ind, :, p_ind] = np.ndarray.flatten(ggiw_temp.mean)
+                cov_temp[z_ind, p_ind, :, :] = ggiw_temp.covariance
+                a_temp[z_ind, p_ind] = ggiw_temp.alpha
+                b_temp[z_ind, p_ind] = ggiw_temp.beta
+                v_temp[z_ind, p_ind] = ggiw_temp.IWdof
+                V_temp[z_ind, p_ind, :, :] = ggiw_temp.IWshape
+
+        # Compute xivals with numerical stability
+        xivals = np.zeros(zlen)
+        pdc = self.prob_detection / self.clutter_den
+        for e in range(0, zlen):
+            xivals[e] = pdc * np.dot(w_pred.T, qz_temp[:, [e]])
+        
+        # Use stable ESF calculation
+        esfvals_E = self._get_elem_sym_fnc(xivals)
+        esfvals_D = np.zeros((zlen, zlen))
+
+        for j in range(0, zlen):
+            xi_temp = xivals.copy()
+            xi_temp = np.delete(xi_temp, j)
+            esfvals_D[:, [j]] = self._get_elem_sym_fnc(xi_temp)
+        
+        # Calculate ups values in log space for stability
+        ups0_E = np.zeros((self.max_expected_card + 1, 1))
+        ups1_E = np.zeros((self.max_expected_card + 1, 1))
+        ups1_D = np.zeros((self.max_expected_card + 1, zlen))
+
+        tot_w_pred = sum(w_pred) + 1e-300
+        log_tot_w_pred = np.log(tot_w_pred)
+        log_clutter_rate = np.log(self.clutter_rate)
+        log_prob_death = np.log(self.prob_death)
+        
+        for nn in range(0, self.max_expected_card + 1):
+            # ups0_E calculation in log space
+            log_terms0_E = []
+            for jj in range(0, min(zlen, nn) + 1):
+                if nn - jj >= 0:
+                    log_factorial_nn = sum([np.log(x) for x in range(1, nn + 1)]) if nn > 0 else 0
+                    log_factorial_nn_jj = sum([np.log(x) for x in range(1, nn - jj + 1)]) if nn - jj > 0 else 0
+                    
+                    log_term = (-self.clutter_rate + 
+                            (zlen - jj) * log_clutter_rate +
+                            log_factorial_nn -
+                            log_factorial_nn_jj +
+                            (nn - jj) * log_prob_death -
+                            jj * log_tot_w_pred +
+                            np.log(esfvals_E[jj] + 1e-300))
+                    log_terms0_E.append(log_term)
+            
+            if log_terms0_E:
+                ups0_E[nn] = np.exp(log_sum_exp(log_terms0_E))
+            
+            # Similar for ups1_E
+            log_terms1_E = []
+            for jj in range(0, min(zlen, nn) + 1):
+                if nn >= jj + 1:
+                    log_factorial_nn = sum([np.log(x) for x in range(1, nn + 1)]) if nn > 0 else 0
+                    log_factorial_nn_jj1 = sum([np.log(x) for x in range(1, nn - (jj + 1) + 1)]) if nn - (jj + 1) > 0 else 0
+                    
+                    log_term = (-self.clutter_rate + 
+                            (zlen - jj) * log_clutter_rate +
+                            log_factorial_nn -
+                            log_factorial_nn_jj1 +
+                            (nn - (jj + 1)) * log_prob_death -
+                            (jj + 1) * log_tot_w_pred +
+                            np.log(esfvals_E[jj] + 1e-300))
+                    log_terms1_E.append(log_term)
+            
+            if log_terms1_E:
+                ups1_E[nn] = np.exp(log_sum_exp(log_terms1_E))
+            
+            # ups1_D calculation
+            if zlen != 0:
+                for ell in range(1, zlen + 1):
+                    log_terms1_D = []
+                    for jj in range(0, min((zlen - 1), nn) + 1):
+                        if nn >= jj + 1:
+                            log_factorial_nn = sum([np.log(x) for x in range(1, nn + 1)]) if nn > 0 else 0
+                            log_factorial_nn_jj1 = sum([np.log(x) for x in range(1, nn - (jj + 1) + 1)]) if nn - (jj + 1) > 0 else 0
+                            
+                            log_term = (-self.clutter_rate + 
+                                    ((zlen - 1) - jj) * log_clutter_rate +
+                                    log_factorial_nn -
+                                    log_factorial_nn_jj1 +
+                                    (nn - (jj + 1)) * log_prob_death -
+                                    (jj + 1) * log_tot_w_pred +
+                                    np.log(esfvals_D[jj, ell - 1] + 1e-300))
+                            log_terms1_D.append(log_term)
+                    
+                    if log_terms1_D:
+                        ups1_D[nn, ell - 1] = np.exp(log_sum_exp(log_terms1_D))
+        
+        # Create new mixture with numerical stability
+        newMix = deepcopy(probDensity)
+        
+        # Avoid division by zero
+        ups0_E_weighted = ups0_E.T @ self._card_dist
+        if ups0_E_weighted <= 0 or not np.isfinite(ups0_E_weighted):
+            ups0_E_weighted = 1e-300
+        
+        ups1_E_weighted = ups1_E.T @ self._card_dist
+        
+        w_update = (ups1_E_weighted / ups0_E_weighted) * self.prob_miss_detection * w_pred
+        
+        # Ensure weights are valid
+        w_update = np.clip(w_update, 1e-300, 1e6)
+        newMix.weights = [x.item() for x in w_update]
+
+        # Add measurement-updated components
+        for ee in range(0, zlen):
+            wt_1 = (ups1_D[:, [ee]].T @ self._card_dist) / ups0_E_weighted
+            wt_1 = np.clip(wt_1, 1e-300, 1e6).reshape((1, 1))
+            
+            # Calculate weights with overflow protection
+            log_wt_2 = (np.log(self.prob_detection) + 
+                        np.log(qz_temp[:, [ee]] + 1e-300) - 
+                        np.log(self.clutter_den) + 
+                        np.log(w_pred + 1e-300))
+            
+            # Clip to prevent overflow
+            log_wt_2 = np.clip(log_wt_2, -700, 700)
+            wt_2 = np.exp(log_wt_2)
+            
+            w_temp = wt_1 * wt_2
+            w_temp = np.clip(w_temp, 1e-300, 1e6)
+            
+            for ww in range(0, w_temp.shape[0]):
+                if w_temp[ww] > 1e-10:  # Only add components with significant weight
+                    newMix.add_components(
+                        alphas=a_temp[ee,ww],
+                        betas=b_temp[ee,ww],
+                        means=mean_temp[ee, :, ww].reshape((xdim, 1)),
+                        covariances=cov_temp[ee, ww, :, :],
+                        IWdofs=v_temp[ee,ww],
+                        IWshapes=V_temp[ee, ww, :, :],
+                        weights=w_temp[ww].item(),
+                    )
+        
+        # Update cardinality distribution
+        cdn_update = self._card_dist.copy()
+        for ii in range(0, len(cdn_update)):
+            cdn_update[ii] = ups0_E[ii] * self._card_dist[ii]
+        
+        cdn_sum = np.sum(cdn_update)
+        if cdn_sum > 0 and np.isfinite(cdn_sum):
+            self._card_dist = cdn_update / cdn_sum
+        else:
+            # Reset to default if numerical issues
+            self._card_dist = np.zeros(self.max_expected_card + 1)
+            self._card_dist[0] = 1.0
+        
+        # Update cardinality history
+        self._card_time_hist[-1] = (
+            np.argmax(self._card_dist).item(),
+            np.std(self._card_dist),
+        )
+
+        return newMix
+    
+    def _get_elem_sym_fnc(self,z):
+        """Compute elementary symmetric functions using log-space for numerical stability."""
+        if z.size == 0:
+            esf = np.array([[1]])
+        else:
+            z_loc = deepcopy(z).reshape(z.size)
+            n_z = z_loc.size
+            
+            # Work in log space - use -inf to represent log(0)
+            log_F = np.full((2, n_z), -np.inf)
+            
+            i_n = 1
+            i_nminus = 0
+            
+            # Initialize: F[0,0] = 1, so log(F[0,0]) = 0
+            log_F[0, :] = -np.inf  # Initialize all to log(0)
+            
+            for n in range(1, n_z + 1):
+                # F[i_n, 0] = F[i_nminus, 0] + z_loc[n-1]
+                # In log space: log(a + b) = log(a) + log(1 + b/a) when a > b
+                if n == 1:
+                    log_F[i_n, 0] = np.log(1 + z_loc[n-1])
+                else:
+                    # Use logaddexp for log(exp(a) + exp(b))
+                    log_F[i_n, 0] = np.logaddexp(log_F[i_nminus, 0], 
+                                                np.log(z_loc[n-1] + 1e-300))
+                
+                for k in range(2, n + 1):
+                    if k > n_z:
+                        break
+                        
+                    if k == n:
+                        # F[i_n, k-1] = z_loc[n-1] * F[i_nminus, k-2]
+                        # In log space: log(a*b) = log(a) + log(b)
+                        log_F[i_n, k-1] = np.log(z_loc[n-1] + 1e-300) + log_F[i_nminus, k-2]
+                    else:
+                        # F[i_n, k-1] = F[i_nminus, k-1] + z_loc[n-1] * F[i_nminus, k-2]
+                        # In log space: log(a + b) = logaddexp(log(a), log(b))
+                        term1 = log_F[i_nminus, k-1]
+                        term2 = np.log(z_loc[n-1] + 1e-300) + log_F[i_nminus, k-2]
+                        log_F[i_n, k-1] = np.logaddexp(term1, term2)
+                
+                # Swap indices
+                tmp = i_n
+                i_n = i_nminus
+                i_nminus = tmp
+            
+            # Convert back from log space
+            # ESF includes e_0 = 1, so prepend log(1) = 0
+            log_esf = np.hstack((0, log_F[i_nminus, :]))
+            
+            # Convert from log space with overflow protection
+            esf = np.exp(np.minimum(log_esf, 700))  # exp(700) is near float max
+            esf = esf.reshape((esf.size, 1))
+        
+        return esf
+
+    def extract_states(self, allow_multiple=True):
+        """Extracts the best state estimates.
+
+        This extracts the best states from the distribution. It should be
+        called once per time step after the correction function.
+
+        Parameters
+        ----------
+        allow_multiple : bool
+            Flag inicating if extraction is allowed to map a single Gaussian
+            to multiple states. The default is True.
+        """
+        s_weights = np.argsort(self._Mixture.weights)[::-1]
+        s_lst = []
+        c_lst = [] 
+        self.agents_per_state = []
+        ii = 0
+        tot_agents = 0
+        while ii < s_weights.size and tot_agents < self.cardinality:
+            idx = int(s_weights[ii])
+
+            if allow_multiple:
+                n_agents = np.round(self._Mixture.weights[idx])
+                if n_agents <= 0:
+                    msg = "Gaussian weights are 0 before reaching cardinality"
+                    warnings.warn(msg, RuntimeWarning)
+                    break
+                if tot_agents + n_agents > self.cardinality:
+                    n_agents = self.cardinality - tot_agents
+            else:
+                n_agents = 1
+            tot_agents += n_agents
+            self.agents_per_state.append(n_agents)
+
+            s_lst.append(self._Mixture.means[idx])
+            if self.save_covs:
+                c_lst.append(self._Mixture.covariances[idx]) 
+            ii += 1
+        if tot_agents != self.cardinality:
+            warnings.warn("Failed to meet estimated cardinality when extracting!")
+        self._states.append(s_lst)
+        if self.save_covs:
+            self._covs.append(c_lst)
+        if self.debug_plots:
+            self._n_states_per_time.append(ii) 
+
+    def extract_mixture(self, allow_multiple=True):
+        """Extracts the best mixture estimates. It should be
+        called once per time step after the correction function.
+
+        Parameters
+        ----------
+        allow_multiple : bool
+            Flag inicating if extraction is allowed to map a single Gaussian
+            to multiple states. The default is True.
+        """
+        s_weights = np.argsort(self._Mixture.weights)[::-1] 
+        Mix = GGIWMixture() 
+        ii = 0
+        tot_agents = 0
+        while ii < s_weights.size and tot_agents < self.cardinality:
+            idx = int(s_weights[ii])
+
+            if allow_multiple:
+                n_agents = np.round(self._Mixture.weights[idx])
+                if n_agents <= 0:
+                    msg = "Gaussian weights are 0 before reaching cardinality"
+                    warnings.warn(msg, RuntimeWarning)
+                    break
+                if tot_agents + n_agents > self.cardinality:
+                    n_agents = self.cardinality - tot_agents
+            else:
+                n_agents = 1
+            tot_agents += n_agents
+            self.agents_per_state.append(n_agents) 
+            Mix.add_components(alphas=self._Mixture.alphas[idx],betas=self._Mixture.betas[idx],means=self._Mixture.means[idx],covariances=self._Mixture.covariances[idx],IWdofs=self._Mixture.IWdofs[idx],IWshapes=self._Mixture.IWshapes[idx])
+            ii += 1
+        if tot_agents != self.cardinality:
+            warnings.warn("Failed to meet estimated cardinality when extracting!")
+        self.extracted_mixture.append(Mix) 
+
+        return Mix
+
     
 
+    def plot_card_dist(self, **kwargs):
+        """Plots the current cardinality distribution.
 
+        This assumes that the cardinality distribution has been calculated by
+        the class.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            Keyword arguments are processed with
+            :meth:`gncpy.plotting.init_plotting_opts`. This function
+            implements
+
+                - f_hndl
+
+        Returns
+        -------
+        Matplotlib figure
+            Instance of the matplotlib figure used
+
+        Raises
+        ------
+        RuntimeWarning
+            If the cardinality distribution is empty.
+        """
+        opts = pltUtil.init_plotting_opts(**kwargs)
+        f_hndl = opts["f_hndl"]
+
+        if len(self._card_dist) == 0:
+            raise RuntimeWarning("Empty Cardinality")
+            return f_hndl
+        if f_hndl is None:
+            f_hndl = plt.figure()
+            f_hndl.add_subplot(1, 1, 1)
+        x_vals = np.arange(0, len(self._card_dist))
+        f_hndl.axes[0].bar(x_vals, self._card_dist)
+
+        pltUtil.set_title_label(
+            f_hndl,
+            0,
+            opts,
+            ttl="Cardinality Distribution",
+            x_lbl="Cardinality",
+            y_lbl="Probability",
+        )
+        plt.tight_layout()
+
+        return f_hndl
+
+    def plot_card_history(
+        self, ttl=None, true_card=None, time_units="index", time=None, **kwargs
+    ):
+        """Plots the current cardinality time history.
+
+        This assumes that the cardinality distribution has been calculated by
+        the class.
+
+        Parameters
+        ----------
+        ttl : string
+            String for the title, if None a default is created. The default is
+            None.
+        true_card : array like
+            List of the true cardinality at each time
+        time_units : string, optional
+            Text representing the units of time in the plot. The default is
+            'index'.
+        time : numpy array, optional
+            Vector to use for the x-axis of the plot. If none is given then
+            vector indices are used. The default is None.
+        **kwargs : dict, optional
+            Keyword arguments are processed with
+            :meth:`gncpy.plotting.init_plotting_opts`. This function
+            implements
+
+                - f_hndl
+                - sig_bnd
+                - time_vec
+                - lgnd_loc
+
+        Returns
+        -------
+        Matplotlib figure
+            Instance of the matplotlib figure used
+        """
+        opts = pltUtil.init_plotting_opts(**kwargs)
+        f_hndl = opts["f_hndl"]
+        sig_bnd = opts["sig_bnd"]
+        # time_vec = opts["time_vec"]
+        lgnd_loc = opts["lgnd_loc"]
+        if ttl is None:
+            ttl = "Cardinality History"
+        if len(self._card_time_hist) == 0:
+            raise RuntimeWarning("Empty Cardinality")
+            return f_hndl
+        if sig_bnd is not None:
+            stds = [sig_bnd * x[1] for x in self._card_time_hist]
+        card = [x[0] for x in self._card_time_hist]
+
+        if f_hndl is None:
+            f_hndl = plt.figure()
+            f_hndl.add_subplot(1, 1, 1)
+        if time is None:
+            x_vals = [ii for ii in range(0, len(card))]
+        else:
+            x_vals = time
+        f_hndl.axes[0].step(
+            x_vals,
+            card,
+            label="Cardinality",
+            color="k",
+            linestyle="-",
+            where="post",
+        )
+
+        if true_card is not None:
+            if len(true_card) != len(x_vals):
+                c_len = len(true_card)
+                t_len = len(x_vals)
+                msg = "True Cardinality vector length ({})".format(
+                    c_len
+                ) + " does not match time vector length ({})".format(t_len)
+                warnings.warn(msg)
+            else:
+                f_hndl.axes[0].step(
+                    x_vals,
+                    true_card,
+                    color="g",
+                    label="True Cardinality",
+                    linestyle="--",
+                    where="post",
+                )
+        if sig_bnd is not None:
+            lbl = r"${}\sigma$ Bound".format(sig_bnd)
+            f_hndl.axes[0].plot(
+                x_vals,
+                [x + s for (x, s) in zip(card, stds)],
+                linestyle="--",
+                color="r",
+                label=lbl,
+            )
+            f_hndl.axes[0].plot(
+                x_vals, [x - s for (x, s) in zip(card, stds)], linestyle="--", color="r"
+            )
+        f_hndl.axes[0].ticklabel_format(useOffset=False)
+
+        if lgnd_loc is not None:
+            plt.legend(loc=lgnd_loc)
+        plt.grid(True)
+        pltUtil.set_title_label(
+            f_hndl,
+            0,
+            opts,
+            ttl=ttl,
+            x_lbl="Time ({})".format(time_units),
+            y_lbl="Cardinality",
+        )
+
+        plt.tight_layout()
+
+        return f_hndl
+
+    def plot_number_states_per_time(self, **kwargs):
+        """Plots the number of states per timestep.
+
+        This is a debug plot for if there are 0 weights in the GM but the
+        cardinality is not reached. Debug plots must be turned on prior to
+        running the filter.
+
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            Keyword arguments are processed with
+            :meth:`gncpy.plotting.init_plotting_opts`. This function
+            implements
+
+                - f_hndl
+                - lgnd_loc
+
+        Returns
+        -------
+        f_hndl : matplotlib figure
+            handle to the current figure.
+
+        """
+        opts = pltUtil.init_plotting_opts(**kwargs)
+        f_hndl = opts["f_hndl"]
+        lgnd_loc = opts["lgnd_loc"]
+
+        if not self.debug_plots:
+            msg = "Debug plots turned off"
+            warnings.warn(msg)
+            return f_hndl
+        if f_hndl is None:
+            f_hndl = plt.figure()
+            f_hndl.add_subplot(1, 1, 1)
+        if lgnd_loc is not None:
+            plt.legend(loc=lgnd_loc)
+        x_vals = [ii for ii in range(0, len(self._n_states_per_time))]
+
+        f_hndl.axes[0].plot(x_vals, self._n_states_per_time)
+        plt.grid(True)
+        pltUtil.set_title_label(
+            f_hndl,
+            0,
+            opts,
+            ttl="Gaussians per Timestep",
+            x_lbl="Time",
+            y_lbl="Number of Gaussians",
+        )
+
+        return f_hndl
 
 
 
@@ -1515,7 +2447,7 @@ class GGIW_GLMB(RandomFiniteSetBase):
         
         new_GGIW, likely = self.filter.correct(timestep, meas, GGIW_obj, **filt_args) 
 
-        new_w = distrib_weight * np.exp(likely)   # The GGIW EKF returns the log likelihood.  
+        new_w = distrib_weight * likely
 
         return new_GGIW, new_w
 
@@ -1653,9 +2585,7 @@ class GGIW_GLMB(RandomFiniteSetBase):
 
         return avg_prob_detect, avg_prob_miss_detect
 
-    def _clean_updates(self):
-        # print("Before update:")
-        # print(f"Hypothesis 0: track_set = {self._hypotheses[0].track_set} \n ")
+    def _clean_updates(self): 
 
         used = [0] * len(self._track_tab)
         for hyp in self._hypotheses:
@@ -1678,10 +2608,7 @@ class GGIW_GLMB(RandomFiniteSetBase):
                 hyp.track_set = track_set
             new_hyps.append(hyp)
         self._track_tab = new_tab
-        self._hypotheses = new_hyps
-
-        # print("After update:")
-        # print(f"Hypothesis 0: track_set = {self._hypotheses[0].track_set} \n ")
+        self._hypotheses = new_hyps 
         
 
     def correct(self, timestep, meas_in, filt_args={}):
@@ -2241,6 +3168,7 @@ class GGIW_GLMB(RandomFiniteSetBase):
                 "color": color,
                 "markeredgecolor": "k",
                 "marker": mrkr,
+                "linewidth":3,
                 "ls": "--",
             }
             if not added_state_lbl:
@@ -2253,10 +3181,10 @@ class GGIW_GLMB(RandomFiniteSetBase):
             ax.plot(x[plt_inds[0], :], x[plt_inds[1], :], **settings)
 
             for idx, g in enumerate(GGIW_lst):
-                if idx % extent_plot_step == 0 and g is not None:
-                    g.plot_confidence_extents(h=h, plt_inds=plt_inds, ax=ax, edgecolor=color, linewidth=1.5)
+                last_valid_idx = max(i for i, g in enumerate(GGIW_lst) if g is not None)
 
-            GGIW_lst[-1].plot_confidence_extents(h=h, plt_inds=plt_inds, ax=ax, edgecolor=color, linewidth=1.5)
+                if (idx % extent_plot_step == 0 or idx == last_valid_idx) and g is not None:
+                    g.plot_confidence_extents(h=h, plt_inds=plt_inds, ax=ax, edgecolor=color, linewidth=2) 
 
             s = "({}, {})".format(lbl[0], lbl[1])
             tmp = x.copy()
@@ -2277,9 +3205,7 @@ class GGIW_GLMB(RandomFiniteSetBase):
 
                 for idx, g in enumerate(t_lst):
                     if idx % extent_plot_step == 0 and g is not None:
-                        g.plot_confidence_extents(h=h, plt_inds=plt_inds, ax=ax, edgecolor='k', linewidth=1)
-                        
-                t_lst[-1].plot_confidence_extents(h=h, plt_inds=plt_inds, ax=ax, edgecolor='k', linewidth=1)
+                        g.plot_confidence_extents(h=0, plt_inds=plt_inds, ax=ax, edgecolor='k', linewidth=1) #NOTE: Plotting with 0% confidence interval for truth. Makes trajectory plots less messy. 
 
         # if true states are available then plot them
         if true_states is not None and any([len(x) > 0 for x in true_states]):
@@ -2351,7 +3277,313 @@ class GGIW_GLMB(RandomFiniteSetBase):
         # plt.tight_layout()
 
         return f_hndl
+    
+    def plot_ospa2_history(
+        self,
+        time_units="index",
+        time=None,
+        main_opts=None,
+        sub_opts=None,
+        plot_subs=True,
+    ):
+        """Plots the OSPA2 history.
 
+        This requires that the OSPA2 has been calcualted by the approriate
+        function first.
+
+        Parameters
+        ----------
+        time_units : string, optional
+            Text representing the units of time in the plot. The default is
+            'index'.
+        time : numpy array, optional
+            Vector to use for the x-axis of the plot. If none is given then
+            vector indices are used. The default is None.
+        main_opts : dict, optional
+            Additional plotting options for :meth:`gncpy.plotting.init_plotting_opts`
+            function. Values implemented here are `f_hndl`, and any values
+            relating to title/axis text formatting. The default of None implies
+            the default options are used for the main plot.
+        sub_opts : dict, optional
+            Additional plotting options for :meth:`gncpy.plotting.init_plotting_opts`
+            function. Values implemented here are `f_hndl`, and any values
+            relating to title/axis text formatting. The default of None implies
+            the default options are used for the sub plot.
+        plot_subs : bool, optional
+            Flag indicating if the component statistics (cardinality and
+            localization) should also be plotted.
+
+        Returns
+        -------
+        figs : dict
+            Dictionary of matplotlib figure objects the data was plotted on.
+        """
+        if self.ospa2 is None:
+            warnings.warn("OSPA must be calculated before plotting")
+            return
+        if main_opts is None:
+            main_opts = pltUtil.init_plotting_opts()
+        if sub_opts is None and plot_subs:
+            sub_opts = pltUtil.init_plotting_opts()
+        fmt = "{:s} OSPA2 (c = {:.1f}, p = {:d}, w={:d})"
+        ttl = fmt.format(
+            self._ospa2_params["core"],
+            self._ospa2_params["cutoff"],
+            self._ospa2_params["power"],
+            self._ospa2_params["win_len"],
+        )
+        y_lbl = "OSPA2"
+
+        figs = {}
+        figs["OSPA2"] = self._plt_ospa_hist(
+            self.ospa2, time_units, time, ttl, y_lbl, main_opts
+        )
+
+        if plot_subs:
+            fmt = "{:s} OSPA2 Components (c = {:.1f}, p = {:d}, w={:d})"
+            ttl = fmt.format(
+                self._ospa2_params["core"],
+                self._ospa2_params["cutoff"],
+                self._ospa2_params["power"],
+                self._ospa2_params["win_len"],
+            )
+            y_lbls = ["Localiztion", "Cardinality"]
+            figs["OSPA2_subs"] = self._plt_ospa_hist_subs(
+                [self.ospa2_localization, self.ospa2_cardinality],
+                time_units,
+                time,
+                ttl,
+                y_lbls,
+                main_opts,
+            )
+        return figs
+
+    def calculate_extended_ospa(self, truth, c, p, c_gamma=5, c_x=10, c_X=5, w_gamma=1, w_x=1, w_X=1):
+        """
+        Calculate OSPA for extended targets with GGIW distributions.
+        
+        Parameters
+        ----------
+        truth : list
+            List where each element is a list of GGIW objects for that timestep
+        c : float
+            Cut-off distance
+        p : int
+            Order parameter (typically 1 or 2)
+        c_gamma : float
+            Maximum expected error for measurement rate
+        c_x : float
+            Maximum expected error for kinematic state
+        c_X : float
+            Maximum expected error for extension state
+        w_gamma : float
+            Weight for measurement rate component
+        w_x : float
+            Weight for kinematic state component
+        w_X : float
+            Weight for extension state component
+        """
+        
+        # Ensure states have been extracted
+        if not self._GGIW_objs or not any(self._GGIW_objs):
+            warnings.warn("No extracted GGIW objects. Run extract_states first.")
+            return
+            
+        num_timesteps = min(len(self._GGIW_objs), len(truth))
+        
+        self.ospa = np.zeros(num_timesteps)
+        self.ospa_localization = np.zeros(num_timesteps)
+        self.ospa_cardinality = np.zeros(num_timesteps)
+        self.ospa_rate = np.zeros(num_timesteps)
+        self.ospa_kinematic = np.zeros(num_timesteps)
+        self.ospa_extension = np.zeros(num_timesteps)
+        
+        for tt in range(num_timesteps):
+            true_ggiws = truth[tt] if truth[tt] is not None else []
+            extracted_ggiws = self._GGIW_objs[tt] if tt < len(self._GGIW_objs) else []
+            
+            ospa_res = self._calculate_ggiw_ospa(
+                extracted_ggiws, true_ggiws, c, p,
+                c_gamma, c_x, c_X, w_gamma, w_x, w_X
+            )
+            
+            self.ospa[tt] = ospa_res['total']
+            self.ospa_localization[tt] = ospa_res['localization']
+            self.ospa_cardinality[tt] = ospa_res['cardinality']
+            self.ospa_rate[tt] = ospa_res['rate']
+            self.ospa_kinematic[tt] = ospa_res['kinematic']
+            self.ospa_extension[tt] = ospa_res['extension']
+
+    def _calculate_ggiw_ospa(self, est_ggiws, true_ggiws, c, p, 
+                            c_gamma, c_x, c_X, w_gamma, w_x, w_X):
+        """
+        Calculate OSPA between sets of GGIW distributions per paper Equation 45-47.
+        """
+        n_est = len(est_ggiws)
+        n_true = len(true_ggiws)
+        
+        if n_est == 0 and n_true == 0:
+            return {
+                'total': 0, 'localization': 0, 'cardinality': 0,
+                'rate': 0, 'kinematic': 0, 'extension': 0
+            }
+        
+        if n_est > 0 and n_true > 0:
+            dist_matrix = np.zeros((n_est, n_true))
+            
+            for i in range(n_est):
+                for j in range(n_true):
+                    d_gamma = self._ggiw_rate_distance(est_ggiws[i], true_ggiws[j])
+                    d_x = self._ggiw_kinematic_distance(est_ggiws[i], true_ggiws[j]) 
+                    d_X = self._ggiw_extension_distance(est_ggiws[i], true_ggiws[j])
+                    
+                    d_gamma_norm = w_gamma * min(d_gamma, c_gamma) / c_gamma
+                    d_x_norm = w_x * min(d_x, c_x) / c_x
+                    d_X_norm = w_X * min(d_X, c_X) / c_X
+                    
+                    dist_matrix[i,j] = d_gamma_norm + d_x_norm + d_X_norm
+            
+            row_ind, col_ind = linear_sum_assignment(dist_matrix)
+            
+            localization = 0
+            for i, j in zip(row_ind, col_ind):
+                d = min(dist_matrix[i,j], c)
+                localization += d**p
+            
+            cardinality = abs(n_est - n_true) * c**p
+            
+        else:
+            localization = 0
+            cardinality = max(n_est, n_true) * c**p
+        
+        n_max = max(n_est, n_true)
+        if n_max > 0:
+            total_ospa = ((localization + cardinality) / n_max)**(1/p)
+            loc_ospa = (localization / n_max)**(1/p)
+            card_ospa = (cardinality / n_max)**(1/p)
+        else:
+            total_ospa = loc_ospa = card_ospa = 0
+        
+        if n_est > 0 and n_true > 0 and len(row_ind) > 0:
+            rate_sum = 0
+            kin_sum = 0
+            ext_sum = 0
+            
+            for i, j in zip(row_ind, col_ind):
+                d_gamma = min(self._ggiw_rate_distance(est_ggiws[i], true_ggiws[j]), c_gamma)
+                d_x = min(self._ggiw_kinematic_distance(est_ggiws[i], true_ggiws[j]), c_x)
+                d_X = min(self._ggiw_extension_distance(est_ggiws[i], true_ggiws[j]), c_X)
+                
+                rate_sum += d_gamma**p
+                kin_sum += d_x**p
+                ext_sum += d_X**p
+            
+            n_unassigned = abs(n_est - n_true)
+            rate_sum += n_unassigned * c_gamma**p
+            kin_sum += n_unassigned * c_x**p
+            ext_sum += n_unassigned * c_X**p
+            
+            rate_ospa = (rate_sum / n_max)**(1/p)
+            kin_ospa = (kin_sum / n_max)**(1/p)
+            ext_ospa = (ext_sum / n_max)**(1/p)
+        else:
+            rate_ospa = c_gamma
+            kin_ospa = c_x
+            ext_ospa = c_X
+        
+        return {
+            'total': total_ospa,
+            'localization': loc_ospa,
+            'cardinality': card_ospa,
+            'rate': rate_ospa,
+            'kinematic': kin_ospa,
+            'extension': ext_ospa
+        }
+
+    def _ggiw_rate_distance(self, ggiw1, ggiw2):
+        """Calculate distance between measurement rates."""
+        rate1 = ggiw1.alpha / ggiw1.beta if ggiw1.beta > 0 else 0
+        rate2 = ggiw2.alpha / ggiw2.beta if ggiw2.beta > 0 else 0
+        return abs(rate1 - rate2)
+
+    def _ggiw_kinematic_distance(self, ggiw1, ggiw2):
+        """Calculate distance between kinematic states."""
+        diff = ggiw1.mean - ggiw2.mean
+        return la.norm(diff)
+
+    def _ggiw_extension_distance(self, ggiw1, ggiw2):
+        """Calculate distance between extensions."""
+        # Get dimension from GGIW object
+        d = ggiw1.d
+        
+        if ggiw1.IWdof > d + 1:
+            X1 = ggiw1.IWshape / (ggiw1.IWdof - d - 1)
+        else:
+            X1 = ggiw1.IWshape
+            
+        if ggiw2.IWdof > d + 1:
+            X2 = ggiw2.IWshape / (ggiw2.IWdof - d - 1)
+        else:
+            X2 = ggiw2.IWshape
+        
+        return la.norm(X1 - X2, 'fro')
+
+    def plot_extended_ospa(self, time_units="index", time=None, **kwargs):
+        """
+        Plot OSPA metrics for extended targets.
+        """
+        opts = pltUtil.init_plotting_opts(**kwargs)
+        f_hndl = opts["f_hndl"]
+        
+        if not hasattr(self, 'ospa'):
+            raise RuntimeError("Must call calculate_extended_ospa first")
+        
+        if f_hndl is None:
+            f_hndl = plt.figure(figsize=(12, 10))
+        
+        if time is None:
+            time = np.arange(len(self.ospa))
+        
+        plt.subplot(3, 1, 1)
+        plt.plot(time, self.ospa, 'b-', linewidth=2)
+        plt.grid(True)
+        plt.ylabel('Total OSPA')
+        plt.title('Extended Target OSPA Metrics')
+        
+        plt.subplot(3, 1, 2)
+        plt.plot(time, self.ospa_localization, 'g-', label='Localization')
+        plt.plot(time, self.ospa_cardinality, 'r-', label='Cardinality')
+        plt.grid(True)
+        plt.ylabel('OSPA')
+        plt.legend()
+        
+        # plt.subplot(3, 2, 3)
+        # plt.plot(time, self.ospa_rate, 'm-', linewidth=2)
+        # plt.grid(True)
+        # plt.ylabel('Rate OSPA')
+        
+        # plt.subplot(3, 2, 4)
+        # plt.plot(time, self.ospa_kinematic, 'c-', linewidth=2)
+        # plt.grid(True)
+        # plt.ylabel('Kinematic OSPA')
+        
+        # plt.subplot(3, 2, 5)
+        # plt.plot(time, self.ospa_extension, 'y-', linewidth=2)
+        # plt.grid(True)
+        # plt.xlabel(f'Time ({time_units})')
+        # plt.ylabel('Extension OSPA')
+        
+        plt.subplot(3, 1, 3)
+        plt.plot(time, self.ospa_rate, 'm-', label='Rate', alpha=0.7)
+        plt.plot(time, self.ospa_kinematic, 'c-', label='Kinematic', alpha=0.7)
+        plt.plot(time, self.ospa_extension, 'y-', label='Extension', alpha=0.7) 
+        plt.grid(True)
+        plt.xlabel(f'Time ({time_units})')
+        plt.ylabel('Component OSPA')
+        plt.legend()
+        
+        plt.tight_layout()
+        return f_hndl
 
 
 class GGIW_JGLMB(GGIW_GLMB):
@@ -2444,13 +3676,20 @@ class GGIW_JGLMB(GGIW_GLMB):
         return mindices
 
     def _calc_avg_prob_surv_death(self):
-        avg_surv = np.zeros(len(self.birth_terms) + self._old_track_tab_len)
-        for ii in range(0, avg_surv.shape[0]):
-            if ii <= len(self.birth_terms) - 1:
-                avg_surv[ii] = self.birth_terms[ii][1]
-            else:
-                avg_surv[ii] = self.prob_survive
-        # avg_surv = np.array([avg_surv]).T
+        """Calculate average survival/death probabilities for JGLMB."""
+        num_births = len(self.birth_terms)
+        num_exists = self._old_track_tab_len
+        avg_surv = np.zeros(num_births + num_exists)
+        
+        # Birth terms should use survival probability, not birth probability
+        # The birth probability is already handled in _gen_birth_tab
+        for ii in range(num_births):
+            avg_surv[ii] = self.prob_survive  # Changed from self.birth_terms[ii][1]
+        
+        # Existing tracks use the standard survival probability
+        for ii in range(num_births, num_births + num_exists):
+            avg_surv[ii] = self.prob_survive
+            
         avg_death = 1 - avg_surv
         return avg_surv, avg_death
 
@@ -2461,32 +3700,35 @@ class GGIW_JGLMB(GGIW_GLMB):
         return avg_detect, avg_miss
 
     def _gen_cor_tab(self, num_meas, meas, timestep, filt_args):
+        """Generate correction table for JGLMB."""
         num_pred = len(self._track_tab)
         up_tab = [None] * (num_meas + 1) * num_pred
 
+        # Initialize missed detection tracks
         for ii, track in enumerate(self._track_tab):
             up_tab[ii] = self._TabEntry()
             up_tab[ii].setup(track)
             up_tab[ii].meas_assoc_hist.append(None)
-        # measurement updated tracks
+            
+        # Measurement updated tracks
         all_cost_m = np.zeros((num_pred, num_meas))
-        # for emm, z in enumerate(meas):
-        for ii, ent in enumerate(self._track_tab):
-            for emm, z in enumerate(meas):
-
-                num_meas = len(z)
+        
+        for emm, z in enumerate(meas):
+            for ii, ent in enumerate(self._track_tab):
+                meas_per_clust = len(z)
                 meas_d = z[0].shape[0]
-                z_array = np.array(z).reshape((num_meas, meas_d)).transpose()
+                z_array = np.array(z).reshape((meas_per_clust, meas_d)).transpose()
 
                 s_to_ii = num_pred * emm + ii + num_pred
                 (up_tab[s_to_ii], cost) = self._correct_track_tab_entry(
                     z_array, ent, timestep, filt_args
                 )
-
-                # update association history with current measurement index
+                
+                # Update association history with current measurement index
                 if up_tab[s_to_ii] is not None:
                     up_tab[s_to_ii].meas_assoc_hist.append(emm)
                 all_cost_m[ii, emm] = cost
+                
         return up_tab, all_cost_m
 
     def _gen_cor_hyps(
