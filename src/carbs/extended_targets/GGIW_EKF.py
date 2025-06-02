@@ -231,7 +231,7 @@ class GGIW_ExtendedKalmanFilter(ExtendedKalmanFilter):
 
         N_hat = X_sqrt @ S_sqrt_inv @ N @ S_sqrt_inv.T @ X_sqrt.T
 
-        next_alpha = cur_alpha + W + 150 # NUMERICAL HACK, NEED IN VESTIGATING
+        next_alpha = cur_alpha + W + 100 # NUMERICAL HACK, NEED IN VESTIGATING
         next_beta = cur_beta + 1
         next_state = cur_state + K @ epsilon 
         temp = np.eye(cur_cov.shape[0]) - K @ meas_mat
